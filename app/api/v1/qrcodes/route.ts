@@ -29,14 +29,14 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const { destination_url, name = null } = parsed.data;
+  const { destination_url, name = null, folder_id = null, tags = [] } = parsed.data;
 
   // Insert with a fresh slug, retrying on the rare unique-slug collision.
   for (let attempt = 0; attempt < 5; attempt++) {
     const short_slug = generateSlug();
     const { data, error } = await supabase
       .from("qr_codes")
-      .insert({ user_id: user.id, short_slug, destination_url, name })
+      .insert({ user_id: user.id, short_slug, destination_url, name, folder_id, tags })
       .select()
       .single();
 
@@ -57,7 +57,8 @@ export async function POST(request: Request) {
 }
 
 // GET /api/v1/qrcodes — list the caller's codes (RLS returns only their rows).
-export async function GET() {
+// Optional filters: ?folder=<uuid|none> and ?tag=<tag>.
+export async function GET(request: Request) {
   const supabase = await createUserClient();
   const {
     data: { user },
@@ -66,11 +67,16 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from("qr_codes")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const sp = new URL(request.url).searchParams;
+  const folder = sp.get("folder");
+  const tag = sp.get("tag");
 
+  let query = supabase.from("qr_codes").select("*").order("created_at", { ascending: false });
+  if (folder === "none") query = query.is("folder_id", null);
+  else if (folder) query = query.eq("folder_id", folder);
+  if (tag) query = query.contains("tags", [tag]);
+
+  const { data, error } = await query;
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

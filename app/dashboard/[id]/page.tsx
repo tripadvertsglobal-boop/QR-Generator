@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createUserClient } from "@/lib/supabase/server";
 import ScanChart from "./ScanChart";
+import CopyButton from "./CopyButton";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN ?? "";
 
@@ -46,6 +47,34 @@ export default async function QrDetailPage({
           {code.is_active ? "active" : "paused"}
         </p>
       </header>
+
+      <section className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-start">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/api/v1/qrcodes/${code.id}/qr.svg`}
+          alt={`QR code for ${code.short_slug}`}
+          width={176}
+          height={176}
+          className="h-44 w-44 rounded-lg border border-black/10 bg-white p-2 dark:border-white/15"
+        />
+        <div className="flex flex-col gap-2">
+          <CopyButton value={`${REDIRECT_DOMAIN}/r/${code.short_slug}`} />
+          <a
+            href={`/api/v1/qrcodes/${code.id}/qr.svg`}
+            download={`qr-${code.short_slug}.svg`}
+            className="rounded-md border border-black/15 px-3 py-1.5 text-center text-sm dark:border-white/20"
+          >
+            Download SVG
+          </a>
+          <a
+            href={`/api/v1/qrcodes/${code.id}/qr.svg?format=png`}
+            download={`qr-${code.short_slug}.png`}
+            className="rounded-md border border-black/15 px-3 py-1.5 text-center text-sm dark:border-white/20"
+          >
+            Download PNG
+          </a>
+        </div>
+      </section>
 
       <section>
         <h2 className="mb-3 text-sm font-medium text-black/60 dark:text-white/60">
