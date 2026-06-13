@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
-import { setDestination, delDestination } from "@/lib/kv";
+import { setConfig, delConfig } from "@/lib/kv";
+import { buildConfig } from "@/lib/slug-config";
 import { generateSlug } from "@/lib/slug";
 import { logAudit } from "@/lib/audit";
 import { bulkCreateSchema, bulkDeleteSchema } from "@/lib/validation";
@@ -41,7 +42,7 @@ export const POST = withAuth(
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
 
-      await Promise.all(data.map((row) => setDestination(row.short_slug, row.destination_url)));
+      await Promise.all(data.map((row) => setConfig(row.short_slug, buildConfig(row))));
       logAudit({
         userId: auth.userId,
         action: "qr.bulk_create",
@@ -91,7 +92,7 @@ export const DELETE = withAuth(
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-    await Promise.all((data ?? []).map((row) => delDestination(row.short_slug)));
+    await Promise.all((data ?? []).map((row) => delConfig(row.short_slug)));
     logAudit({
       userId: auth.userId,
       action: "qr.bulk_delete",

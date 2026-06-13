@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createUserClient } from "@/lib/supabase/server";
 import ScanChart from "./ScanChart";
 import CopyButton from "./CopyButton";
+import AdvancedSettings from "./AdvancedSettings";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN ?? "";
 
@@ -17,11 +18,14 @@ export default async function QrDetailPage({
   // RLS scopes this to the owner; a foreign/unknown id returns no row -> 404.
   const { data: code } = await supabase
     .from("qr_codes")
-    .select("*")
+    .select(
+      "id, short_slug, destination_url, name, is_active, scan_count, active_from, active_until, ab_destinations, password_hash",
+    )
     .eq("id", id)
     .maybeSingle();
 
   if (!code) notFound();
+  const hasPassword = !!code.password_hash;
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -82,6 +86,14 @@ export default async function QrDetailPage({
         </h2>
         <ScanChart qrId={code.id} />
       </section>
+
+      <AdvancedSettings
+        id={code.id}
+        activeFrom={code.active_from}
+        activeUntil={code.active_until}
+        hasPassword={hasPassword}
+        ab={code.ab_destinations}
+      />
     </main>
   );
 }

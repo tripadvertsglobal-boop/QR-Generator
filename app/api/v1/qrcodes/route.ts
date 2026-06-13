@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
-import { setDestination } from "@/lib/kv";
+import { setConfig } from "@/lib/kv";
+import { buildConfig } from "@/lib/slug-config";
+import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { generateSlug } from "@/lib/slug";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
@@ -24,20 +26,21 @@ export const POST = withAuth(
         { status: 400 },
       );
     }
-    const { destination_url, name = null, folder_id = null, tags = [] } = parsed.data;
 
-    if (!(await isUrlSafe(destination_url))) {
+    if (!(await isUrlSafe(parsed.data.destination_url))) {
       return NextResponse.json(
         { error: "Destination URL was flagged as unsafe" },
         { status: 400 },
       );
     }
 
+    const fields = await toDbFields(parsed.data);
+
     for (let attempt = 0; attempt < 5; attempt++) {
       const short_slug = generateSlug();
       const { data, error } = await auth.db
         .from("qr_codes")
-        .insert({ user_id: auth.userId, short_slug, destination_url, name, folder_id, tags })
+        .insert({ user_id: auth.userId, short_slug, ...fields })
         .select()
         .single();
 
@@ -46,17 +49,17 @@ export const POST = withAuth(
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
 
-      await setDestination(short_slug, data.destination_url);
+      await setConfig(short_slug, buildConfig(data));
       logAudit({
         userId: auth.userId,
         action: "qr.create",
         resourceType: "qr_code",
         resourceId: data.id,
-        newValue: { destination_url, name },
+        newValue: { destination_url: parsed.data.destination_url, name: parsed.data.name },
         request,
       });
       const tracking_url = `${process.env.NEXT_PUBLIC_REDIRECT_DOMAIN}/r/${short_slug}`;
-      return NextResponse.json({ ...data, tracking_url }, { status: 201 });
+      return NextResponse.json({ ...stripSecret(data), tracking_url }, { status: 201 });
     }
 
     return NextResponse.json(
@@ -74,9 +77,12 @@ export const GET = withAuth(
     const folder = sp.get("folder");
     const tag = sp.get("tag");
 
+    // Explicit column list keeps the password hash out of API responses.
     let query = auth.db
       .from("qr_codes")
-      .select("*")
+      .select(
+        "id, user_id, short_slug, destination_url, name, is_active, scan_count, folder_id, tags, active_from, active_until, ab_destinations, created_at, updated_at",
+      )
       .eq("user_id", auth.userId)
       .order("created_at", { ascending: false });
     if (folder === "none") query = query.is("folder_id", null);

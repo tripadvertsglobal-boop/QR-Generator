@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
-import { setDestination, delDestination } from "@/lib/kv";
+import { setConfig, delConfig } from "@/lib/kv";
+import { buildConfig } from "@/lib/slug-config";
+import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
 import { updateQrSchema } from "@/lib/validation";
@@ -32,10 +34,12 @@ export const PATCH = withAuth(
       return NextResponse.json({ error: "Destination URL was flagged as unsafe" }, { status: 400 });
     }
 
+    const fields = await toDbFields(parsed.data);
+
     // Explicit user scoping so service-role (API-key) requests stay tenant-isolated.
     const { data, error } = await auth.db
       .from("qr_codes")
-      .update(parsed.data)
+      .update(fields)
       .eq("id", id)
       .eq("user_id", auth.userId)
       .select()
@@ -46,18 +50,21 @@ export const PATCH = withAuth(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    if (data.is_active) await setDestination(data.short_slug, data.destination_url);
-    else await delDestination(data.short_slug);
+    // Keep KV in sync with the full config (paused codes are evicted).
+    if (data.is_active) await setConfig(data.short_slug, buildConfig(data));
+    else await delConfig(data.short_slug);
 
+    const { password: _pw, ...auditFields } = parsed.data;
+    void _pw;
     logAudit({
       userId: auth.userId,
       action: "qr.update",
       resourceType: "qr_code",
       resourceId: id,
-      newValue: parsed.data,
+      newValue: auditFields,
       request,
     });
-    return NextResponse.json(data);
+    return NextResponse.json(stripSecret(data));
   },
   { scope: "qrcodes:write" },
 );
@@ -80,7 +87,7 @@ export const DELETE = withAuth(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    await delDestination(data.short_slug);
+    await delConfig(data.short_slug);
     logAudit({ userId: auth.userId, action: "qr.delete", resourceType: "qr_code", resourceId: id, request });
     return NextResponse.json({ success: true });
   },

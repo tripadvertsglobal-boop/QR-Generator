@@ -76,6 +76,13 @@ export default function QrRow({
           </Link>
           <div className="flex items-center gap-2 text-xs">
             <span className="text-black/60 dark:text-white/60">{code.scan_count} scans</span>
+            {code.has_password && <span title="Password protected">🔒</span>}
+            {(code.active_from || code.active_until) && <span title="Scheduled">🗓️</span>}
+            {code.ab_destinations && code.ab_destinations.length > 0 && (
+              <span title="A/B split" className="rounded-full bg-purple-500/15 px-2 py-0.5 text-purple-600">
+                A/B
+              </span>
+            )}
             <span
               className={`rounded-full px-2 py-0.5 ${
                 code.is_active

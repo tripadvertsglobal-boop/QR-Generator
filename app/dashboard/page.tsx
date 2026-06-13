@@ -19,11 +19,20 @@ export default async function DashboardPage({
 
   const [{ data: folderData }, { data: codeData }] = await Promise.all([
     supabase.from("folders").select("id, name, color").order("name"),
-    supabase.from("qr_codes").select("*").order("created_at", { ascending: false }),
+    supabase
+      .from("qr_codes")
+      .select(
+        "id, short_slug, destination_url, name, is_active, scan_count, folder_id, tags, active_from, active_until, ab_destinations, password_hash, created_at",
+      )
+      .order("created_at", { ascending: false }),
   ]);
 
   const folders = (folderData ?? []) as Folder[];
-  const allCodes = (codeData ?? []) as QrCode[];
+  // Map to has_password and drop the hash before it reaches client components.
+  const allCodes: QrCode[] = (codeData ?? []).map((row) => {
+    const { password_hash, ...rest } = row as Record<string, unknown> & { password_hash: string | null };
+    return { ...rest, has_password: !!password_hash } as QrCode;
+  });
 
   // Counts for the sidebar (computed from the full set).
   const counts: Record<string, number> = {};
