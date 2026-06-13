@@ -2,16 +2,7 @@ import { NextResponse } from "next/server";
 import { createUserClient } from "@/lib/supabase/server";
 import { setDestination } from "@/lib/kv";
 import { generateSlug } from "@/lib/slug";
-
-function validDestination(value: unknown): value is string {
-  if (typeof value !== "string" || value.length === 0) return false;
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+import { createQrSchema } from "@/lib/validation";
 
 // POST /api/v1/qrcodes — create a dynamic QR: generate slug, insert (RLS-scoped),
 // warm the KV cache so the redirect engine resolves it instantly.
@@ -24,28 +15,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { destination_url?: unknown; name?: unknown };
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!validDestination(body.destination_url)) {
+  const parsed = createQrSchema.safeParse(raw);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "destination_url must be a valid http(s) URL" },
+      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
       { status: 400 },
     );
   }
-  const name =
-    typeof body.name === "string" && body.name.trim() ? body.name.trim() : null;
+  const { destination_url, name = null } = parsed.data;
 
   // Insert with a fresh slug, retrying on the rare unique-slug collision.
   for (let attempt = 0; attempt < 5; attempt++) {
     const short_slug = generateSlug();
     const { data, error } = await supabase
       .from("qr_codes")
-      .insert({ user_id: user.id, short_slug, destination_url: body.destination_url, name })
+      .insert({ user_id: user.id, short_slug, destination_url, name })
       .select()
       .single();
 
