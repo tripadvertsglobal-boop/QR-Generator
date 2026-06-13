@@ -66,5 +66,14 @@ export const bulkDeleteSchema = z.object({
   ids: z.array(uuid).min(1).max(100),
 });
 
+const apiScope = z.enum(["qrcodes:read", "qrcodes:write"]);
+
+export const createKeySchema = z.object({
+  name: name,
+  scopes: z.array(apiScope).min(1).optional(),
+  rate_limit: z.number().int().min(1).max(10000).optional(),
+  expires_at: z.string().datetime().nullish(),
+});
+
 export type CreateQrInput = z.infer<typeof createQrSchema>;
 export type UpdateQrInput = z.infer<typeof updateQrSchema>;
