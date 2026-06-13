@@ -1,26 +1,20 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
-import { createUserClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth";
 
 // GET /api/v1/qrcodes/[id]/qr.svg            -> scannable SVG of the tracking URL
 // GET /api/v1/qrcodes/[id]/qr.svg?format=png -> PNG (256px)
 // The QR encodes the tracking URL (/r/<slug>), never the destination, so the
 // printed image stays valid when the destination changes.
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const GET = withAuth(
+  async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
-  const supabase = await createUserClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: code } = await supabase
+  const { data: code } = await auth.db
     .from("qr_codes")
     .select("short_slug")
     .eq("id", id)
+    .eq("user_id", auth.userId)
     .maybeSingle();
   if (!code) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -47,4 +41,8 @@ export async function GET(
       "Cache-Control": "private, max-age=3600",
     },
   });
-}
+  },
+  { scope: "qrcodes:read" },
+);
+
+export { preflight as OPTIONS } from "@/lib/cors";

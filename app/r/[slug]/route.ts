@@ -1,10 +1,11 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getDestination, setDestination } from "@/lib/kv";
+import { getConfig, setConfig } from "@/lib/kv";
+import { scheduleState, pickDestination, type SlugConfig } from "@/lib/slug-config";
+import { unlockCookieName, verifyUnlockToken } from "@/lib/link-token";
 
 export const runtime = "edge";
 
-// KV backfill TTL on a cache miss — 24h, matching the plan's Appendix F.
 const BACKFILL_TTL_SECONDS = 60 * 60 * 24;
 
 function anonClient() {
@@ -15,34 +16,60 @@ function anonClient() {
   );
 }
 
-// GET /r/<slug> — resolve a dynamic QR to its destination and 302.
-// Fast path: Vercel KV. Miss: resolve_slug RPC (anon, active codes only) +
-// backfill KV. Unknown/paused slug -> 404. Scan is recorded fire-and-forget via
-// `after()` (post-response), so it never adds latency to the redirect.
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> },
-) {
+// GET /r/<slug> — resolve a dynamic QR. Resolution order (Appendix F):
+// KV (miss -> resolve_slug_config + backfill) -> schedule/active -> password
+// gate -> A/B pick -> fire-and-forget scan -> 302. Latency stays on the KV path.
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  let destination = await getDestination(slug);
+  let config = await getConfig(slug);
 
-  if (!destination) {
+  if (!config) {
     const { data } = await anonClient()
-      .rpc("resolve_slug", { p_slug: slug })
-      .maybeSingle<{ destination_url: string }>();
+      .rpc("resolve_slug_config", { p_slug: slug })
+      .maybeSingle<{
+        destination_url: string;
+        is_active: boolean;
+        active_from: string | null;
+        active_until: string | null;
+        has_password: boolean;
+        ab_destinations: SlugConfig["ab"];
+      }>();
 
-    if (data?.destination_url) {
-      destination = data.destination_url;
-      await setDestination(slug, destination, BACKFILL_TTL_SECONDS);
+    if (data) {
+      config = {
+        destination_url: data.destination_url,
+        is_active: data.is_active,
+        active_from: data.active_from,
+        active_until: data.active_until,
+        has_password: data.has_password,
+        ab: data.ab_destinations,
+      };
+      await setConfig(slug, config, BACKFILL_TTL_SECONDS);
     }
   }
 
-  if (!destination) {
-    return new NextResponse("Not found", { status: 404 });
+  if (!config) return new NextResponse("Not found", { status: 404 });
+
+  // Scheduling + active state.
+  switch (scheduleState(config)) {
+    case "paused":
+    case "expired":
+      return new NextResponse("This link is no longer active", { status: 410 });
+    case "not_started":
+      return new NextResponse("This link is not active yet", { status: 404 });
   }
 
-  // Record the scan after the response is sent (Vercel geo headers when present).
+  // Password gate — require a valid unlock cookie, else show the interstitial.
+  if (config.has_password) {
+    const token = request.cookies.get(unlockCookieName(slug))?.value;
+    if (!(await verifyUnlockToken(slug, token))) {
+      return NextResponse.redirect(new URL(`/r/${slug}/unlock`, request.url), 302);
+    }
+  }
+
+  const destination = pickDestination(config);
+
   const h = request.headers;
   after(async () => {
     await anonClient().rpc("record_scan", {

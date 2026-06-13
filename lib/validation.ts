@@ -18,11 +18,22 @@ const hexColor = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, "Color must be a #rrggbb hex value");
 
+// M7 advanced-link fields.
+const password = z.string().min(4).max(200);
+const abDestinations = z
+  .array(z.object({ url: httpUrl, weight: z.number().int().min(1).max(100) }))
+  .min(2, "A/B split needs at least two destinations")
+  .max(10);
+
 export const createQrSchema = z.object({
   destination_url: httpUrl,
   name: name.nullish(),
   folder_id: uuid.nullish(),
   tags: tags.optional(),
+  active_from: z.string().datetime().nullish(),
+  active_until: z.string().datetime().nullish(),
+  password: password.nullish(),
+  ab_destinations: abDestinations.nullish(),
 });
 
 export const updateQrSchema = z
@@ -32,6 +43,10 @@ export const updateQrSchema = z
     name: name.nullish(),
     folder_id: uuid.nullish(),
     tags: tags.optional(),
+    active_from: z.string().datetime().nullish(),
+    active_until: z.string().datetime().nullish(),
+    password: password.nullish(), // string = set, null = clear, undefined = leave
+    ab_destinations: abDestinations.nullish(),
   })
   .refine((d) => Object.keys(d).length > 0, "No fields to update");
 
@@ -64,6 +79,15 @@ export const bulkCreateSchema = z.object({
 
 export const bulkDeleteSchema = z.object({
   ids: z.array(uuid).min(1).max(100),
+});
+
+const apiScope = z.enum(["qrcodes:read", "qrcodes:write"]);
+
+export const createKeySchema = z.object({
+  name: name,
+  scopes: z.array(apiScope).min(1).optional(),
+  rate_limit: z.number().int().min(1).max(10000).optional(),
+  expires_at: z.string().datetime().nullish(),
 });
 
 export type CreateQrInput = z.infer<typeof createQrSchema>;
