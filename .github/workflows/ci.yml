@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          # Build-time public vars (non-secret testing values are fine in CI).
+          NEXT_PUBLIC_SUPABASE_URL: https://gyoqcwgregxfvhpdubym.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_u6aUmKrJhOkodXI6IBsBZQ_XSzx_A3n
+          NEXT_PUBLIC_REDIRECT_DOMAIN: http://localhost:3000
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
