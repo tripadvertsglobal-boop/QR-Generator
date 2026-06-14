@@ -27,6 +27,32 @@ export default async function QrDetailPage({
   if (!code) notFound();
   const hasPassword = !!code.password_hash;
 
+  // Scan geography. Recent scans come straight from scan_logs (RLS-scoped to the
+  // owner); the country breakdown uses the ownership-guarded get_scan_geo RPC.
+  // Fixed all-time bounds keep this render pure (no Date.now()).
+  const [{ data: recentScans }, { data: geo }] = await Promise.all([
+    supabase
+      .from("scan_logs")
+      .select("scanned_at, country, region, city")
+      .eq("qr_code_id", code.id)
+      .order("scanned_at", { ascending: false })
+      .limit(50),
+    supabase.rpc("get_scan_geo", {
+      p_qr_code_id: code.id,
+      p_start: "2020-01-01",
+      p_end: "2099-12-31",
+    }),
+  ]);
+  const recent = (recentScans ?? []) as {
+    scanned_at: string;
+    country: string | null;
+    region: string | null;
+    city: string | null;
+  }[];
+  const countries = (geo ?? []) as { country: string; scan_count: number }[];
+  const place = (s: { city: string | null; region: string | null; country: string | null }) =>
+    [s.city, s.region, s.country].filter(Boolean).join(", ") || "Unknown";
+
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
       <Link href="/dashboard" className="text-sm text-blue-600 underline">
@@ -85,6 +111,52 @@ export default async function QrDetailPage({
           Scans (last 30 days)
         </h2>
         <ScanChart qrId={code.id} />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-sm font-medium text-black/60 dark:text-white/60">
+          Scans by country
+        </h2>
+        {countries.length === 0 ? (
+          <p className="text-sm text-black/50 dark:text-white/50">No scans recorded yet.</p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {countries.map((c) => (
+              <li key={c.country} className="flex items-center justify-between text-sm">
+                <span>{c.country}</span>
+                <span className="text-black/60 dark:text-white/60">{c.scan_count}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-sm font-medium text-black/60 dark:text-white/60">
+          Recent scans
+        </h2>
+        {recent.length === 0 ? (
+          <p className="text-sm text-black/50 dark:text-white/50">No scans recorded yet.</p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="text-xs uppercase tracking-wide text-black/40 dark:text-white/40">
+              <tr>
+                <th className="py-2">Time</th>
+                <th className="py-2">Location</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((s, i) => (
+                <tr key={i} className="border-t border-black/10 dark:border-white/10">
+                  <td className="py-2 text-black/60 dark:text-white/60">
+                    {new Date(s.scanned_at).toLocaleString()}
+                  </td>
+                  <td className="py-2">{place(s)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <AdvancedSettings
