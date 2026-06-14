@@ -60,9 +60,15 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-semibold">Your QR codes</h1>
           <p className="text-sm text-black/60 dark:text-white/60">{user?.email}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard/webhooks" className="text-sm text-blue-600 underline">
+        <div className="flex items-center gap-3 text-sm">
+          <Link href="/dashboard/webhooks" className="text-blue-600 underline">
             Webhooks
+          </Link>
+          <Link href="/dashboard/audit" className="text-blue-600 underline">
+            Audit log
+          </Link>
+          <Link href="/dashboard/account" className="text-blue-600 underline">
+            Account
           </Link>
           <SignOutButton />
         </div>
