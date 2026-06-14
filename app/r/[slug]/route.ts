@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { getConfig, setConfig } from "@/lib/kv";
 import { scheduleState, pickDestination, type SlugConfig } from "@/lib/slug-config";
 import { unlockCookieName, verifyUnlockToken } from "@/lib/link-token";
+import { crossedMilestone, dispatchEvent } from "@/lib/webhooks";
 
 export const runtime = "edge";
 
@@ -72,13 +73,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const h = request.headers;
   after(async () => {
-    await anonClient().rpc("record_scan", {
+    const { data } = await anonClient().rpc("record_scan", {
       p_slug: slug,
       p_country: h.get("x-vercel-ip-country"),
       p_region: h.get("x-vercel-ip-country-region"),
       p_city: h.get("x-vercel-ip-city"),
       p_referer: h.get("referer"),
     });
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { scan_count: number; user_id: string }
+      | undefined;
+    if (row?.user_id) {
+      const count = Number(row.scan_count);
+      const milestone = crossedMilestone(count - 1, count);
+      if (milestone) {
+        await dispatchEvent(row.user_id, "scan.threshold", { slug, scan_count: count, milestone });
+      }
+    }
   });
 
   return NextResponse.redirect(destination, 302);

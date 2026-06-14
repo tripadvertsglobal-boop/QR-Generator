@@ -90,5 +90,12 @@ export const createKeySchema = z.object({
   expires_at: z.string().datetime().nullish(),
 });
 
+const webhookEvent = z.enum(["qr.created", "qr.updated", "qr.deleted", "scan.threshold"]);
+
+export const createWebhookSchema = z.object({
+  url: httpUrl,
+  events: z.array(webhookEvent).min(1),
+});
+
 export type CreateQrInput = z.infer<typeof createQrSchema>;
 export type UpdateQrInput = z.infer<typeof updateQrSchema>;

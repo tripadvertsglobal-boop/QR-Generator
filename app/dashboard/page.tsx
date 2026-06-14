@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
 import CreateQrForm from "./CreateQrForm";
 import SignOutButton from "./SignOutButton";
@@ -59,7 +60,12 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-semibold">Your QR codes</h1>
           <p className="text-sm text-black/60 dark:text-white/60">{user?.email}</p>
         </div>
-        <SignOutButton />
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/webhooks" className="text-sm text-blue-600 underline">
+            Webhooks
+          </Link>
+          <SignOutButton />
+        </div>
       </header>
 
       <div className="flex flex-col gap-8 sm:flex-row">
