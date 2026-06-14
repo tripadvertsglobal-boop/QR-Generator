@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { withAuth } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { isPublicWebhookUrl } from "@/lib/ssrf";
 import { createWebhookSchema } from "@/lib/validation";
 
 // POST /api/v1/webhooks — register a webhook. JWT only. Returns the signing
@@ -19,6 +20,13 @@ export const POST = withAuth(
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+        { status: 400 },
+      );
+    }
+
+    if (!isPublicWebhookUrl(parsed.data.url)) {
+      return NextResponse.json(
+        { error: "Webhook URL must be a public http(s) endpoint" },
         { status: 400 },
       );
     }
