@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
-import { generateApiKey } from "@/lib/apikey";
+import { generateApiKey, MAX_API_KEYS } from "@/lib/apikey";
 import { logAudit } from "@/lib/audit";
 import { createKeySchema } from "@/lib/validation";
 
@@ -23,6 +23,24 @@ export const POST = withAuth(
       );
     }
 
+    // Cap active keys per account. The DB trigger is the race-proof backstop;
+    // this check returns a friendly error before we mint a key we can't keep.
+    const { count, error: countError } = await auth.db
+      .from("api_keys")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", auth.userId)
+      .eq("is_active", true);
+
+    if (countError)
+      return NextResponse.json({ error: countError.message }, { status: 400 });
+
+    if ((count ?? 0) >= MAX_API_KEYS) {
+      return NextResponse.json(
+        { error: `API key limit reached (max ${MAX_API_KEYS} active keys per account). Revoke one first.` },
+        { status: 409 },
+      );
+    }
+
     const key = generateApiKey();
     const { data, error } = await auth.db
       .from("api_keys")
@@ -38,7 +56,13 @@ export const POST = withAuth(
       .select("id, name, key_prefix, scopes, rate_limit, expires_at, created_at")
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) {
+      const limitHit = error.message.includes("API key limit reached");
+      return NextResponse.json(
+        { error: error.message },
+        { status: limitHit ? 409 : 400 },
+      );
+    }
 
     logAudit({
       userId: auth.userId,

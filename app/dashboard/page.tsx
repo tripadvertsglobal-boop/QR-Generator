@@ -61,6 +61,9 @@ export default async function DashboardPage({
           <p className="text-sm text-black/60 dark:text-white/60">{user?.email}</p>
         </div>
         <div className="flex items-center gap-3 text-sm">
+          <Link href="/dashboard/keys" className="text-blue-600 underline">
+            API keys
+          </Link>
           <Link href="/dashboard/webhooks" className="text-blue-600 underline">
             Webhooks
           </Link>

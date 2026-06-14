@@ -3,6 +3,9 @@ import { createHash, randomBytes } from "node:crypto";
 const PREFIX = "qr_sk_";
 const ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+// Maximum active API keys per account.
+export const MAX_API_KEYS = 4;
+
 // `qr_sk_<32 random chars>`. The `qr_sk_` prefix lets secret scanners flag leaks.
 function randomBody(len: number): string {
   const bytes = randomBytes(len);
