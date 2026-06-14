@@ -12,6 +12,9 @@ export default function SiteHeader() {
           <Link href="/pricing" className="text-black/70 hover:text-black">
             Pricing
           </Link>
+          <Link href="/docs" className="text-black/70 hover:text-black">
+            Docs
+          </Link>
           <Link href={siteConfig.links.logIn} className="text-black/70 hover:text-black">
             Log in
           </Link>
