@@ -42,14 +42,14 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:opacity-50"
+            className="rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
           >
             {loading ? "…" : "Send reset link"}
           </button>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </form>
       )}
-      <Link href="/login" className="text-sm text-blue-600 underline">
+      <Link href="/login" className="text-sm text-brand underline">
         Back to log in
       </Link>
     </div>

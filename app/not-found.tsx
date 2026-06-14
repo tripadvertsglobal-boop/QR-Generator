@@ -7,7 +7,7 @@ export default function NotFound() {
       <p className="text-sm text-black/60 dark:text-white/60">
         The page you’re looking for doesn’t exist.
       </p>
-      <Link href="/dashboard" className="mt-2 text-sm text-blue-600 underline">
+      <Link href="/dashboard" className="mt-2 text-sm text-brand underline">
         Go to dashboard
       </Link>
     </main>

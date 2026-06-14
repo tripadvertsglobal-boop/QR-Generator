@@ -55,7 +55,7 @@ export default async function QrDetailPage({
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <Link href="/dashboard" className="text-sm text-blue-600 underline">
+      <Link href="/dashboard" className="text-sm text-brand underline">
         ← Back to dashboard
       </Link>
 
@@ -65,7 +65,7 @@ export default async function QrDetailPage({
           href={`${REDIRECT_DOMAIN}/r/${code.short_slug}`}
           target="_blank"
           rel="noreferrer"
-          className="text-sm text-blue-600 underline"
+          className="text-sm text-brand underline"
         >
           {REDIRECT_DOMAIN}/r/{code.short_slug}
         </a>

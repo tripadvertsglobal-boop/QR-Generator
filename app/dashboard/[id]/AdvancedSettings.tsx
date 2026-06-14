@@ -116,7 +116,7 @@ export default function AdvancedSettings({
         <button
           onClick={save}
           disabled={busy}
-          className="self-start rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
+          className="self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
         >
           {busy ? "…" : "Save settings"}
         </button>

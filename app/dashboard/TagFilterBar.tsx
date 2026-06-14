@@ -23,7 +23,7 @@ export default function TagFilterBar({
   const chip = (active: boolean) =>
     `rounded-full px-3 py-1 text-xs ${
       active
-        ? "bg-foreground text-background"
+        ? "bg-brand hover:bg-brand-hover text-brand-foreground"
         : "border border-black/15 hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/5"
     }`;
 

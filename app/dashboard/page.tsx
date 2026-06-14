@@ -61,16 +61,16 @@ export default async function DashboardPage({
           <p className="text-sm text-black/60 dark:text-white/60">{user?.email}</p>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <Link href="/dashboard/keys" className="text-blue-600 underline">
+          <Link href="/dashboard/keys" className="text-brand underline">
             API keys
           </Link>
-          <Link href="/dashboard/webhooks" className="text-blue-600 underline">
+          <Link href="/dashboard/webhooks" className="text-brand underline">
             Webhooks
           </Link>
-          <Link href="/dashboard/audit" className="text-blue-600 underline">
+          <Link href="/dashboard/audit" className="text-brand underline">
             Audit log
           </Link>
-          <Link href="/dashboard/account" className="text-blue-600 underline">
+          <Link href="/dashboard/account" className="text-brand underline">
             Account
           </Link>
           <SignOutButton />

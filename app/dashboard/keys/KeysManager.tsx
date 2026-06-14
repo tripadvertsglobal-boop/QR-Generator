@@ -111,7 +111,7 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
         <button
           type="submit"
           disabled={busy || atLimit}
-          className="self-start rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
+          className="self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
         >
           {busy ? "…" : "Create key"}
         </button>
