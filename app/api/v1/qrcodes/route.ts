@@ -6,6 +6,7 @@ import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { generateSlug } from "@/lib/slug";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
+import { emitEvent } from "@/lib/webhooks";
 import { createQrSchema } from "@/lib/validation";
 
 // POST /api/v1/qrcodes — create a dynamic QR: generate slug, insert (scoped to
@@ -58,6 +59,7 @@ export const POST = withAuth(
         newValue: { destination_url: parsed.data.destination_url, name: parsed.data.name },
         request,
       });
+      emitEvent(auth.userId, "qr.created", { id: data.id, short_slug, destination_url: data.destination_url });
       const tracking_url = `${process.env.NEXT_PUBLIC_REDIRECT_DOMAIN}/r/${short_slug}`;
       return NextResponse.json({ ...stripSecret(data), tracking_url }, { status: 201 });
     }

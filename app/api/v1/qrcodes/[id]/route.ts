@@ -5,6 +5,7 @@ import { buildConfig } from "@/lib/slug-config";
 import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
+import { emitEvent } from "@/lib/webhooks";
 import { updateQrSchema } from "@/lib/validation";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -64,6 +65,7 @@ export const PATCH = withAuth(
       newValue: auditFields,
       request,
     });
+    emitEvent(auth.userId, "qr.updated", { id, short_slug: data.short_slug });
     return NextResponse.json(stripSecret(data));
   },
   { scope: "qrcodes:write" },
@@ -89,6 +91,7 @@ export const DELETE = withAuth(
 
     await delConfig(data.short_slug);
     logAudit({ userId: auth.userId, action: "qr.delete", resourceType: "qr_code", resourceId: id, request });
+    emitEvent(auth.userId, "qr.deleted", { id, short_slug: data.short_slug });
     return NextResponse.json({ success: true });
   },
   { scope: "qrcodes:write" },
