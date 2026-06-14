@@ -28,10 +28,11 @@ const groups: Group[] = [
         method: "POST",
         path: "/api/v1/qrcodes",
         auth: "scope qrcodes:write",
-        summary: "Create a dynamic QR code. Returns the row plus a tracking_url.",
+        summary: "Generate a dynamic QR code. Returns the QR's id (UUID), tracking_url, and qr_svg_url.",
         details: [
-          "Body: destination_url (http/https, required), name?, folder_id?, tags?[],",
-          "active_from?, active_until? (ISO 8601), password?, ab_destinations?[{url,weight}]",
+          "Body: destination_url (http/https, required), name? (recommended), folder_id?,",
+          "tags?[], active_from?, active_until? (ISO 8601), password?, ab_destinations?[{url,weight}]",
+          "Returns 201: { id, name, destination_url, short_slug, tracking_url, qr_svg_url, folder_id, tags, is_active, created_at }",
           "Destination is checked against Google Safe Browsing; unsafe URLs → 400.",
         ],
       },
@@ -227,6 +228,35 @@ export default function DocsPage() {
         <p className="mt-4 text-black/60">
           A REST API over HTTPS. All endpoints live under <code className="text-sm">/api/v1</code> and return JSON.
         </p>
+
+        {/* Quickstart */}
+        <section className="mt-12">
+          <h2 className="text-2xl font-semibold">Quickstart — generate a QR for a campaign</h2>
+          <p className="mt-3 text-sm text-black/70">
+            Create a dynamic QR with a destination URL and a name. The response returns the QR&apos;s{" "}
+            <strong><code>id</code> (a UUID)</strong> — store it against your ad campaign. Change the destination
+            later with <code>PATCH /api/v1/qrcodes/&#123;id&#125;</code> and the printed code keeps working.
+          </p>
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-black/90 p-4 text-xs text-white">
+{`curl -X POST https://your-domain.com/api/v1/qrcodes \\
+  -H "X-API-Key: qr_sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{"destination_url":"https://example.com/landing","name":"Spring Campaign"}'`}
+          </pre>
+          <p className="mt-3 text-sm text-black/70">Response <code>201 Created</code>:</p>
+          <pre className="mt-2 overflow-x-auto rounded-lg bg-black/90 p-4 text-xs text-white">
+{`{
+  "id": "8f3c0b2e-4d1a-4c9b-9f2e-1a2b3c4d5e6f",   // QR UUID — store against your campaign
+  "name": "Spring Campaign",
+  "destination_url": "https://example.com/landing",
+  "short_slug": "a1B2c3",
+  "tracking_url": "https://your-domain.com/r/a1B2c3",   // what the QR encodes
+  "qr_svg_url": "https://your-domain.com/api/v1/qrcodes/8f3c0b2e-.../qr.svg",
+  "is_active": true,
+  "created_at": "2026-06-14T21:00:00.000Z"
+}`}
+          </pre>
+        </section>
 
         {/* Authentication */}
         <section className="mt-12">

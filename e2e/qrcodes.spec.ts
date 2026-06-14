@@ -24,6 +24,20 @@ test("create a QR code, list it, and redirect resolves", async ({ page, request 
   expect(res.headers()["location"]).toBe(destination);
 });
 
+test("generate QR via the API returns the UUID, tracking + svg urls", async ({ page }) => {
+  // page.request shares the logged-in browser context's session cookie.
+  const res = await page.request.post("/api/v1/qrcodes", {
+    data: { destination_url: `https://example.com/campaign-${Date.now()}`, name: "Campaign API test" },
+  });
+  expect(res.status()).toBe(201);
+
+  const body = await res.json();
+  expect(body.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  expect(body.name).toBe("Campaign API test");
+  expect(body.tracking_url).toContain(`/r/${body.short_slug}`);
+  expect(body.qr_svg_url).toContain(`/api/v1/qrcodes/${body.id}/qr.svg`);
+});
+
 test("edit a QR destination and the redirect updates", async ({ page, request }) => {
   const name = `e2e-edit-${Date.now()}`;
   const original = `https://example.com/orig-${Date.now()}`;
