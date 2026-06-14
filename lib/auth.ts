@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { hashKey } from "@/lib/apikey";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { corsHeaders, applyHeaders } from "@/lib/cors";
+import { log, captureException } from "@/lib/log";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -176,7 +177,34 @@ export function withAuth<C>(
       );
     }
 
-    const res = await handler(request, auth, context);
-    return applyHeaders(res, { ...cors, ...rlHeaders });
+    const requestId = crypto.randomUUID();
+    const startedAt = Date.now();
+    try {
+      const res = await handler(request, auth, context);
+      log("info", "api_request", {
+        requestId,
+        method: request.method,
+        path: new URL(request.url).pathname,
+        userId: auth.userId,
+        authType: auth.authType,
+        status: res.status,
+        ms: Date.now() - startedAt,
+      });
+      return applyHeaders(res, { ...cors, ...rlHeaders, "X-Request-Id": requestId });
+    } catch (err) {
+      log("error", "api_error", {
+        requestId,
+        method: request.method,
+        path: new URL(request.url).pathname,
+        userId: auth.userId,
+        ms: Date.now() - startedAt,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      await captureException(err, { requestId, userId: auth.userId });
+      return applyHeaders(
+        NextResponse.json({ error: "Internal server error", requestId }, { status: 500 }),
+        { ...cors, ...rlHeaders, "X-Request-Id": requestId },
+      );
+    }
   };
 }
