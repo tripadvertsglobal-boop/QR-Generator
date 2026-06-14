@@ -4,6 +4,10 @@ import { getConfig, setConfig } from "@/lib/kv";
 import { scheduleState, pickDestination, type SlugConfig } from "@/lib/slug-config";
 import { unlockCookieName, verifyUnlockToken } from "@/lib/link-token";
 import { crossedMilestone, dispatchEvent } from "@/lib/webhooks";
+import { statusPage } from "@/lib/status-page";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const IP_RATE_LIMIT = 5000; // requests/min per IP
 
 export const runtime = "edge";
 
@@ -22,6 +26,14 @@ function anonClient() {
 // gate -> A/B pick -> fire-and-forget scan -> 302. Latency stays on the KV path.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  // Edge IP throttle to blunt abusive scan floods (skips if KV unconfigured).
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  const rl = await checkRateLimit(`ip:${ip}`, IP_RATE_LIMIT);
+  if (!rl.ok) return new NextResponse("Too many requests", { status: 429 });
 
   let config = await getConfig(slug);
 
@@ -50,15 +62,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
   }
 
-  if (!config) return new NextResponse("Not found", { status: 404 });
+  if (!config) {
+    return statusPage(404, "Link not found", "This QR code doesn’t exist or has been removed.");
+  }
 
   // Scheduling + active state.
   switch (scheduleState(config)) {
     case "paused":
     case "expired":
-      return new NextResponse("This link is no longer active", { status: 410 });
+      return statusPage(410, "Link expired", "This QR code is no longer active.");
     case "not_started":
-      return new NextResponse("This link is not active yet", { status: 404 });
+      return statusPage(404, "Not active yet", "This QR code isn’t active yet. Check back later.");
   }
 
   // Password gate — require a valid unlock cookie, else show the interstitial.

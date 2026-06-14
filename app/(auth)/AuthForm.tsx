@@ -90,6 +90,10 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <Link href="/signup" className="underline">
               Sign up
             </Link>
+            {" · "}
+            <Link href="/forgot-password" className="underline">
+              Forgot password?
+            </Link>
           </>
         ) : (
           <>

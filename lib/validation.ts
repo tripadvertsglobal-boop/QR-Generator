@@ -97,5 +97,12 @@ export const createWebhookSchema = z.object({
   events: z.array(webhookEvent).min(1),
 });
 
+export const updateAccountSchema = z
+  .object({
+    display_name: z.string().trim().min(1).max(120).nullish(),
+    timezone: z.string().trim().min(1).max(64).optional(),
+  })
+  .refine((d) => Object.keys(d).length > 0, "No fields to update");
+
 export type CreateQrInput = z.infer<typeof createQrSchema>;
 export type UpdateQrInput = z.infer<typeof updateQrSchema>;
