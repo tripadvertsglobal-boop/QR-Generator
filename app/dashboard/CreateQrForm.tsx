@@ -90,12 +90,12 @@ export default function CreateQrForm({ folders }: { folders: Folder[] }) {
           <span className="text-xs text-black/60 dark:text-white/60">Tags (comma-separated)</span>
           <input type="text" placeholder="print, q2-campaign" value={tagsText} onChange={(e) => setTagsText(e.target.value)} className={inputCls} />
         </label>
-        <button type="submit" disabled={loading} className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50">
+        <button type="submit" disabled={loading} className="rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
           {loading ? "…" : "Create"}
         </button>
       </div>
 
-      <button type="button" onClick={() => setAdvanced((v) => !v)} className="self-start text-xs text-blue-600 hover:underline">
+      <button type="button" onClick={() => setAdvanced((v) => !v)} className="self-start text-xs text-brand hover:underline">
         {advanced ? "Hide advanced" : "Advanced: scheduling, password, A/B"}
       </button>
 

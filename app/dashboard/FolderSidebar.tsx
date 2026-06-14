@@ -69,7 +69,7 @@ export default function FolderSidebar({
         </span>
         <button
           onClick={() => setAdding((v) => !v)}
-          className="text-xs text-blue-600 hover:underline"
+          className="text-xs text-brand hover:underline"
         >
           {adding ? "Cancel" : "+ New"}
         </button>
@@ -93,7 +93,7 @@ export default function FolderSidebar({
               className="flex-1 rounded-md border border-black/15 bg-transparent px-2 py-1 text-sm outline-none dark:border-white/20"
             />
           </div>
-          <button className="rounded-md bg-foreground px-2 py-1 text-xs text-background">Add folder</button>
+          <button className="rounded-md bg-brand hover:bg-brand-hover px-2 py-1 text-xs text-brand-foreground">Add folder</button>
           {error && <p className="text-xs text-red-500">{error}</p>}
         </form>
       )}

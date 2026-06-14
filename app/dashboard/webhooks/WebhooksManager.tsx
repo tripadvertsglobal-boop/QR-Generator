@@ -73,7 +73,7 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
             </label>
           ))}
         </div>
-        <button type="submit" disabled={busy} className="self-start rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50">
+        <button type="submit" disabled={busy} className="self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
           {busy ? "…" : "Add webhook"}
         </button>
         {error && <p className="text-sm text-red-500">{error}</p>}

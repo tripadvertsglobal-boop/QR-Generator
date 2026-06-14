@@ -99,7 +99,7 @@ export default function QrRow({
           href={`${REDIRECT_DOMAIN}/r/${code.short_slug}`}
           target="_blank"
           rel="noreferrer"
-          className="text-sm text-blue-600 underline"
+          className="text-sm text-brand underline"
         >
           {REDIRECT_DOMAIN}/r/{code.short_slug}
         </a>
@@ -137,7 +137,7 @@ export default function QrRow({
               <button
                 type="submit"
                 disabled={busy}
-                className="rounded-md bg-foreground px-3 py-1.5 text-sm text-background disabled:opacity-50"
+                className="rounded-md bg-brand hover:bg-brand-hover px-3 py-1.5 text-sm text-brand-foreground disabled:opacity-50"
               >
                 Save
               </button>

@@ -11,7 +11,7 @@ export default async function AccountPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">
       <div>
-        <Link href="/dashboard" className="text-sm text-blue-600 underline">
+        <Link href="/dashboard" className="text-sm text-brand underline">
           ← Back to dashboard
         </Link>
         <h1 className="mt-4 text-2xl font-semibold">Account</h1>

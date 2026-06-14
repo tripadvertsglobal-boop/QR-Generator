@@ -48,7 +48,7 @@ export default function AbBuilder({
       <button
         type="button"
         onClick={() => onChange([...arms, { url: "", weight: 50 }])}
-        className="self-start text-xs text-blue-600 hover:underline"
+        className="self-start text-xs text-brand hover:underline"
       >
         + Add variant
       </button>

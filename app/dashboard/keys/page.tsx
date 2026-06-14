@@ -13,7 +13,7 @@ export default async function KeysPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <Link href="/dashboard" className="text-sm text-blue-600 underline">
+      <Link href="/dashboard" className="text-sm text-brand underline">
         ← Back to dashboard
       </Link>
       <header className="mt-4 mb-8">
