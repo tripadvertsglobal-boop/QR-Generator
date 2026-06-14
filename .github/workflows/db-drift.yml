@@ -1,0 +1,33 @@
+name: DB drift
+
+# Applies every committed migration to a fresh local Postgres and fails if the
+# result drifts from the migrations (i.e. migrations don't fully reproduce the
+# schema, or a change was made without a migration). Uses Docker, which is
+# preinstalled on GitHub-hosted runners.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local Postgres (applies all migrations)
+        run: supabase db start
+      - name: Fail on schema drift
+        run: |
+          set -o pipefail
+          supabase db diff --schema public 2>&1 | tee diff.out
+          if grep -qi "No schema changes found" diff.out; then
+            echo "No drift."
+          elif [ ! -s diff.out ]; then
+            echo "No drift (empty diff)."
+          else
+            echo "Schema drift detected — migrations do not reproduce the schema."
+            exit 1
+          fi
