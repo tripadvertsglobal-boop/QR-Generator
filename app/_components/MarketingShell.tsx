@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import { siteConfig } from "@/site.config";
+import { createUserClient } from "@/lib/supabase/server";
+import AuthProvider from "./AuthProvider";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 
@@ -12,16 +14,23 @@ const brandVars = {
   fontFamily: siteConfig.theme.fontFamily,
 } as CSSProperties;
 
-export default function MarketingShell({
+export default async function MarketingShell({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createUserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
-    <div style={brandVars} className="flex min-h-screen flex-col bg-background text-foreground">
-      <SiteHeader />
-      <main className="flex-1">{children}</main>
-      <SiteFooter />
-    </div>
+    <AuthProvider initialUser={user}>
+      <div style={brandVars} className="flex min-h-screen flex-col bg-background text-foreground">
+        <SiteHeader />
+        <main className="flex-1">{children}</main>
+        <SiteFooter />
+      </div>
+    </AuthProvider>
   );
 }
