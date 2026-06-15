@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { setConfig } from "@/lib/kv";
 import { buildConfig } from "@/lib/slug-config";
-import { toDbFields, stripSecret } from "@/lib/qr-write";
+import { toDbFields } from "@/lib/qr-write";
 import { generateSlug } from "@/lib/slug";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
@@ -60,8 +60,27 @@ export const POST = withAuth(
         request,
       });
       emitEvent(auth.userId, "qr.created", { id: data.id, short_slug, destination_url: data.destination_url });
+
+      // Curated, stable resource for integrations (e.g. mapping a QR to an ad
+      // campaign): `id` is the QR's UUID — store it against your campaign;
+      // `tracking_url` is what the QR encodes; `qr_svg_url` fetches the image.
       const tracking_url = `${process.env.NEXT_PUBLIC_REDIRECT_DOMAIN}/r/${short_slug}`;
-      return NextResponse.json({ ...stripSecret(data), tracking_url }, { status: 201 });
+      const qr_svg_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/qrcodes/${data.id}/qr.svg`;
+      return NextResponse.json(
+        {
+          id: data.id,
+          name: data.name,
+          destination_url: data.destination_url,
+          short_slug: data.short_slug,
+          tracking_url,
+          qr_svg_url,
+          folder_id: data.folder_id,
+          tags: data.tags,
+          is_active: data.is_active,
+          created_at: data.created_at,
+        },
+        { status: 201 },
+      );
     }
 
     return NextResponse.json(
