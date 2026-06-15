@@ -15,6 +15,8 @@ type Endpoint = {
   auth: string; // who can call it
   summary: string;
   details?: string[]; // params / body fields / notes
+  request?: string; // example request body (JSON)
+  response?: string; // example response body
 };
 
 type Group = { title: string; intro?: string; endpoints: Endpoint[] };
@@ -32,9 +34,26 @@ const groups: Group[] = [
         details: [
           "Body: destination_url (http/https, required), name? (recommended), folder_id?,",
           "tags?[], active_from?, active_until? (ISO 8601), password?, ab_destinations?[{url,weight}]",
-          "Returns 201: { id, name, destination_url, short_slug, tracking_url, qr_svg_url, folder_id, tags, is_active, created_at }",
           "Destination is checked against Google Safe Browsing; unsafe URLs → 400.",
         ],
+        request: `{
+  "destination_url": "https://example.com/landing",
+  "name": "Spring Campaign",
+  "tags": ["q2", "print"]
+}`,
+        response: `201 Created
+{
+  "id": "8f3c0b2e-4d1a-4c9b-9f2e-1a2b3c4d5e6f",
+  "name": "Spring Campaign",
+  "destination_url": "https://example.com/landing",
+  "short_slug": "a1B2c3",
+  "tracking_url": "https://your-domain.com/r/a1B2c3",
+  "qr_svg_url": "https://your-domain.com/api/v1/qrcodes/8f3c0b2e-.../qr.svg",
+  "folder_id": null,
+  "tags": ["q2", "print"],
+  "is_active": true,
+  "created_at": "2026-06-14T21:00:00.000Z"
+}`,
       },
       {
         method: "GET",
@@ -42,6 +61,19 @@ const groups: Group[] = [
         auth: "scope qrcodes:read",
         summary: "List your QR codes (newest first). Password hashes are never returned.",
         details: ["Query: ?folder=<uuid|none>, ?tag=<tag>"],
+        response: `200 OK
+[
+  {
+    "id": "8f3c0b2e-4d1a-4c9b-9f2e-1a2b3c4d5e6f",
+    "short_slug": "a1B2c3",
+    "destination_url": "https://example.com/landing",
+    "name": "Spring Campaign",
+    "is_active": true,
+    "scan_count": 42,
+    "tags": ["q2"],
+    "created_at": "2026-06-14T21:00:00.000Z"
+  }
+]`,
       },
       {
         method: "PATCH",
@@ -49,6 +81,15 @@ const groups: Group[] = [
         auth: "scope qrcodes:write",
         summary: "Update destination, is_active, name, folder, tags, or advanced-link fields.",
         details: ["Editing the destination updates the redirect instantly (KV is kept in sync)."],
+        request: `{ "destination_url": "https://example.com/new-landing" }`,
+        response: `200 OK
+{
+  "id": "8f3c0b2e-4d1a-4c9b-9f2e-1a2b3c4d5e6f",
+  "short_slug": "a1B2c3",
+  "destination_url": "https://example.com/new-landing",
+  "is_active": true,
+  ...
+}`,
       },
       {
         method: "DELETE",
@@ -69,6 +110,14 @@ const groups: Group[] = [
         auth: "session only",
         summary: "Per-day scan timeseries.",
         details: ["Query: ?days=1..365 (default 30). Returns { days, series }."],
+        response: `200 OK
+{
+  "days": 30,
+  "series": [
+    { "day": "2026-06-13", "scans": 8 },
+    { "day": "2026-06-14", "scans": 34 }
+  ]
+}`,
       },
       {
         method: "POST",
@@ -76,6 +125,19 @@ const groups: Group[] = [
         auth: "scope qrcodes:write",
         summary: "Create up to 100 codes in one request.",
         details: ["Body: { codes: [{ destination_url, name?, folder_id?, tags? }] } (1–100)"],
+        request: `{
+  "codes": [
+    { "destination_url": "https://example.com/a", "name": "Flyer A" },
+    { "destination_url": "https://example.com/b", "name": "Flyer B" }
+  ]
+}`,
+        response: `201 Created
+{
+  "created": 2,
+  "codes": [
+    { "id": "…", "short_slug": "a1B2c3", "tracking_url": "https://your-domain.com/r/a1B2c3", ... }
+  ]
+}`,
       },
       {
         method: "DELETE",
@@ -103,6 +165,9 @@ const groups: Group[] = [
         auth: "session only",
         summary: "Create a folder.",
         details: ["Body: { name, color? (#rrggbb) }"],
+        request: `{ "name": "Q2 Campaigns", "color": "#4f46e5" }`,
+        response: `201 Created
+{ "id": "…", "name": "Q2 Campaigns", "color": "#4f46e5" }`,
       },
       {
         method: "PATCH",
@@ -126,6 +191,16 @@ const groups: Group[] = [
           "Body: { name, scopes?: [qrcodes:read|qrcodes:write], rate_limit?: 1..10000, expires_at? }",
           "409 if you already have 4 active keys.",
         ],
+        request: `{ "name": "Production server", "scopes": ["qrcodes:read", "qrcodes:write"] }`,
+        response: `201 Created
+{
+  "id": "…",
+  "name": "Production server",
+  "key_prefix": "qr_sk_a1b2",
+  "scopes": ["qrcodes:read", "qrcodes:write"],
+  "rate_limit": 100,
+  "key": "qr_sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"   // shown once — store it now
+}`,
       },
       { method: "GET", path: "/api/v1/keys", auth: "session only", summary: "List your keys (never the secret)." },
       {
@@ -146,6 +221,18 @@ const groups: Group[] = [
         auth: "session only",
         summary: "Register a webhook. URL must be a public endpoint (SSRF-guarded).",
         details: ["Body: { url, events: [qr.created|qr.updated|qr.deleted|scan.threshold] }"],
+        request: `{
+  "url": "https://your-server.com/hooks/qr",
+  "events": ["qr.created", "scan.threshold"]
+}`,
+        response: `201 Created
+{
+  "id": "…",
+  "url": "https://your-server.com/hooks/qr",
+  "events": ["qr.created", "scan.threshold"],
+  "secret": "whsec_…",   // verify the X-Webhook-Signature (sha256 HMAC) with this
+  "is_active": true
+}`,
       },
       { method: "GET", path: "/api/v1/webhooks", auth: "session only", summary: "List your webhooks." },
       { method: "DELETE", path: "/api/v1/webhooks/{id}", auth: "session only", summary: "Delete a webhook." },
@@ -215,6 +302,18 @@ function EndpointRow({ ep }: { ep: Endpoint }) {
             <li key={d} className="font-mono">{d}</li>
           ))}
         </ul>
+      )}
+      {ep.request && (
+        <div className="mt-3">
+          <p className="text-xs font-medium text-black/50">Request body</p>
+          <pre className="mt-1 overflow-x-auto rounded-md bg-black/90 p-3 text-xs text-white">{ep.request}</pre>
+        </div>
+      )}
+      {ep.response && (
+        <div className="mt-3">
+          <p className="text-xs font-medium text-black/50">Response</p>
+          <pre className="mt-1 overflow-x-auto rounded-md bg-black/90 p-3 text-xs text-white">{ep.response}</pre>
+        </div>
       )}
     </div>
   );
