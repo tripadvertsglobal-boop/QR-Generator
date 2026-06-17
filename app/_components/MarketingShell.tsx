@@ -1,12 +1,10 @@
 import type { CSSProperties } from "react";
 import { siteConfig } from "@/site.config";
-import { createUserClient } from "@/lib/supabase/server";
-import AuthProvider from "./AuthProvider";
-import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 
 // Brand colors and font from site.config are exposed as CSS variables here so
-// every marketing page (and its buttons/accents) updates from one place.
+// every marketing page (and its buttons/accents) updates from one place. The
+// header and auth state are provided globally by the root layout.
 const brandVars = {
   "--brand": siteConfig.theme.brand,
   "--brand-fg": siteConfig.theme.brandForeground,
@@ -14,23 +12,15 @@ const brandVars = {
   fontFamily: siteConfig.theme.fontFamily,
 } as CSSProperties;
 
-export default async function MarketingShell({
+export default function MarketingShell({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createUserClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   return (
-    <AuthProvider initialUser={user}>
-      <div style={brandVars} className="flex min-h-screen flex-col bg-background text-foreground">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-      </div>
-    </AuthProvider>
+    <div style={brandVars} className="flex flex-1 flex-col bg-background text-foreground">
+      <main className="flex-1">{children}</main>
+      <SiteFooter />
+    </div>
   );
 }
