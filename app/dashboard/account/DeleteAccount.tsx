@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/app/_components/Spinner";
 import { createClient } from "@/lib/supabase/client";
 
 export default function DeleteAccount() {
@@ -41,9 +42,10 @@ export default function DeleteAccount() {
       <button
         onClick={onDelete}
         disabled={busy || confirm !== "DELETE"}
-        className="self-start rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+        className="inline-flex items-center justify-center gap-2 self-start rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
       >
-        {busy ? "…" : "Delete my account"}
+        {busy && <Spinner />}
+        {busy ? "Deleting…" : "Delete my account"}
       </button>
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>

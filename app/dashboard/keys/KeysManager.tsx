@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/app/_components/Spinner";
 
 const SCOPES = ["qrcodes:read", "qrcodes:write"] as const;
 
@@ -28,6 +29,7 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
   const [scopes, setScopes] = useState<string[]>([...SCOPES]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
 
   const atLimit = initial.length >= MAX_KEYS;
@@ -64,8 +66,10 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
 
   async function revoke(id: string) {
     if (!confirm("Revoke this key? Requests using it will immediately stop working.")) return;
+    setRevokingId(id);
     await fetch(`/api/v1/keys/${id}`, { method: "DELETE" });
     router.refresh();
+    setRevokingId(null);
   }
 
   return (
@@ -111,9 +115,9 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
         <button
           type="submit"
           disabled={busy || atLimit}
-          className="self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
+          className="inline-flex items-center justify-center self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
         >
-          {busy ? "…" : "Create key"}
+          {busy ? <Spinner /> : "Create key"}
         </button>
         {atLimit && (
           <p className="text-sm text-black/60 dark:text-white/60">
@@ -141,7 +145,12 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
               <span>Last used: {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "never"}</span>
               {k.expires_at && <span>Expires: {new Date(k.expires_at).toLocaleDateString()}</span>}
             </div>
-            <button onClick={() => revoke(k.id)} className="self-start rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-500">
+            <button
+              onClick={() => revoke(k.id)}
+              disabled={revokingId === k.id}
+              className="inline-flex items-center justify-center gap-1.5 self-start rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-500 disabled:opacity-50"
+            >
+              {revokingId === k.id && <Spinner className="h-3.5 w-3.5" />}
               Revoke
             </button>
           </li>

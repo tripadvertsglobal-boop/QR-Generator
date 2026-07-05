@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Skeleton from "@/app/_components/Skeleton";
 import {
   ResponsiveContainer,
   LineChart,
@@ -49,7 +50,7 @@ export default function ScanChart({ qrId }: { qrId: string }) {
   }, [qrId]);
 
   if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!data) return <p className="text-sm text-black/60 dark:text-white/60">Loading chart…</p>;
+  if (!data) return <Skeleton className="h-64 w-full rounded-lg" />;
 
   return (
     <div className="h-64 w-full">

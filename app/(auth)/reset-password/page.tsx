@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/app/_components/Spinner";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
@@ -40,6 +41,11 @@ export default function ResetPasswordPage() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-6">
       <h1 className="text-2xl font-semibold">Choose a new password</h1>
+      {!ready && !error && (
+        <p className="flex items-center gap-2 text-sm text-black/60 dark:text-white/60">
+          <Spinner /> Verifying reset link…
+        </p>
+      )}
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <input
           type="password"
@@ -54,9 +60,10 @@ export default function ResetPasswordPage() {
         <button
           type="submit"
           disabled={loading || !ready}
-          className="rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
         >
-          {loading ? "…" : "Update password"}
+          {loading && <Spinner />}
+          {loading ? "Updating…" : "Update password"}
         </button>
         {error && <p className="text-sm text-red-500">{error}</p>}
       </form>
