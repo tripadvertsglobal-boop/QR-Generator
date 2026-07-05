@@ -5,9 +5,16 @@ export default function SiteFooter() {
   const { company, contact, social, footer } = siteConfig;
   const socialLinks = Object.entries(social).filter(([, url]) => url);
 
+  const legalLinks = [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+    { label: "Cookie Policy", href: "/cookies" },
+    { label: "Acceptable Use", href: "/acceptable-use" },
+  ];
+
   return (
     <footer className="mt-auto border-t border-black/10">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 sm:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="text-base font-semibold">{company.name}</p>
           <p className="mt-2 max-w-xs text-sm text-black/60">{footer.note}</p>
@@ -48,6 +55,19 @@ export default function SiteFooter() {
                 ))}
               </li>
             )}
+          </ul>
+        </div>
+
+        <div className="text-sm">
+          <p className="font-medium">Legal</p>
+          <ul className="mt-2 space-y-1 text-black/60">
+            {legalLinks.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="hover:text-black">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

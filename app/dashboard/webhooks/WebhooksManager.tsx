@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/app/_components/Spinner";
 
 const EVENTS = ["qr.created", "qr.updated", "qr.deleted", "scan.threshold"] as const;
 
@@ -24,6 +25,7 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
   const [events, setEvents] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function toggle(ev: string, on: boolean) {
     setEvents((prev) => (on ? [...prev, ev] : prev.filter((e) => e !== ev)));
@@ -54,8 +56,10 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
 
   async function remove(id: string) {
     if (!confirm("Delete this webhook?")) return;
+    setDeletingId(id);
     await fetch(`/api/v1/webhooks/${id}`, { method: "DELETE" });
     router.refresh();
+    setDeletingId(null);
   }
 
   return (
@@ -73,8 +77,8 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
             </label>
           ))}
         </div>
-        <button type="submit" disabled={busy} className="self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
-          {busy ? "…" : "Add webhook"}
+        <button type="submit" disabled={busy} className="inline-flex items-center justify-center self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
+          {busy ? <Spinner /> : "Add webhook"}
         </button>
         {error && <p className="text-sm text-red-500">{error}</p>}
       </form>
@@ -98,7 +102,12 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
               <span>Secret:</span>
               <code className="rounded bg-black/5 px-1.5 py-0.5 dark:bg-white/10">{wh.secret}</code>
             </div>
-            <button onClick={() => remove(wh.id)} className="self-start rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-500">
+            <button
+              onClick={() => remove(wh.id)}
+              disabled={deletingId === wh.id}
+              className="inline-flex items-center justify-center gap-1.5 self-start rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-500 disabled:opacity-50"
+            >
+              {deletingId === wh.id && <Spinner className="h-3.5 w-3.5" />}
               Delete
             </button>
           </li>

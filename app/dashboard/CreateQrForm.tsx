@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/app/_components/Spinner";
 import type { Folder, AbDestination } from "./types";
 import AbBuilder from "./AbBuilder";
 
@@ -90,8 +91,8 @@ export default function CreateQrForm({ folders }: { folders: Folder[] }) {
           <span className="text-xs text-black/60 dark:text-white/60">Tags (comma-separated)</span>
           <input type="text" placeholder="print, q2-campaign" value={tagsText} onChange={(e) => setTagsText(e.target.value)} className={inputCls} />
         </label>
-        <button type="submit" disabled={loading} className="rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
-          {loading ? "…" : "Create"}
+        <button type="submit" disabled={loading} className="inline-flex items-center justify-center rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
+          {loading ? <Spinner /> : "Create"}
         </button>
       </div>
 

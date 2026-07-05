@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Spinner from "@/app/_components/Spinner";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
@@ -42,9 +43,10 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
           >
-            {loading ? "…" : "Send reset link"}
+            {loading && <Spinner />}
+            {loading ? "Sending…" : "Send reset link"}
           </button>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </form>

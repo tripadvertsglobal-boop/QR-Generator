@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
 import CreateQrForm from "./CreateQrForm";
-import SignOutButton from "./SignOutButton";
 import FolderSidebar from "./FolderSidebar";
 import TagFilterBar from "./TagFilterBar";
 import QrList from "./QrList";
@@ -70,10 +69,6 @@ export default async function DashboardPage({
           <Link href="/dashboard/audit" className="text-brand underline">
             Audit log
           </Link>
-          <Link href="/dashboard/account" className="text-brand underline">
-            Account
-          </Link>
-          <SignOutButton />
         </div>
       </header>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Spinner from "@/app/_components/Spinner";
 
 export default function PasswordForm({ slug }: { slug: string }) {
   const [password, setPassword] = useState("");
@@ -40,9 +41,9 @@ export default function PasswordForm({ slug }: { slug: string }) {
       <button
         type="submit"
         disabled={loading}
-        className="rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
+        className="inline-flex items-center justify-center rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
       >
-        {loading ? "…" : "Unlock"}
+        {loading ? <Spinner /> : "Unlock"}
       </button>
       {error && <p className="text-sm text-red-500">{error}</p>}
     </form>
