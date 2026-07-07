@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN;
 
@@ -15,7 +16,10 @@ const COLUMNS = [
 ] as const;
 
 function csvCell(value: unknown): string {
-  const s = value == null ? "" : Array.isArray(value) ? value.join(" ") : String(value);
+  let s = value == null ? "" : Array.isArray(value) ? value.join(" ") : String(value);
+  // Neutralize spreadsheet formula injection: a leading =,+,-,@,tab,CR makes the
+  // cell a formula when opened in Excel/Sheets. Prefix with an apostrophe.
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
@@ -28,7 +32,7 @@ export const GET = withAuth(
       .eq("user_id", auth.userId)
       .order("created_at", { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
 
     const lines = [COLUMNS.join(",")];
     for (const row of data ?? []) {

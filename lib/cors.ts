@@ -16,12 +16,16 @@ export function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
-  if (ALLOW_LIST.length === 0) {
+  if (ALLOW_LIST.length > 0) {
+    if (origin && ALLOW_LIST.includes(origin)) {
+      headers["Access-Control-Allow-Origin"] = origin;
+    }
+  } else if (process.env.NODE_ENV !== "production") {
+    // Dev/test convenience only: reflect any origin so local tooling works.
     headers["Access-Control-Allow-Origin"] = origin ?? "*";
-  } else if (origin && ALLOW_LIST.includes(origin)) {
-    headers["Access-Control-Allow-Origin"] = origin;
   }
-  // Disallowed origins get no ACAO header → browser blocks the cross-origin read.
+  // In production with no allow-list, and for disallowed origins, no ACAO header
+  // is sent → the browser blocks the cross-origin read (fail closed).
   return headers;
 }
 

@@ -1,9 +1,16 @@
 import { Redis } from "@upstash/redis";
+import { log } from "@/lib/log";
 
 const url = process.env.KV_REST_API_URL;
 const token = process.env.KV_REST_API_TOKEN;
 const redis = url && token ? new Redis({ url, token }) : null;
 const apiKey = process.env.SAFE_BROWSING_API_KEY;
+
+// Warn once at startup if screening is disabled in production, so a missing key
+// is observable rather than silently allowing every URL.
+if (!apiKey && process.env.NODE_ENV === "production") {
+  log("warn", "safe_browsing_disabled", { reason: "SAFE_BROWSING_API_KEY not set" });
+}
 
 const CACHE_TTL = 60 * 30; // 30 min
 
@@ -44,8 +51,10 @@ export async function isUrlSafe(targetUrl: string): Promise<boolean> {
       const body = await res.json();
       safe = !body.matches || body.matches.length === 0;
     }
-  } catch {
-    // On API failure, fail open (treat as safe) — never block on an outage.
+  } catch (err) {
+    // On API failure, fail open (treat as safe) — never block on an outage, but
+    // log it so the gap is visible.
+    log("warn", "safe_browsing_error", { error: err instanceof Error ? err.message : String(err) });
     safe = true;
   }
 

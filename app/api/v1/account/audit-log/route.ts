@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 
 // GET /api/v1/account/audit-log — the caller's recent mutations. JWT only.
 export const GET = withAuth(
@@ -16,7 +17,7 @@ export const GET = withAuth(
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
     return NextResponse.json(data);
   },
   { jwtOnly: true },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { generateApiKey, MAX_API_KEYS } from "@/lib/apikey";
 import { logAudit } from "@/lib/audit";
 import { createKeySchema } from "@/lib/validation";
@@ -31,8 +32,7 @@ export const POST = withAuth(
       .eq("user_id", auth.userId)
       .eq("is_active", true);
 
-    if (countError)
-      return NextResponse.json({ error: countError.message }, { status: 400 });
+    if (countError) return dbError(countError);
 
     if ((count ?? 0) >= MAX_API_KEYS) {
       return NextResponse.json(
@@ -57,11 +57,14 @@ export const POST = withAuth(
       .single();
 
     if (error) {
-      const limitHit = error.message.includes("API key limit reached");
-      return NextResponse.json(
-        { error: error.message },
-        { status: limitHit ? 409 : 400 },
-      );
+      // The DB trigger raises this exact message; surface it as a friendly 409.
+      if (error.message.includes("API key limit reached")) {
+        return NextResponse.json(
+          { error: `API key limit reached (max ${MAX_API_KEYS} active keys per account). Revoke one first.` },
+          { status: 409 },
+        );
+      }
+      return dbError(error);
     }
 
     logAudit({
@@ -88,7 +91,7 @@ export const GET = withAuth(
       .eq("user_id", auth.userId)
       .order("created_at", { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
     return NextResponse.json(data);
   },
   { jwtOnly: true },

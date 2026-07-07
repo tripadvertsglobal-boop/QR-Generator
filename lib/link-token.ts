@@ -1,7 +1,13 @@
 // HMAC-signed unlock token for password-gated links. Created server-side (node)
 // after a bcrypt check, verified at the edge via Web Crypto (no bcrypt needed
 // on the redirect path). Token format: `<expiryMs>.<hmacHex>`.
-const SECRET = process.env.LINK_UNLOCK_SECRET || "dev-insecure-unlock-secret";
+// Fail closed: a missing secret in production would fall back to a public
+// constant, letting anyone forge unlock cookies and bypass the password gate.
+const CONFIGURED_SECRET = process.env.LINK_UNLOCK_SECRET;
+if (!CONFIGURED_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("LINK_UNLOCK_SECRET must be set in production");
+}
+const SECRET = CONFIGURED_SECRET || "dev-insecure-unlock-secret";
 const TTL_MS = 60 * 60 * 1000; // 1 hour
 
 export const unlockCookieName = (slug: string) => `ul_${slug}`;

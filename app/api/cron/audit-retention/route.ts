@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { dbError } from "@/lib/api-error";
 
 // GET /api/cron/audit-retention — purge audit_logs older than 90 days.
 // Invoked by Vercel Cron (see vercel.json). Protected by CRON_SECRET: Vercel
@@ -16,6 +17,6 @@ export async function GET(request: Request) {
     .delete({ count: "exact" })
     .lt("created_at", cutoff);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return dbError(error, 500);
   return NextResponse.json({ purged: count ?? 0, cutoff });
 }

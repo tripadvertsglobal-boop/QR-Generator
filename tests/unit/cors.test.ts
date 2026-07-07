@@ -14,6 +14,13 @@ describe("corsHeaders", () => {
     expect(corsHeaders(null)["Access-Control-Allow-Origin"]).toBe("*");
   });
 
+  it("omits ACAO in production when no allow-list is set (fail closed)", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.resetModules();
+    const { corsHeaders } = await import("@/lib/cors");
+    expect("Access-Control-Allow-Origin" in corsHeaders("https://anything.com")).toBe(false);
+  });
+
   it("reflects only allow-listed origins, omits ACAO otherwise", async () => {
     vi.stubEnv("ALLOWED_ORIGINS", "https://allowed.example.com,https://ok.com");
     vi.resetModules();

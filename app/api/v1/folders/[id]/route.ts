@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { logAudit } from "@/lib/audit";
 import { updateFolderSchema } from "@/lib/validation";
 
@@ -36,7 +37,7 @@ export const PATCH = withAuth(
     if (error) {
       if (error.code === "PGRST116") return NextResponse.json({ error: "Not found" }, { status: 404 });
       if (error.code === "23505") return NextResponse.json({ error: "A folder with that name already exists" }, { status: 409 });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return dbError(error);
     }
     logAudit({ userId: auth.userId, action: "folder.update", resourceType: "folder", resourceId: id, request });
     return NextResponse.json(data);
@@ -59,7 +60,7 @@ export const DELETE = withAuth(
 
     if (error) {
       if (error.code === "PGRST116") return NextResponse.json({ error: "Not found" }, { status: 404 });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return dbError(error);
     }
     logAudit({ userId: auth.userId, action: "folder.delete", resourceType: "folder", resourceId: id, request });
     return NextResponse.json({ success: true });

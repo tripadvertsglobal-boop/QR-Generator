@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth, purgeApiKeyCache } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { logAudit } from "@/lib/audit";
 
 // DELETE /api/v1/keys/[id] — revoke a key. JWT only. Purges the KV cache so the
@@ -18,7 +19,7 @@ export const DELETE = withAuth(
 
     if (error) {
       if (error.code === "PGRST116") return NextResponse.json({ error: "Not found" }, { status: 404 });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return dbError(error);
     }
 
     await purgeApiKeyCache(data.key_hash);

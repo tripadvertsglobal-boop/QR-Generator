@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { setConfig } from "@/lib/kv";
 import { buildConfig } from "@/lib/slug-config";
 import { toDbFields } from "@/lib/qr-write";
@@ -47,7 +48,7 @@ export const POST = withAuth(
 
       if (error) {
         if (error.code === "23505") continue; // slug collision — retry
-        return NextResponse.json({ error: error.message }, { status: 400 });
+        return dbError(error);
       }
 
       await setConfig(short_slug, buildConfig(data));
@@ -111,7 +112,7 @@ export const GET = withAuth(
     if (tag) query = query.contains("tags", [tag]);
 
     const { data, error } = await query;
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
     return NextResponse.json(data);
   },
   { scope: "qrcodes:read" },

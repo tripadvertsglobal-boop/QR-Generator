@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { setConfig, delConfig } from "@/lib/kv";
 import { buildConfig } from "@/lib/slug-config";
 import { toDbFields, stripSecret } from "@/lib/qr-write";
@@ -48,7 +49,7 @@ export const PATCH = withAuth(
 
     if (error) {
       if (error.code === "PGRST116") return NextResponse.json({ error: "Not found" }, { status: 404 });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return dbError(error);
     }
 
     // Keep KV in sync with the full config (paused codes are evicted).
@@ -86,7 +87,7 @@ export const DELETE = withAuth(
 
     if (error) {
       if (error.code === "PGRST116") return NextResponse.json({ error: "Not found" }, { status: 404 });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return dbError(error);
     }
 
     await delConfig(data.short_slug);

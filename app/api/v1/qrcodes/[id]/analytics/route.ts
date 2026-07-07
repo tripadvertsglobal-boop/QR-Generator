@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 
 // GET /api/v1/qrcodes/[id]/analytics?days=30 — per-day scan timeseries.
 // JWT only: the get_scan_timeseries RPC enforces ownership via auth.uid(),
@@ -23,11 +24,10 @@ export const GET = withAuth(
     });
 
     if (error) {
-      const forbidden = error.message?.includes("Forbidden");
-      return NextResponse.json(
-        { error: forbidden ? "Forbidden" : error.message },
-        { status: forbidden ? 403 : 400 },
-      );
+      if (error.message?.includes("Forbidden")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      return dbError(error);
     }
 
     return NextResponse.json({ days, series: data ?? [] });

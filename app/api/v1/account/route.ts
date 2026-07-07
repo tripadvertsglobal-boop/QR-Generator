@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { createServiceClient } from "@/lib/supabase/service";
 import { delConfig } from "@/lib/kv";
 import { logAudit } from "@/lib/audit";
@@ -37,7 +38,7 @@ export const PATCH = withAuth(
       .eq("id", auth.userId)
       .select("id, display_name, timezone")
       .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
     logAudit({ userId: auth.userId, action: "account.update", resourceType: "user_profile", resourceId: auth.userId, request });
     return NextResponse.json(data);
   },
@@ -57,7 +58,7 @@ export const DELETE = withAuth(
     await Promise.all((codes ?? []).map((c) => delConfig(c.short_slug)));
 
     const { error } = await svc.auth.admin.deleteUser(auth.userId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
 
     return NextResponse.json({ success: true });
   },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { logAudit } from "@/lib/audit";
 
 // DELETE /api/v1/webhooks/[id] — remove a webhook. JWT only.
@@ -17,7 +18,7 @@ export const DELETE = withAuth(
 
     if (error) {
       if (error.code === "PGRST116") return NextResponse.json({ error: "Not found" }, { status: 404 });
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return dbError(error);
     }
 
     logAudit({ userId: auth.userId, action: "webhook.delete", resourceType: "webhook", resourceId: id, request });

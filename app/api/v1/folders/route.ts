@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { logAudit } from "@/lib/audit";
 import { createFolderSchema } from "@/lib/validation";
 
@@ -31,7 +32,7 @@ export const POST = withAuth(
       if (error.code === "23505") {
         return NextResponse.json({ error: "A folder with that name already exists" }, { status: 409 });
       }
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return dbError(error);
     }
     logAudit({ userId: auth.userId, action: "folder.create", resourceType: "folder", resourceId: data.id, request });
     return NextResponse.json(data, { status: 201 });
@@ -48,7 +49,7 @@ export const GET = withAuth(
       .eq("user_id", auth.userId)
       .order("name", { ascending: true });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
     return NextResponse.json(data);
   },
   { scope: "folders:read" },

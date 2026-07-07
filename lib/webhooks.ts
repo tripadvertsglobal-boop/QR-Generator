@@ -64,6 +64,9 @@ export async function dispatchEvent(userId: string, event: WebhookEvent, data: u
             "X-Webhook-Signature": `sha256=${await sign(hook.secret, body)}`,
           },
           body,
+          // Never follow redirects: a public URL could 3xx to an internal host
+          // (SSRF). A 3xx surfaces here as !res.ok and is treated as a failure.
+          redirect: "manual",
           signal: AbortSignal.timeout(5000),
         });
         if (!res.ok) throw new Error(`status ${res.status}`);

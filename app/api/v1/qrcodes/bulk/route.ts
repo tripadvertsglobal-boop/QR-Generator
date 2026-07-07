@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { setConfig, delConfig } from "@/lib/kv";
 import { buildConfig } from "@/lib/slug-config";
 import { generateSlug } from "@/lib/slug";
@@ -39,7 +40,7 @@ export const POST = withAuth(
       const { data, error } = await auth.db.from("qr_codes").insert(rows).select();
       if (error) {
         if (error.code === "23505") continue;
-        return NextResponse.json({ error: error.message }, { status: 400 });
+        return dbError(error);
       }
 
       await Promise.all(data.map((row) => setConfig(row.short_slug, buildConfig(row))));
@@ -90,7 +91,7 @@ export const DELETE = withAuth(
       .in("id", parsed.data.ids)
       .select("short_slug");
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
 
     await Promise.all((data ?? []).map((row) => delConfig(row.short_slug)));
     logAudit({

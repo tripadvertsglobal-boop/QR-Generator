@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { withAuth } from "@/lib/auth";
+import { dbError } from "@/lib/api-error";
 import { logAudit } from "@/lib/audit";
-import { isPublicWebhookUrl } from "@/lib/ssrf";
+import { isPublicWebhookUrlResolved } from "@/lib/ssrf";
 import { createWebhookSchema } from "@/lib/validation";
 
 // POST /api/v1/webhooks — register a webhook. JWT only. Returns the signing
@@ -24,7 +25,7 @@ export const POST = withAuth(
       );
     }
 
-    if (!isPublicWebhookUrl(parsed.data.url)) {
+    if (!(await isPublicWebhookUrlResolved(parsed.data.url))) {
       return NextResponse.json(
         { error: "Webhook URL must be a public http(s) endpoint" },
         { status: 400 },
@@ -38,7 +39,7 @@ export const POST = withAuth(
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
 
     logAudit({ userId: auth.userId, action: "webhook.create", resourceType: "webhook", resourceId: data.id, request });
     return NextResponse.json(data, { status: 201 });
@@ -55,7 +56,7 @@ export const GET = withAuth(
       .eq("user_id", auth.userId)
       .order("created_at", { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return dbError(error);
     return NextResponse.json(data);
   },
   { jwtOnly: true },
