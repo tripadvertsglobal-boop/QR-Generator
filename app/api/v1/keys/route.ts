@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { generateApiKey, MAX_API_KEYS } from "@/lib/apikey";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditSnapshot } from "@/lib/audit";
 import { createKeySchema } from "@/lib/validation";
 
 // POST /api/v1/keys — mint a key. JWT only (API keys can't create keys). The raw
@@ -72,7 +72,7 @@ export const POST = withAuth(
       action: "key.create",
       resourceType: "api_key",
       resourceId: data.id,
-      newValue: { name: data.name, scopes: data.scopes },
+      newValue: auditSnapshot(data),
       request,
     });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditDiff, auditSnapshot } from "@/lib/audit";
 import { updateFolderSchema } from "@/lib/validation";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -26,6 +26,13 @@ export const PATCH = withAuth(
       );
     }
 
+    const { data: before } = await auth.db
+      .from("folders")
+      .select()
+      .eq("id", id)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+
     const { data, error } = await auth.db
       .from("folders")
       .update(parsed.data)
@@ -39,7 +46,16 @@ export const PATCH = withAuth(
       if (error.code === "23505") return NextResponse.json({ error: "A folder with that name already exists" }, { status: 409 });
       return dbError(error);
     }
-    logAudit({ userId: auth.userId, action: "folder.update", resourceType: "folder", resourceId: id, request });
+    const diff = auditDiff(before, data, Object.keys(parsed.data));
+    logAudit({
+      userId: auth.userId,
+      action: "folder.update",
+      resourceType: "folder",
+      resourceId: id,
+      oldValue: diff?.oldValue ?? null,
+      newValue: diff?.newValue ?? null,
+      request,
+    });
     return NextResponse.json(data);
   },
   { scope: "folders:write" },
@@ -50,19 +66,26 @@ export const DELETE = withAuth(
   async (request, auth, { params }: Ctx) => {
     const { id } = await params;
 
-    const { error } = await auth.db
+    const { data, error } = await auth.db
       .from("folders")
       .delete()
       .eq("id", id)
       .eq("user_id", auth.userId)
-      .select("id")
+      .select()
       .single();
 
     if (error) {
       if (error.code === "PGRST116") return NextResponse.json({ error: "Not found" }, { status: 404 });
       return dbError(error);
     }
-    logAudit({ userId: auth.userId, action: "folder.delete", resourceType: "folder", resourceId: id, request });
+    logAudit({
+      userId: auth.userId,
+      action: "folder.delete",
+      resourceType: "folder",
+      resourceId: id,
+      oldValue: auditSnapshot(data),
+      request,
+    });
     return NextResponse.json({ success: true });
   },
   { scope: "folders:write" },

@@ -11,14 +11,18 @@ beforeEach(() => {
 
 describe("PATCH /api/v1/qrcodes/[id]", () => {
   it("updates a code and returns it", async () => {
-    setDb([{ data: { id: "abc", short_slug: "s", is_active: true, destination_url: "https://new.test" } }]);
+    // First query snapshots the pre-update row for auditing, then the update.
+    setDb([
+      { data: { id: "abc", short_slug: "s", is_active: true, destination_url: "https://old.test" } },
+      { data: { id: "abc", short_slug: "s", is_active: true, destination_url: "https://new.test" } },
+    ]);
     const res = await route.PATCH(jsonRequest("PATCH", { destination_url: "https://new.test" }), ctx({ id: "abc" }));
     expect(res.status).toBe(200);
     expect((await res.json()).destination_url).toBe("https://new.test");
   });
 
   it("returns 404 when the code is not found / not owned", async () => {
-    setDb([{ error: { code: "PGRST116" } }]);
+    setDb([{ data: null }, { error: { code: "PGRST116" } }]);
     const res = await route.PATCH(jsonRequest("PATCH", { name: "x" }), ctx({ id: "missing" }));
     expect(res.status).toBe(404);
   });

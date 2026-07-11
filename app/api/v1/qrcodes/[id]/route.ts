@@ -5,7 +5,7 @@ import { setConfig, delConfig } from "@/lib/kv";
 import { buildConfig } from "@/lib/slug-config";
 import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { isUrlSafe } from "@/lib/safe-browsing";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditDiff, auditSnapshot } from "@/lib/audit";
 import { emitEvent } from "@/lib/webhooks";
 import { updateQrSchema } from "@/lib/validation";
 
@@ -38,6 +38,14 @@ export const PATCH = withAuth(
 
     const fields = await toDbFields(parsed.data);
 
+    // Snapshot the pre-update row so the audit trail can record what changed.
+    const { data: before } = await auth.db
+      .from("qr_codes")
+      .select()
+      .eq("id", id)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+
     // Explicit user scoping so service-role (API-key) requests stay tenant-isolated.
     const { data, error } = await auth.db
       .from("qr_codes")
@@ -56,14 +64,17 @@ export const PATCH = withAuth(
     if (data.is_active) await setConfig(data.short_slug, buildConfig(data));
     else await delConfig(data.short_slug);
 
-    const { password: _pw, ...auditFields } = parsed.data;
-    void _pw;
+    const diff = auditDiff(before, data, Object.keys(parsed.data));
+    const newValue = { ...(diff?.newValue ?? {}) };
+    // A password change never diffs (the hash is sensitive) — note it explicitly.
+    if (parsed.data.password !== undefined) newValue.password = "[changed]";
     logAudit({
       userId: auth.userId,
       action: "qr.update",
       resourceType: "qr_code",
       resourceId: id,
-      newValue: auditFields,
+      oldValue: diff?.oldValue ?? null,
+      newValue: Object.keys(newValue).length ? newValue : null,
       request,
     });
     emitEvent(auth.userId, "qr.updated", { id, short_slug: data.short_slug });
@@ -82,7 +93,7 @@ export const DELETE = withAuth(
       .delete()
       .eq("id", id)
       .eq("user_id", auth.userId)
-      .select("short_slug")
+      .select()
       .single();
 
     if (error) {
@@ -91,7 +102,14 @@ export const DELETE = withAuth(
     }
 
     await delConfig(data.short_slug);
-    logAudit({ userId: auth.userId, action: "qr.delete", resourceType: "qr_code", resourceId: id, request });
+    logAudit({
+      userId: auth.userId,
+      action: "qr.delete",
+      resourceType: "qr_code",
+      resourceId: id,
+      oldValue: auditSnapshot(data),
+      request,
+    });
     emitEvent(auth.userId, "qr.deleted", { id, short_slug: data.short_slug });
     return NextResponse.json({ success: true });
   },

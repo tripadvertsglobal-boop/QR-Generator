@@ -20,7 +20,10 @@ describe("GET /api/v1/account", () => {
 
 describe("PATCH /api/v1/account", () => {
   it("updates the profile", async () => {
-    setDb([{ data: { id: "user-1", display_name: "New", timezone: "UTC" } }]);
+    setDb([
+      { data: { id: "user-1", display_name: "Old", timezone: "UTC" } },
+      { data: { id: "user-1", display_name: "New", timezone: "UTC" } },
+    ]);
     const res = await account.PATCH(jsonRequest("PATCH", { display_name: "New" }), ctx());
     expect(res.status).toBe(200);
   });

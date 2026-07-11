@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditSnapshot } from "@/lib/audit";
 import { createFolderSchema } from "@/lib/validation";
 
 // POST /api/v1/folders — create a folder (owner-scoped, unique name per user).
@@ -34,7 +34,14 @@ export const POST = withAuth(
       }
       return dbError(error);
     }
-    logAudit({ userId: auth.userId, action: "folder.create", resourceType: "folder", resourceId: data.id, request });
+    logAudit({
+      userId: auth.userId,
+      action: "folder.create",
+      resourceType: "folder",
+      resourceId: data.id,
+      newValue: auditSnapshot(data),
+      request,
+    });
     return NextResponse.json(data, { status: 201 });
   },
   { scope: "folders:write" },

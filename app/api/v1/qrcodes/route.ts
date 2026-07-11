@@ -6,7 +6,7 @@ import { buildConfig } from "@/lib/slug-config";
 import { toDbFields } from "@/lib/qr-write";
 import { generateSlug } from "@/lib/slug";
 import { isUrlSafe } from "@/lib/safe-browsing";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditSnapshot } from "@/lib/audit";
 import { emitEvent } from "@/lib/webhooks";
 import { createQrSchema } from "@/lib/validation";
 
@@ -57,7 +57,7 @@ export const POST = withAuth(
         action: "qr.create",
         resourceType: "qr_code",
         resourceId: data.id,
-        newValue: { destination_url: parsed.data.destination_url, name: parsed.data.name },
+        newValue: auditSnapshot(data),
         request,
       });
       emitEvent(auth.userId, "qr.created", { id: data.id, short_slug, destination_url: data.destination_url });

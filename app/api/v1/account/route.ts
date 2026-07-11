@@ -3,7 +3,7 @@ import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { createServiceClient } from "@/lib/supabase/service";
 import { delConfig } from "@/lib/kv";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditDiff } from "@/lib/audit";
 import { updateAccountSchema } from "@/lib/validation";
 
 // GET /api/v1/account — the caller's profile.
@@ -32,6 +32,12 @@ export const PATCH = withAuth(
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
     }
+    const { data: before } = await auth.db
+      .from("user_profiles")
+      .select("id, display_name, timezone")
+      .eq("id", auth.userId)
+      .maybeSingle();
+
     const { data, error } = await auth.db
       .from("user_profiles")
       .update(parsed.data)
@@ -39,7 +45,16 @@ export const PATCH = withAuth(
       .select("id, display_name, timezone")
       .single();
     if (error) return dbError(error);
-    logAudit({ userId: auth.userId, action: "account.update", resourceType: "user_profile", resourceId: auth.userId, request });
+    const diff = auditDiff(before, data, Object.keys(parsed.data));
+    logAudit({
+      userId: auth.userId,
+      action: "account.update",
+      resourceType: "user_profile",
+      resourceId: auth.userId,
+      oldValue: diff?.oldValue ?? null,
+      newValue: diff?.newValue ?? null,
+      request,
+    });
     return NextResponse.json(data);
   },
   { jwtOnly: true },

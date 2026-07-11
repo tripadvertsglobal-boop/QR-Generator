@@ -39,13 +39,13 @@ describe("GET /api/v1/folders", () => {
 
 describe("PATCH /api/v1/folders/[id]", () => {
   it("renames a folder", async () => {
-    setDb([{ data: { id: "f1", name: "New" } }]);
+    setDb([{ data: { id: "f1", name: "Old" } }, { data: { id: "f1", name: "New" } }]);
     const res = await folderId.PATCH(jsonRequest("PATCH", { name: "New" }), ctx({ id: "f1" }));
     expect(res.status).toBe(200);
   });
 
   it("returns 404 when not found", async () => {
-    setDb([{ error: { code: "PGRST116" } }]);
+    setDb([{ data: null }, { error: { code: "PGRST116" } }]);
     const res = await folderId.PATCH(jsonRequest("PATCH", { name: "x" }), ctx({ id: "missing" }));
     expect(res.status).toBe(404);
   });

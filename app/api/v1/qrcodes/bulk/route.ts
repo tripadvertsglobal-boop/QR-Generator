@@ -48,7 +48,7 @@ export const POST = withAuth(
         userId: auth.userId,
         action: "qr.bulk_create",
         resourceType: "qr_code",
-        newValue: { count: data.length },
+        newValue: { count: data.length, ids: data.map((row) => row.id) },
         request,
       });
       const codes = data.map((row) => ({
@@ -89,7 +89,7 @@ export const DELETE = withAuth(
       .delete()
       .eq("user_id", auth.userId)
       .in("id", parsed.data.ids)
-      .select("short_slug");
+      .select("id, short_slug");
 
     if (error) return dbError(error);
 
@@ -98,7 +98,7 @@ export const DELETE = withAuth(
       userId: auth.userId,
       action: "qr.bulk_delete",
       resourceType: "qr_code",
-      newValue: { count: data?.length ?? 0 },
+      oldValue: { count: data?.length ?? 0, deleted: data ?? [] },
       request,
     });
     return NextResponse.json({ deleted: data?.length ?? 0 });

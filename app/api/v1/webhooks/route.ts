@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditSnapshot } from "@/lib/audit";
 import { isPublicWebhookUrlResolved } from "@/lib/ssrf";
 import { createWebhookSchema } from "@/lib/validation";
 
@@ -41,7 +41,14 @@ export const POST = withAuth(
 
     if (error) return dbError(error);
 
-    logAudit({ userId: auth.userId, action: "webhook.create", resourceType: "webhook", resourceId: data.id, request });
+    logAudit({
+      userId: auth.userId,
+      action: "webhook.create",
+      resourceType: "webhook",
+      resourceId: data.id,
+      newValue: auditSnapshot(data),
+      request,
+    });
     return NextResponse.json(data, { status: 201 });
   },
   { jwtOnly: true },

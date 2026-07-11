@@ -28,7 +28,12 @@ vi.mock("@/lib/kv", () => ({
   getConfig: vi.fn(async () => null),
 }));
 
-vi.mock("@/lib/audit", () => ({ logAudit: vi.fn() }));
+vi.mock("@/lib/audit", () => ({
+  logAudit: vi.fn(),
+  auditDiff: vi.fn(() => null),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  auditSnapshot: vi.fn((r: any) => r ?? null),
+}));
 vi.mock("@/lib/webhooks", () => ({ emitEvent: vi.fn() }));
 vi.mock("@/lib/safe-browsing", () => ({ isUrlSafe: vi.fn(async () => true) }));
 vi.mock("@/lib/slug-config", () => ({ buildConfig: vi.fn(() => ({})) }));

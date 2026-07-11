@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditSnapshot } from "@/lib/audit";
 
 // DELETE /api/v1/webhooks/[id] — remove a webhook. JWT only.
 export const DELETE = withAuth(
   async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
 
-    const { error } = await auth.db
+    const { data, error } = await auth.db
       .from("webhooks")
       .delete()
       .eq("id", id)
       .eq("user_id", auth.userId)
-      .select("id")
+      .select()
       .single();
 
     if (error) {
@@ -21,7 +21,14 @@ export const DELETE = withAuth(
       return dbError(error);
     }
 
-    logAudit({ userId: auth.userId, action: "webhook.delete", resourceType: "webhook", resourceId: id, request });
+    logAudit({
+      userId: auth.userId,
+      action: "webhook.delete",
+      resourceType: "webhook",
+      resourceId: id,
+      oldValue: auditSnapshot(data),
+      request,
+    });
     return NextResponse.json({ success: true });
   },
   { jwtOnly: true },

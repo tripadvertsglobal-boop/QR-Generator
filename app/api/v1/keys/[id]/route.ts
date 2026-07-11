@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth, purgeApiKeyCache } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditSnapshot } from "@/lib/audit";
 
 // DELETE /api/v1/keys/[id] — revoke a key. JWT only. Purges the KV cache so the
 // key stops authenticating immediately.
@@ -14,7 +14,7 @@ export const DELETE = withAuth(
       .delete()
       .eq("id", id)
       .eq("user_id", auth.userId)
-      .select("key_hash")
+      .select()
       .single();
 
     if (error) {
@@ -23,7 +23,14 @@ export const DELETE = withAuth(
     }
 
     await purgeApiKeyCache(data.key_hash);
-    logAudit({ userId: auth.userId, action: "key.delete", resourceType: "api_key", resourceId: id, request });
+    logAudit({
+      userId: auth.userId,
+      action: "key.delete",
+      resourceType: "api_key",
+      resourceId: id,
+      oldValue: auditSnapshot(data),
+      request,
+    });
     return NextResponse.json({ success: true });
   },
   { jwtOnly: true },
