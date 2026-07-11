@@ -6,6 +6,7 @@ import { unlockCookieName, verifyUnlockToken } from "@/lib/link-token";
 import { crossedMilestone, dispatchEvent } from "@/lib/webhooks";
 import { statusPage } from "@/lib/status-page";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { isBotUserAgent, hashIp } from "@/lib/scan-agent";
 
 const IP_RATE_LIMIT = 5000; // requests/min per IP
 
@@ -86,13 +87,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const destination = pickDestination(config);
 
   const h = request.headers;
+  const userAgent = h.get("user-agent");
   after(async () => {
+    // Skip crawler/preview/monitoring fetches — they resolve the redirect but
+    // aren't real scans. Dedup of rapid repeats from one source is handled in
+    // record_scan via the passed IP hash.
+    if (isBotUserAgent(userAgent)) return;
     const { data } = await anonClient().rpc("record_scan", {
       p_slug: slug,
       p_country: h.get("x-vercel-ip-country"),
       p_region: h.get("x-vercel-ip-country-region"),
       p_city: h.get("x-vercel-ip-city"),
       p_referer: h.get("referer"),
+      p_ip_hash: ip === "unknown" ? null : await hashIp(ip),
     });
     const row = (Array.isArray(data) ? data[0] : data) as
       | { scan_count: number; user_id: string }
