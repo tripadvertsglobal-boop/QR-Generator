@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
 
 type Json = Record<string, unknown> | null;
@@ -103,11 +102,8 @@ export default async function AuditPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <Link href="/dashboard" className="text-sm text-brand underline">
-        ← Back to dashboard
-      </Link>
-      <header className="mt-4 mb-8">
+    <main className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8">
+      <header className="mb-8">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold">Audit log</h1>
           {rows.length > 0 && (

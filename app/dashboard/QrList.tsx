@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Button from "@/app/_components/ui/Button";
+import { buttonClasses } from "@/app/_components/ui/Button";
 import QrRow from "./QrRow";
 import type { QrCode } from "./types";
 
@@ -41,27 +43,20 @@ export default function QrList({ codes }: { codes: QrCode[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-black/60 dark:text-white/60">
-          <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4" />
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <label className="flex items-center gap-2 text-muted">
+          <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 accent-brand" />
           {selected.size > 0 ? `${selected.size} selected` : "Select all"}
         </label>
         <div className="flex items-center gap-2">
           {selected.size > 0 && (
-            <button
-              onClick={deleteSelected}
-              disabled={busy}
-              className="rounded-md border border-red-500/40 px-3 py-1.5 text-red-500 disabled:opacity-50"
-            >
+            <Button size="sm" variant="ghost" disabled={busy} onClick={deleteSelected} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
               Delete selected
-            </button>
+            </Button>
           )}
           {/* File download endpoint, not a page — must be a real anchor. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a
-            href="/api/v1/qrcodes/export"
-            className="rounded-md border border-black/15 px-3 py-1.5 dark:border-white/20"
-          >
+          <a href="/api/v1/qrcodes/export" className={buttonClasses("secondary", "sm")}>
             Export CSV
           </a>
         </div>
@@ -69,7 +64,9 @@ export default function QrList({ codes }: { codes: QrCode[] }) {
 
       <ul className="flex flex-col gap-3">
         {codes.length === 0 && (
-          <li className="text-sm text-black/60 dark:text-white/60">No QR codes here yet.</li>
+          <li className="rounded-xl border border-dashed border-border bg-black/[0.015] px-6 py-12 text-center text-sm text-muted">
+            No QR codes here yet.
+          </li>
         )}
         {codes.map((code) => (
           <QrRow

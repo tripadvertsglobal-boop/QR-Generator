@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
+import PageHeader from "@/app/_components/ui/PageHeader";
 import CreateQrForm from "./CreateQrForm";
 import FolderSidebar from "./FolderSidebar";
 import TagFilterBar from "./TagFilterBar";
@@ -53,26 +53,14 @@ export default async function DashboardPage({
   });
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-10">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Your QR codes</h1>
-          <p className="text-sm text-black/60 dark:text-white/60">{user?.email}</p>
-        </div>
-        <div className="flex items-center gap-3 text-sm">
-          <Link href="/dashboard/keys" className="text-brand underline">
-            API keys
-          </Link>
-          <Link href="/dashboard/webhooks" className="text-brand underline">
-            Webhooks
-          </Link>
-          <Link href="/dashboard/audit" className="text-brand underline">
-            Audit log
-          </Link>
-        </div>
-      </header>
+    <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8">
+      <PageHeader
+        title="QR codes"
+        description={`${allCodes.length} ${allCodes.length === 1 ? "code" : "codes"} · ${user?.email ?? ""}`}
+        className="mb-8"
+      />
 
-      <div className="flex flex-col gap-8 sm:flex-row">
+      <div className="flex flex-col gap-8 lg:flex-row">
         <FolderSidebar
           folders={folders}
           counts={counts}

@@ -11,8 +11,10 @@ export default function SiteHeader() {
   const pathname = usePathname();
 
   // Public scan / password-unlock interstitials (/r/...) are standalone pages
-  // for people who scanned a code — they get no app chrome.
-  if (pathname?.startsWith("/r/")) return null;
+  // for people who scanned a code — they get no app chrome. The /dashboard
+  // surface has its own shell (sidebar/drawer), so the marketing header is
+  // suppressed there too.
+  if (pathname?.startsWith("/r/") || pathname?.startsWith("/dashboard")) return null;
 
   return (
     <header className="sticky top-0 z-10 border-b border-black/10 bg-background/80 backdrop-blur">

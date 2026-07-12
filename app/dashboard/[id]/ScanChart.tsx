@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Skeleton from "@/app/_components/Skeleton";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -49,19 +49,29 @@ export default function ScanChart({ qrId }: { qrId: string }) {
     };
   }, [qrId]);
 
-  if (error) return <p className="text-sm text-red-500">{error}</p>;
-  if (!data) return <Skeleton className="h-64 w-full rounded-lg" />;
+  if (error) return <p className="text-sm text-rose-600">{error}</p>;
+  if (!data) return <Skeleton className="h-64 w-full rounded-xl" />;
 
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: -16 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.2)" />
-          <XAxis dataKey="day" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-          <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-          <Tooltip />
-          <Line type="monotone" dataKey="scan_count" stroke="#2563eb" strokeWidth={2} dot={false} />
-        </LineChart>
+        <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: -16 }}>
+          <defs>
+            <linearGradient id="scanFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(16,16,40,0.08)" vertical={false} />
+          <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#8b8b97" }} tickLine={false} axisLine={{ stroke: "#ececf1" }} interval="preserveStartEnd" />
+          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#8b8b97" }} tickLine={false} axisLine={false} width={32} />
+          <Tooltip
+            contentStyle={{ borderRadius: 10, border: "1px solid #ececf1", boxShadow: "var(--shadow-pop)", fontSize: 12 }}
+            labelStyle={{ color: "#8b8b97" }}
+            cursor={{ stroke: "#4f46e5", strokeOpacity: 0.25 }}
+          />
+          <Area type="monotone" dataKey="scan_count" stroke="#4f46e5" strokeWidth={2} fill="url(#scanFill)" dot={false} activeDot={{ r: 4, fill: "#4f46e5" }} />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

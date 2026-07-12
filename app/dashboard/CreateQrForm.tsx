@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Spinner from "@/app/_components/Spinner";
+import Button from "@/app/_components/ui/Button";
+import { Input, Select, Field } from "@/app/_components/ui/Input";
 import type { Folder, AbDestination } from "./types";
 import AbBuilder from "./AbBuilder";
-
-const inputCls =
-  "rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20 dark:focus:border-white/50";
 
 export default function CreateQrForm({ folders }: { folders: Folder[] }) {
   const router = useRouter();
@@ -65,65 +63,55 @@ export default function CreateQrForm({ folders }: { folders: Folder[] }) {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 dark:border-white/15"
+      className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 shadow-card sm:p-5"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-xs text-black/60 dark:text-white/60">Destination URL</span>
-          <input type="url" required placeholder="https://example.com" value={destination} onChange={(e) => setDestination(e.target.value)} className={inputCls} />
-        </label>
-        <label className="flex flex-col gap-1 sm:w-40">
-          <span className="text-xs text-black/60 dark:text-white/60">Name (optional)</span>
-          <input type="text" placeholder="Spring flyer" value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
-        </label>
+        <Field label="Destination URL" className="flex-1">
+          <Input type="url" required placeholder="https://example.com" value={destination} onChange={(e) => setDestination(e.target.value)} />
+        </Field>
+        <Field label="Name (optional)" className="sm:w-40">
+          <Input type="text" placeholder="Spring flyer" value={name} onChange={(e) => setName(e.target.value)} />
+        </Field>
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <label className="flex flex-col gap-1 sm:w-48">
-          <span className="text-xs text-black/60 dark:text-white/60">Folder</span>
-          <select value={folderId} onChange={(e) => setFolderId(e.target.value)} className={inputCls}>
+        <Field label="Folder" className="sm:w-48">
+          <Select value={folderId} onChange={(e) => setFolderId(e.target.value)}>
             <option value="">No folder</option>
             {folders.map((f) => (
               <option key={f.id} value={f.id}>{f.name}</option>
             ))}
-          </select>
-        </label>
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-xs text-black/60 dark:text-white/60">Tags (comma-separated)</span>
-          <input type="text" placeholder="print, q2-campaign" value={tagsText} onChange={(e) => setTagsText(e.target.value)} className={inputCls} />
-        </label>
-        <button type="submit" disabled={loading} className="inline-flex items-center justify-center rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
-          {loading ? <Spinner /> : "Create"}
-        </button>
+          </Select>
+        </Field>
+        <Field label="Tags (comma-separated)" className="flex-1">
+          <Input type="text" placeholder="print, q2-campaign" value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
+        </Field>
+        <Button type="submit" loading={loading}>Create</Button>
       </div>
 
-      <button type="button" onClick={() => setAdvanced((v) => !v)} className="self-start text-xs text-brand hover:underline">
-        {advanced ? "Hide advanced" : "Advanced: scheduling, password, A/B"}
+      <button type="button" onClick={() => setAdvanced((v) => !v)} className="self-start text-xs font-medium text-brand hover:underline">
+        {advanced ? "Hide advanced options" : "Advanced: scheduling, password, A/B"}
       </button>
 
       {advanced && (
-        <div className="flex flex-col gap-4 rounded-md border border-black/10 p-3 dark:border-white/10">
+        <div className="flex flex-col gap-4 rounded-lg border border-border bg-black/[0.015] p-4">
           <div className="flex flex-col gap-3 sm:flex-row">
-            <label className="flex flex-1 flex-col gap-1">
-              <span className="text-xs text-black/60 dark:text-white/60">Active from</span>
-              <input type="datetime-local" value={activeFrom} onChange={(e) => setActiveFrom(e.target.value)} className={inputCls} />
-            </label>
-            <label className="flex flex-1 flex-col gap-1">
-              <span className="text-xs text-black/60 dark:text-white/60">Active until</span>
-              <input type="datetime-local" value={activeUntil} onChange={(e) => setActiveUntil(e.target.value)} className={inputCls} />
-            </label>
+            <Field label="Active from" className="flex-1">
+              <Input type="datetime-local" value={activeFrom} onChange={(e) => setActiveFrom(e.target.value)} />
+            </Field>
+            <Field label="Active until" className="flex-1">
+              <Input type="datetime-local" value={activeUntil} onChange={(e) => setActiveUntil(e.target.value)} />
+            </Field>
           </div>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-black/60 dark:text-white/60">Password (optional, min 4 chars)</span>
-            <input type="text" placeholder="Leave blank for no password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
-          </label>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-black/60 dark:text-white/60">A/B split (overrides destination when ≥2 variants)</span>
+          <Field label="Password (optional, min 4 chars)">
+            <Input type="text" placeholder="Leave blank for no password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </Field>
+          <Field label="A/B split (overrides destination when ≥2 variants)">
             <AbBuilder arms={ab} onChange={setAb} />
-          </div>
+          </Field>
         </div>
       )}
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-rose-600">{error}</p>}
     </form>
   );
 }

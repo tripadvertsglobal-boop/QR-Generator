@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/app/_components/Spinner";
+import Button from "@/app/_components/ui/Button";
+import { Input, Field } from "@/app/_components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
@@ -39,34 +41,33 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-6">
-      <h1 className="text-2xl font-semibold">Choose a new password</h1>
-      {!ready && !error && (
-        <p className="flex items-center gap-2 text-sm text-black/60 dark:text-white/60">
-          <Spinner /> Verifying reset link…
-        </p>
-      )}
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <input
-          type="password"
-          required
-          minLength={6}
-          placeholder="New password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={!ready}
-          className="rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 disabled:opacity-50 dark:border-white/20"
-        />
-        <button
-          type="submit"
-          disabled={loading || !ready}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
-        >
-          {loading && <Spinner />}
-          {loading ? "Updating…" : "Update password"}
-        </button>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-      </form>
+    <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-sm flex-col justify-center gap-5 px-6 py-10">
+      <div className="rounded-2xl border border-border bg-surface p-6 shadow-card sm:p-8">
+        <h1 className="text-xl font-semibold tracking-tight">Choose a new password</h1>
+        {!ready && !error && (
+          <p className="mt-3 flex items-center gap-2 text-sm text-muted">
+            <Spinner className="h-4 w-4" /> Verifying reset link…
+          </p>
+        )}
+        <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
+          <Field label="New password" htmlFor="password">
+            <Input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={!ready}
+            />
+          </Field>
+          <Button type="submit" loading={loading} disabled={!ready} className="w-full">
+            {loading ? "Updating…" : "Update password"}
+          </Button>
+          {error && <p className="text-sm text-rose-600">{error}</p>}
+        </form>
+      </div>
     </div>
   );
 }

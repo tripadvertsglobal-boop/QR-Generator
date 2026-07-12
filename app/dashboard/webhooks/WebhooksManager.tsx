@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Spinner from "@/app/_components/Spinner";
+import Button from "@/app/_components/ui/Button";
+import Badge from "@/app/_components/ui/Badge";
+import { Input, Field } from "@/app/_components/ui/Input";
 
 const EVENTS = ["qr.created", "qr.updated", "qr.deleted", "scan.threshold"] as const;
 
@@ -15,9 +17,6 @@ type Webhook = {
   failure_count: number;
   last_triggered_at: string | null;
 };
-
-const inputCls =
-  "rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20";
 
 export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
   const router = useRouter();
@@ -64,52 +63,57 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={create} className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 dark:border-white/15">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-black/60 dark:text-white/60">Endpoint URL</span>
-          <input type="url" required placeholder="https://your-server.com/webhook" value={url} onChange={(e) => setUrl(e.target.value)} className={inputCls} />
-        </label>
-        <div className="flex flex-wrap gap-3">
-          {EVENTS.map((ev) => (
-            <label key={ev} className="flex items-center gap-1.5 text-sm">
-              <input type="checkbox" checked={events.includes(ev)} onChange={(e) => toggle(ev, e.target.checked)} />
-              <code className="text-xs">{ev}</code>
-            </label>
-          ))}
+      <form onSubmit={create} className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 shadow-card">
+        <Field label="Endpoint URL">
+          <Input type="url" required placeholder="https://your-server.com/webhook" value={url} onChange={(e) => setUrl(e.target.value)} />
+        </Field>
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-medium">Events</span>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {EVENTS.map((ev) => (
+              <label key={ev} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={events.includes(ev)} onChange={(e) => toggle(ev, e.target.checked)} className="h-4 w-4 accent-brand" />
+                <code className="font-mono text-xs text-muted">{ev}</code>
+              </label>
+            ))}
+          </div>
         </div>
-        <button type="submit" disabled={busy} className="inline-flex items-center justify-center self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50">
-          {busy ? <Spinner /> : "Add webhook"}
-        </button>
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        <Button type="submit" className="self-start" loading={busy}>Add webhook</Button>
+        {error && <p className="text-sm text-rose-600">{error}</p>}
       </form>
 
       <ul className="flex flex-col gap-3">
-        {initial.length === 0 && <li className="text-sm text-black/60 dark:text-white/60">No webhooks yet.</li>}
+        {initial.length === 0 && (
+          <li className="rounded-xl border border-dashed border-border bg-black/[0.015] px-6 py-12 text-center text-sm text-muted">
+            No webhooks yet.
+          </li>
+        )}
         {initial.map((wh) => (
-          <li key={wh.id} className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/15">
-            <div className="flex items-center justify-between gap-2">
+          <li key={wh.id} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-card">
+            <div className="flex items-start justify-between gap-3">
               <span className="truncate font-medium">{wh.url}</span>
-              <span className={`rounded-full px-2 py-0.5 text-xs ${wh.is_active ? "bg-green-500/15 text-green-600" : "bg-red-500/15 text-red-600"}`}>
-                {wh.is_active ? "active" : `disabled (${wh.failure_count} fails)`}
-              </span>
+              <Badge tone={wh.is_active ? "emerald" : "rose"} dot>
+                {wh.is_active ? "Active" : `Disabled (${wh.failure_count} fails)`}
+              </Badge>
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {wh.events.map((e) => (
-                <code key={e} className="rounded-full bg-black/5 px-2 py-0.5 text-xs dark:bg-white/10">{e}</code>
+                <code key={e} className="rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-xs text-muted">{e}</code>
               ))}
             </div>
-            <div className="flex items-center gap-2 text-xs text-black/60 dark:text-white/60">
-              <span>Secret:</span>
-              <code className="rounded bg-black/5 px-1.5 py-0.5 dark:bg-white/10">{wh.secret}</code>
+            <div className="flex items-center gap-2 text-xs text-muted">
+              <span>Secret</span>
+              <code className="overflow-x-auto rounded bg-black/[0.05] px-1.5 py-0.5 font-mono">{wh.secret}</code>
             </div>
-            <button
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => remove(wh.id)}
-              disabled={deletingId === wh.id}
-              className="inline-flex items-center justify-center gap-1.5 self-start rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-500 disabled:opacity-50"
+              loading={deletingId === wh.id}
+              className="self-start text-rose-600 hover:bg-rose-50 hover:text-rose-700"
             >
-              {deletingId === wh.id && <Spinner className="h-3.5 w-3.5" />}
               Delete
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

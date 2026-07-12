@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Button from "@/app/_components/ui/Button";
+import { Input, Field } from "@/app/_components/ui/Input";
 import AbBuilder from "../AbBuilder";
 import type { AbDestination } from "../types";
-
-const inputCls =
-  "rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20";
 
 function toLocalInput(iso: string | null): string {
   if (!iso) return "";
@@ -71,57 +70,48 @@ export default function AdvancedSettings({
   }
 
   return (
-    <section className="mt-10 flex flex-col gap-4 rounded-lg border border-black/10 p-4 dark:border-white/15">
-      <h2 className="text-sm font-medium text-black/60 dark:text-white/60">Advanced settings</h2>
+    <section className="mt-10 flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 shadow-card">
+      <h2 className="font-medium">Advanced settings</h2>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-xs text-black/60 dark:text-white/60">Active from</span>
-          <input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-xs text-black/60 dark:text-white/60">Active until</span>
-          <input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} className={inputCls} />
-        </label>
+        <Field label="Active from" className="flex-1">
+          <Input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </Field>
+        <Field label="Active until" className="flex-1">
+          <Input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} />
+        </Field>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-black/60 dark:text-white/60">
-          Password {hasPassword && <span className="text-green-600">(currently set)</span>}
-        </span>
-        <input
+      <Field
+        label={
+          <>
+            Password {hasPassword && <span className="font-normal text-emerald-600">(currently set)</span>}
+          </>
+        }
+      >
+        <Input
           type="text"
           placeholder={hasPassword ? "Enter a new password to change it" : "Set a password (min 4 chars)"}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           disabled={clearPassword}
-          className={inputCls}
         />
-        {hasPassword && (
-          <label className="mt-1 flex items-center gap-2 text-xs text-black/60 dark:text-white/60">
-            <input type="checkbox" checked={clearPassword} onChange={(e) => setClearPassword(e.target.checked)} />
-            Remove password protection
-          </label>
-        )}
-      </div>
+      </Field>
+      {hasPassword && (
+        <label className="-mt-2 flex items-center gap-2 text-xs text-muted">
+          <input type="checkbox" checked={clearPassword} onChange={(e) => setClearPassword(e.target.checked)} className="h-4 w-4 accent-brand" />
+          Remove password protection
+        </label>
+      )}
 
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-black/60 dark:text-white/60">
-          A/B split (≥2 variants; clear all to disable)
-        </span>
+      <Field label="A/B split (≥2 variants; clear all to disable)">
         <AbBuilder arms={arms} onChange={setArms} />
-      </div>
+      </Field>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={save}
-          disabled={busy}
-          className="self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
-        >
-          {busy ? "…" : "Save settings"}
-        </button>
-        {msg && <span className="text-sm text-green-600">{msg}</span>}
-        {error && <span className="text-sm text-red-500">{error}</span>}
+        <Button onClick={save} loading={busy} className="self-start">Save settings</Button>
+        {msg && <span className="text-sm text-emerald-600">{msg}</span>}
+        {error && <span className="text-sm text-rose-600">{error}</span>}
       </div>
     </section>
   );

@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Button from "@/app/_components/ui/Button";
+import Badge from "@/app/_components/ui/Badge";
+import { Input } from "@/app/_components/ui/Input";
 import type { QrCode } from "./types";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN ?? "";
@@ -61,56 +64,55 @@ export default function QrRow({
   }
 
   return (
-    <li className="flex gap-3 rounded-lg border border-black/10 p-4 dark:border-white/15">
+    <li className="flex gap-3 rounded-xl border border-border bg-surface p-4 shadow-card transition-colors hover:border-border-strong">
       <input
         type="checkbox"
         checked={selected}
         onChange={(e) => onSelectChange(code.id, e.target.checked)}
-        className="mt-1 h-4 w-4"
+        className="mt-1 h-4 w-4 shrink-0 accent-brand"
         aria-label="Select code"
       />
-      <div className="flex flex-1 flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <Link href={`/dashboard/${code.id}`} className="font-medium hover:underline">
-            {code.name ?? "Untitled"}
-          </Link>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-black/60 dark:text-white/60">{code.scan_count} scans</span>
-            {code.has_password && <span title="Password protected">🔒</span>}
-            {(code.active_from || code.active_until) && <span title="Scheduled">🗓️</span>}
-            {code.ab_destinations && code.ab_destinations.length > 0 && (
-              <span title="A/B split" className="rounded-full bg-purple-500/15 px-2 py-0.5 text-purple-600">
-                A/B
-              </span>
-            )}
-            <span
-              className={`rounded-full px-2 py-0.5 ${
-                code.is_active
-                  ? "bg-green-500/15 text-green-600"
-                  : "bg-black/10 text-black/50 dark:bg-white/10 dark:text-white/50"
-              }`}
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Link
+              href={`/dashboard/${code.id}`}
+              className="truncate font-medium transition-colors hover:text-brand"
             >
-              {code.is_active ? "active" : "paused"}
-            </span>
+              {code.name ?? "Untitled"}
+            </Link>
+            <Badge tone={code.is_active ? "emerald" : "gray"} dot>
+              {code.is_active ? "Active" : "Paused"}
+            </Badge>
+            {code.has_password && <Badge tone="gray">Password</Badge>}
+            {(code.active_from || code.active_until) && <Badge tone="gray">Scheduled</Badge>}
+            {code.ab_destinations && code.ab_destinations.length > 0 && (
+              <Badge tone="blue">A/B</Badge>
+            )}
           </div>
+          <span className="shrink-0 whitespace-nowrap text-sm font-medium tabular-nums">
+            {code.scan_count.toLocaleString()}{" "}
+            <span className="text-xs font-normal text-muted-2">scans</span>
+          </span>
         </div>
 
         <a
           href={`${REDIRECT_DOMAIN}/r/${code.short_slug}`}
           target="_blank"
           rel="noreferrer"
-          className="text-sm text-brand underline"
+          className="truncate font-mono text-xs text-brand hover:underline"
         >
           {REDIRECT_DOMAIN}/r/{code.short_slug}
         </a>
 
+        {!editing && (
+          <p className="truncate text-sm text-muted">→ {code.destination_url}</p>
+        )}
+
         {code.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {code.tags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/60 dark:bg-white/10 dark:text-white/60"
-              >
+              <span key={t} className="rounded-full bg-black/[0.05] px-2 py-0.5 text-xs text-muted">
                 {t}
               </span>
             ))}
@@ -119,72 +121,50 @@ export default function QrRow({
 
         {editing ? (
           <form onSubmit={saveEdit} className="flex flex-col gap-2">
-            <input
+            <Input
               type="url"
               required
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20"
             />
-            <input
+            <Input
               type="text"
               placeholder="Name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20"
             />
             <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={busy}
-                className="rounded-md bg-brand hover:bg-brand-hover px-3 py-1.5 text-sm text-brand-foreground disabled:opacity-50"
-              >
+              <Button type="submit" size="sm" loading={busy}>
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant="secondary"
                 onClick={() => {
                   setEditing(false);
                   setDestination(code.destination_url);
                   setName(code.name ?? "");
                 }}
-                className="rounded-md border border-black/15 px-3 py-1.5 text-sm dark:border-white/20"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
-          <>
-            <span className="truncate text-sm text-black/60 dark:text-white/60">
-              → {code.destination_url}
-            </span>
-            <div className="flex gap-2 text-sm">
-              <button
-                onClick={() => setEditing(true)}
-                disabled={busy}
-                className="rounded-md border border-black/15 px-3 py-1.5 disabled:opacity-50 dark:border-white/20"
-              >
-                Edit
-              </button>
-              <button
-                onClick={toggleActive}
-                disabled={busy}
-                className="rounded-md border border-black/15 px-3 py-1.5 disabled:opacity-50 dark:border-white/20"
-              >
-                {code.is_active ? "Pause" : "Activate"}
-              </button>
-              <button
-                onClick={remove}
-                disabled={busy}
-                className="rounded-md border border-red-500/40 px-3 py-1.5 text-red-500 disabled:opacity-50"
-              >
-                Delete
-              </button>
-            </div>
-          </>
+          <div className="flex flex-wrap gap-2 pt-0.5">
+            <Button size="sm" variant="secondary" disabled={busy} onClick={() => setEditing(true)}>
+              Edit
+            </Button>
+            <Button size="sm" variant="secondary" disabled={busy} onClick={toggleActive}>
+              {code.is_active ? "Pause" : "Activate"}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={remove} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
+              Delete
+            </Button>
+          </div>
         )}
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-rose-600">{error}</p>}
       </div>
     </li>
   );

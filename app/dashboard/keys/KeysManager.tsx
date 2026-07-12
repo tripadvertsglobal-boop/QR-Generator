@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Spinner from "@/app/_components/Spinner";
+import Button from "@/app/_components/ui/Button";
+import { Input, Field } from "@/app/_components/ui/Input";
 
 const SCOPES = ["qrcodes:read", "qrcodes:write"] as const;
 
@@ -17,9 +18,6 @@ type ApiKey = {
   expires_at: string | null;
   created_at: string;
 };
-
-const inputCls =
-  "rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20";
 
 const MAX_KEYS = 4;
 
@@ -75,84 +73,83 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
   return (
     <div className="flex flex-col gap-6">
       {newKey && (
-        <div className="flex flex-col gap-2 rounded-lg border border-green-500/40 bg-green-500/5 p-4">
-          <p className="text-sm font-medium text-green-700 dark:text-green-400">
+        <div className="flex flex-col gap-2 rounded-xl border border-emerald-600/25 bg-emerald-50 p-4">
+          <p className="text-sm font-medium text-emerald-800">
             Key created — copy it now. You won&apos;t be able to see it again.
           </p>
-          <code className="block overflow-x-auto rounded bg-black/5 px-3 py-2 text-xs dark:bg-white/10">
+          <code className="block overflow-x-auto rounded-lg bg-white px-3 py-2 font-mono text-xs ring-1 ring-emerald-600/20">
             {newKey}
           </code>
-          <button
-            onClick={() => navigator.clipboard?.writeText(newKey)}
-            className="self-start rounded-md border border-black/15 px-3 py-1.5 text-xs dark:border-white/20"
-          >
+          <Button size="sm" variant="secondary" onClick={() => navigator.clipboard?.writeText(newKey)} className="self-start">
             Copy
-          </button>
+          </Button>
         </div>
       )}
 
-      <form onSubmit={create} className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 dark:border-white/15">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-black/60 dark:text-white/60">Key name</span>
-          <input
+      <form onSubmit={create} className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 shadow-card">
+        <Field label="Key name">
+          <Input
             type="text"
             required
             maxLength={200}
             placeholder="e.g. Production server"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className={inputCls}
           />
-        </label>
-        <div className="flex flex-wrap gap-3">
-          {SCOPES.map((scope) => (
-            <label key={scope} className="flex items-center gap-1.5 text-sm">
-              <input type="checkbox" checked={scopes.includes(scope)} onChange={(e) => toggle(scope, e.target.checked)} />
-              <code className="text-xs">{scope}</code>
-            </label>
-          ))}
+        </Field>
+        <div className="flex flex-col gap-2">
+          <span className="text-[13px] font-medium">Scopes</span>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {SCOPES.map((scope) => (
+              <label key={scope} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={scopes.includes(scope)} onChange={(e) => toggle(scope, e.target.checked)} className="h-4 w-4 accent-brand" />
+                <code className="font-mono text-xs text-muted">{scope}</code>
+              </label>
+            ))}
+          </div>
         </div>
-        <button
-          type="submit"
-          disabled={busy || atLimit}
-          className="inline-flex items-center justify-center self-start rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-50"
-        >
-          {busy ? <Spinner /> : "Create key"}
-        </button>
+        <Button type="submit" className="self-start" disabled={atLimit} loading={busy}>
+          Create key
+        </Button>
         {atLimit && (
-          <p className="text-sm text-black/60 dark:text-white/60">
+          <p className="text-sm text-muted">
             You have {MAX_KEYS} active keys (the maximum). Revoke one to create another.
           </p>
         )}
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-rose-600">{error}</p>}
       </form>
 
       <ul className="flex flex-col gap-3">
-        {initial.length === 0 && <li className="text-sm text-black/60 dark:text-white/60">No API keys yet.</li>}
+        {initial.length === 0 && (
+          <li className="rounded-xl border border-dashed border-border bg-black/[0.015] px-6 py-12 text-center text-sm text-muted">
+            No API keys yet.
+          </li>
+        )}
         {initial.map((k) => (
-          <li key={k.id} className="flex flex-col gap-2 rounded-lg border border-black/10 p-4 dark:border-white/15">
+          <li key={k.id} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-card">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate font-medium">{k.name}</span>
-              <code className="rounded bg-black/5 px-1.5 py-0.5 text-xs dark:bg-white/10">{k.key_prefix}…</code>
+              <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-xs text-muted">{k.key_prefix}…</code>
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {k.scopes.map((s) => (
-                <code key={s} className="rounded-full bg-black/5 px-2 py-0.5 text-xs dark:bg-white/10">{s}</code>
+                <code key={s} className="rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-xs text-muted">{s}</code>
               ))}
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-black/60 dark:text-white/60">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
               <span>{k.rate_limit} req/min</span>
               <span>Last used: {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "never"}</span>
               {k.expires_at && <span>Expires: {new Date(k.expires_at).toLocaleDateString()}</span>}
             </div>
-            <button
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => revoke(k.id)}
-              disabled={revokingId === k.id}
-              className="inline-flex items-center justify-center gap-1.5 self-start rounded-md border border-red-500/40 px-3 py-1.5 text-sm text-red-500 disabled:opacity-50"
+              loading={revokingId === k.id}
+              className="self-start text-rose-600 hover:bg-rose-50 hover:text-rose-700"
             >
-              {revokingId === k.id && <Spinner className="h-3.5 w-3.5" />}
               Revoke
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

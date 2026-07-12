@@ -21,10 +21,10 @@ export default function TagFilterBar({
   };
 
   const chip = (active: boolean) =>
-    `rounded-full px-3 py-1 text-xs ${
+    `rounded-full px-3 py-1 text-xs font-medium transition-colors ${
       active
-        ? "bg-brand hover:bg-brand-hover text-brand-foreground"
-        : "border border-black/15 hover:bg-black/5 dark:border-white/20 dark:hover:bg-white/5"
+        ? "bg-foreground text-background"
+        : "border border-border bg-surface text-muted hover:bg-black/[0.03] hover:text-foreground"
     }`;
 
   return (

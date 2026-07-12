@@ -7,22 +7,48 @@
 
 :root {
   color-scheme: light;
-  --background: #ffffff;
-  --foreground: #171717;
 
-  /* Bright solid primary colour, used app-wide (buttons, links, accents).
-     Marketing pages can override these per `site.config.ts`. */
+  /* Grounds. The page sits a hair below pure white with a faint cool bias so
+     white cards lift off it — the "airy" layered look. */
+  --background: #fbfbfd;
+  --surface: #ffffff;
+  --foreground: #16161d;
+
+  /* Text ramp (cool-biased neutrals, chosen not defaulted). */
+  --muted: #5c5c68;
+  --muted-2: #8b8b97;
+
+  /* Hairline borders + strong dividers. */
+  --border: #ececf1;
+  --border-strong: #dedee5;
+
+  /* Brand — bright indigo, used app-wide. Marketing may override per site.config. */
   --brand: #4f46e5;
   --brand-fg: #ffffff;
   --brand-hover: #4338ca;
+  --brand-tint: #eef2ff; /* indigo-50 wash for active/selected states */
+
+  /* Elevation. Soft, low-spread shadows with a slight cool tint. */
+  --shadow-card: 0 1px 2px rgba(16, 16, 40, 0.04), 0 1px 3px rgba(16, 16, 40, 0.05);
+  --shadow-pop: 0 8px 24px -6px rgba(16, 16, 40, 0.14), 0 2px 6px rgba(16, 16, 40, 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-fg);
   --color-brand-hover: var(--brand-hover);
+  --color-brand-tint: var(--brand-tint);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -30,5 +56,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Use the loaded Geist face (was falling back to Arial). */
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
 }

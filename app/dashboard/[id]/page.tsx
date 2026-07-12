@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createUserClient } from "@/lib/supabase/server";
+import Badge from "@/app/_components/ui/Badge";
+import { buttonClasses } from "@/app/_components/ui/Button";
 import ScanChart from "./ScanChart";
 import CopyButton from "./CopyButton";
 import AdvancedSettings from "./AdvancedSettings";
@@ -53,111 +54,100 @@ export default async function QrDetailPage({
   const place = (s: { city: string | null; region: string | null; country: string | null }) =>
     [s.city, s.region, s.country].filter(Boolean).join(", ") || "Unknown";
 
-  return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <Link href="/dashboard" className="text-sm text-brand underline">
-        ← Back to dashboard
-      </Link>
+  const maxCountry = Math.max(1, ...countries.map((c) => Number(c.scan_count)));
 
-      <header className="mt-4 mb-8">
-        <h1 className="text-2xl font-semibold">{code.name ?? "Untitled"}</h1>
+  return (
+    <main className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8">
+      <header className="mb-8">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{code.name ?? "Untitled"}</h1>
+          <Badge tone={code.is_active ? "emerald" : "gray"} dot>
+            {code.is_active ? "Active" : "Paused"}
+          </Badge>
+        </div>
         <a
           href={`${REDIRECT_DOMAIN}/r/${code.short_slug}`}
           target="_blank"
           rel="noreferrer"
-          className="text-sm text-brand underline"
+          className="mt-2 inline-block font-mono text-sm text-brand hover:underline"
         >
           {REDIRECT_DOMAIN}/r/{code.short_slug}
         </a>
-        <p className="mt-1 truncate text-sm text-black/60 dark:text-white/60">
-          → {code.destination_url}
-        </p>
-        <p className="mt-2 text-sm">
-          <span className="font-medium">{code.scan_count}</span> total scans ·{" "}
-          {code.is_active ? "active" : "paused"}
-        </p>
+        <p className="mt-1 truncate text-sm text-muted">→ {code.destination_url}</p>
       </header>
 
-      <section className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-start">
+      <section className="mb-8 flex flex-col gap-5 rounded-xl border border-border bg-surface p-5 shadow-card sm:flex-row sm:items-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`/api/v1/qrcodes/${code.id}/qr.svg`}
           alt={`QR code for ${code.short_slug}`}
           width={176}
           height={176}
-          className="h-44 w-44 rounded-lg border border-black/10 bg-white p-2 dark:border-white/15"
+          className="h-40 w-40 shrink-0 self-center rounded-lg border border-border bg-white p-2 sm:self-auto"
         />
-        <div className="flex flex-col gap-2">
-          <CopyButton value={`${REDIRECT_DOMAIN}/r/${code.short_slug}`} />
-          <a
-            href={`/api/v1/qrcodes/${code.id}/qr.svg`}
-            download={`qr-${code.short_slug}.svg`}
-            className="rounded-md border border-black/15 px-3 py-1.5 text-center text-sm dark:border-white/20"
-          >
-            Download SVG
-          </a>
-          <a
-            href={`/api/v1/qrcodes/${code.id}/qr.svg?format=png`}
-            download={`qr-${code.short_slug}.png`}
-            className="rounded-md border border-black/15 px-3 py-1.5 text-center text-sm dark:border-white/20"
-          >
-            Download PNG
-          </a>
+        <div className="flex flex-1 flex-col gap-3">
+          <div>
+            <p className="text-3xl font-semibold tabular-nums">{code.scan_count.toLocaleString()}</p>
+            <p className="text-sm text-muted">total scans</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <CopyButton value={`${REDIRECT_DOMAIN}/r/${code.short_slug}`} />
+            <a href={`/api/v1/qrcodes/${code.id}/qr.svg`} download={`qr-${code.short_slug}.svg`} className={buttonClasses("secondary", "sm")}>
+              SVG
+            </a>
+            <a href={`/api/v1/qrcodes/${code.id}/qr.svg?format=png`} download={`qr-${code.short_slug}.png`} className={buttonClasses("secondary", "sm")}>
+              PNG
+            </a>
+          </div>
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-medium text-black/60 dark:text-white/60">
-          Scans (last 30 days)
-        </h2>
+      <section className="mb-8 rounded-xl border border-border bg-surface p-5 shadow-card">
+        <h2 className="mb-4 text-sm font-semibold">Scans · last 30 days</h2>
         <ScanChart qrId={code.id} />
       </section>
 
-      <section className="mt-10">
-        <h2 className="mb-3 text-sm font-medium text-black/60 dark:text-white/60">
-          Scans by country
-        </h2>
-        {countries.length === 0 ? (
-          <p className="text-sm text-black/50 dark:text-white/50">No scans recorded yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-1">
-            {countries.map((c) => (
-              <li key={c.country} className="flex items-center justify-between text-sm">
-                <span>{c.country}</span>
-                <span className="text-black/60 dark:text-white/60">{c.scan_count}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="mt-10">
-        <h2 className="mb-3 text-sm font-medium text-black/60 dark:text-white/60">
-          Recent scans
-        </h2>
-        {recent.length === 0 ? (
-          <p className="text-sm text-black/50 dark:text-white/50">No scans recorded yet.</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase tracking-wide text-black/40 dark:text-white/40">
-              <tr>
-                <th className="py-2">Time</th>
-                <th className="py-2">Location</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((s, i) => (
-                <tr key={i} className="border-t border-black/10 dark:border-white/10">
-                  <td className="py-2 text-black/60 dark:text-white/60">
-                    {new Date(s.scanned_at).toLocaleString()}
-                  </td>
-                  <td className="py-2">{place(s)}</td>
-                </tr>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <section className="rounded-xl border border-border bg-surface p-5 shadow-card">
+          <h2 className="mb-4 text-sm font-semibold">Scans by country</h2>
+          {countries.length === 0 ? (
+            <p className="text-sm text-muted-2">No scans recorded yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-2.5">
+              {countries.map((c) => (
+                <li key={c.country} className="flex items-center gap-3 text-sm">
+                  <span className="w-8 shrink-0 font-medium">{c.country}</span>
+                  <span className="h-2 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+                    <span
+                      className="block h-full rounded-full bg-brand"
+                      style={{ width: `${(Number(c.scan_count) / maxCountry) * 100}%` }}
+                    />
+                  </span>
+                  <span className="w-8 shrink-0 text-right tabular-nums text-muted">{c.scan_count}</span>
+                </li>
               ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+            </ul>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-border bg-surface p-5 shadow-card">
+          <h2 className="mb-4 text-sm font-semibold">Recent scans</h2>
+          {recent.length === 0 ? (
+            <p className="text-sm text-muted-2">No scans recorded yet.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border text-sm">
+              {recent.slice(0, 12).map((s, i) => (
+                <li key={i} className="flex items-center justify-between gap-3 py-2">
+                  <span className="truncate text-muted">{place(s)}</span>
+                  <time className="shrink-0 whitespace-nowrap text-xs text-muted-2">
+                    {new Date(s.scanned_at).toLocaleString()}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
 
       <AdvancedSettings
         id={code.id}

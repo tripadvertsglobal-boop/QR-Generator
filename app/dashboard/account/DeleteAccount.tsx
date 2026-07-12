@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Spinner from "@/app/_components/Spinner";
+import Button from "@/app/_components/ui/Button";
+import { Input } from "@/app/_components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 
 export default function DeleteAccount() {
@@ -27,27 +28,29 @@ export default function DeleteAccount() {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-red-500/30 p-4">
-      <h2 className="font-medium text-red-500">Delete account</h2>
-      <p className="text-sm text-black/60 dark:text-white/60">
+    <div className="flex flex-col gap-3 rounded-xl border border-rose-300 bg-rose-50/40 p-5">
+      <h2 className="font-medium text-rose-700">Delete account</h2>
+      <p className="text-sm text-muted">
         Permanently deletes your account and all data (QR codes, scans, folders, keys, webhooks).
-        This cannot be undone. Type <code className="text-xs">DELETE</code> to confirm.
+        This cannot be undone. Type{" "}
+        <code className="rounded bg-rose-100 px-1 py-0.5 font-mono text-xs text-rose-700">DELETE</code> to confirm.
       </p>
-      <input
+      <Input
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         placeholder="DELETE"
-        className="w-40 rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none dark:border-white/20"
+        className="w-40"
       />
-      <button
+      <Button
+        variant="danger"
         onClick={onDelete}
-        disabled={busy || confirm !== "DELETE"}
-        className="inline-flex items-center justify-center gap-2 self-start rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+        disabled={confirm !== "DELETE"}
+        loading={busy}
+        className="self-start"
       >
-        {busy && <Spinner />}
         {busy ? "Deleting…" : "Delete my account"}
-      </button>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      </Button>
+      {error && <p className="text-sm text-rose-600">{error}</p>}
     </div>
   );
 }
