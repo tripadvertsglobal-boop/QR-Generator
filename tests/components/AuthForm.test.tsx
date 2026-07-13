@@ -11,8 +11,8 @@ vi.mock("@/lib/supabase/client", () => ({
 beforeEach(() => vi.clearAllMocks());
 
 function fill() {
-  fireEvent.change(screen.getByPlaceholderText("you@example.com"), { target: { value: "a@b.com" } });
-  fireEvent.change(screen.getByPlaceholderText("Password"), { target: { value: "secret123" } });
+  fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
+  fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret123" } });
 }
 
 describe("AuthForm (login)", () => {
