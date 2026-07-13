@@ -1,10 +1,12 @@
 # API Review — 2026-07-12
 
 > **Status (2026-07-13): all 14 findings fixed.** Each item below carries a
-> **Fixed:** note describing the change. Deployment prerequisite: apply
-> `supabase/migrations/00014_scan_timeseries_svc.sql` (new RPC for item 14)
-> before or with the code deploy — until it's applied, API-key analytics
-> requests fail with a generic error instead of returning data.
+> **Fixed:** note describing the change. Migrations `00014` (new RPC for
+> item 14) and `00015` (revokes a Supabase default-privilege anon EXECUTE
+> grant on `get_scan_timeseries` / `get_scan_geo` found while verifying 00014;
+> harmless — both fail closed on the auth.uid() ownership check — but contrary
+> to their migrations' intent) are applied to both the production and testing
+> Supabase projects; function ACLs verified on both.
 
 Scope: all handlers under `app/api/**`, the public redirect engine (`app/r/[slug]/*`),
 and the shared libs they depend on (`lib/auth.ts`, `lib/cors.ts`, `lib/rate-limit.ts`,

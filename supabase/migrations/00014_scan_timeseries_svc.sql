@@ -21,5 +21,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+-- Supabase default privileges grant EXECUTE to anon/authenticated explicitly,
+-- so revoking PUBLIC alone is not enough — revoke them by name.
 REVOKE EXECUTE ON FUNCTION public.get_scan_timeseries_svc(UUID, UUID, DATE, DATE) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.get_scan_timeseries_svc(UUID, UUID, DATE, DATE) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_scan_timeseries_svc(UUID, UUID, DATE, DATE) TO service_role;
