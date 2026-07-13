@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withAuth } from "@/lib/auth";
+import { withAuth, purgeApiKeyCache } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { createServiceClient } from "@/lib/supabase/service";
 import { delConfig } from "@/lib/kv";
@@ -71,6 +71,14 @@ export const DELETE = withAuth(
       .select("short_slug")
       .eq("user_id", auth.userId);
     await Promise.all((codes ?? []).map((c) => delConfig(c.short_slug)));
+
+    // Purge cached API keys too, or they keep authenticating for up to 60s
+    // after the rows are cascade-deleted.
+    const { data: keys } = await svc
+      .from("api_keys")
+      .select("key_hash")
+      .eq("user_id", auth.userId);
+    await Promise.all((keys ?? []).map((k) => purgeApiKeyCache(k.key_hash)));
 
     const { error } = await svc.auth.admin.deleteUser(auth.userId);
     if (error) return dbError(error);

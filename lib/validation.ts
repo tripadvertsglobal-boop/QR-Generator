@@ -25,16 +25,24 @@ const abDestinations = z
   .min(2, "A/B split needs at least two destinations")
   .max(10);
 
-export const createQrSchema = z.object({
-  destination_url: httpUrl,
-  name: name.nullish(),
-  folder_id: uuid.nullish(),
-  tags: tags.optional(),
-  active_from: z.string().datetime().nullish(),
-  active_until: z.string().datetime().nullish(),
-  password: password.nullish(),
-  ab_destinations: abDestinations.nullish(),
-});
+// When both ends of the active window are set, it must be a real window —
+// until <= from would create a permanently dead link with no warning.
+const activeWindowOk = (d: { active_from?: string | null; active_until?: string | null }) =>
+  !d.active_from || !d.active_until || new Date(d.active_until) > new Date(d.active_from);
+const activeWindowMsg = "active_until must be after active_from";
+
+export const createQrSchema = z
+  .object({
+    destination_url: httpUrl,
+    name: name.nullish(),
+    folder_id: uuid.nullish(),
+    tags: tags.optional(),
+    active_from: z.string().datetime().nullish(),
+    active_until: z.string().datetime().nullish(),
+    password: password.nullish(),
+    ab_destinations: abDestinations.nullish(),
+  })
+  .refine(activeWindowOk, activeWindowMsg);
 
 export const updateQrSchema = z
   .object({
@@ -48,7 +56,8 @@ export const updateQrSchema = z
     password: password.nullish(), // string = set, null = clear, undefined = leave
     ab_destinations: abDestinations.nullish(),
   })
-  .refine((d) => Object.keys(d).length > 0, "No fields to update");
+  .refine((d) => Object.keys(d).length > 0, "No fields to update")
+  .refine(activeWindowOk, activeWindowMsg);
 
 export const createFolderSchema = z.object({
   name: name,
@@ -95,6 +104,12 @@ const webhookEvent = z.enum(["qr.created", "qr.updated", "qr.deleted", "scan.thr
 export const createWebhookSchema = z.object({
   url: httpUrl,
   events: z.array(webhookEvent).min(1),
+});
+
+// Re-enable (or pause) a webhook — e.g. after auto-disable at MAX_FAILURES —
+// without delete/recreate, which would rotate the signing secret.
+export const updateWebhookSchema = z.object({
+  is_active: z.boolean(),
 });
 
 export const updateAccountSchema = z

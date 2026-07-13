@@ -39,6 +39,38 @@ describe("GET /api/v1/webhooks", () => {
   });
 });
 
+describe("PATCH /api/v1/webhooks/[id]", () => {
+  it("re-enables a webhook and resets failure_count", async () => {
+    const mock = setDb([{ data: { id: "w1", is_active: true, failure_count: 0 } }]);
+    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: true }), ctx({ id: "w1" }));
+    expect(res.status).toBe(200);
+    expect(mock.calls).toContainEqual(
+      expect.objectContaining({ method: "update", args: [{ is_active: true, failure_count: 0 }] }),
+    );
+  });
+
+  it("pauses a webhook without touching failure_count", async () => {
+    const mock = setDb([{ data: { id: "w1", is_active: false } }]);
+    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: false }), ctx({ id: "w1" }));
+    expect(res.status).toBe(200);
+    expect(mock.calls).toContainEqual(
+      expect.objectContaining({ method: "update", args: [{ is_active: false }] }),
+    );
+  });
+
+  it("returns 404 when not found", async () => {
+    setDb([{ error: { code: "PGRST116" } }]);
+    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: true }), ctx({ id: "missing" }));
+    expect(res.status).toBe(404);
+  });
+
+  it("rejects an invalid body with 400", async () => {
+    setDb([]);
+    const res = await webhookId.PATCH(jsonRequest("PATCH", {}), ctx({ id: "w1" }));
+    expect(res.status).toBe(400);
+  });
+});
+
 describe("DELETE /api/v1/webhooks/[id]", () => {
   it("deletes a webhook", async () => {
     setDb([{ data: { id: "w1" } }]);

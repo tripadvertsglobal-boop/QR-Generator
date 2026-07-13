@@ -34,7 +34,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     request.headers.get("x-real-ip") ||
     "unknown";
   const rl = await checkRateLimit(`ip:${ip}`, IP_RATE_LIMIT);
-  if (!rl.ok) return new NextResponse("Too many requests", { status: 429 });
+  if (!rl.ok) {
+    return new NextResponse("Too many requests", {
+      status: 429,
+      headers: { "Retry-After": String(Math.max(1, rl.reset - Math.floor(Date.now() / 1000))) },
+    });
+  }
 
   let config = await getConfig(slug);
 

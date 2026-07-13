@@ -15,7 +15,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const rl = await checkRateLimit(`verify:${slug}:${ip}`, 10);
   if (!rl.ok) {
-    return NextResponse.json({ error: "Too many attempts, try again shortly" }, { status: 429 });
+    return NextResponse.json(
+      { error: "Too many attempts, try again shortly" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.max(1, rl.reset - Math.floor(Date.now() / 1000))) },
+      },
+    );
   }
 
   let password = "";

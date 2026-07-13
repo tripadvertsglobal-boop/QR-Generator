@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
+import { fetchAllRows } from "@/lib/paginate";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN;
 
@@ -26,16 +27,21 @@ function csvCell(value: unknown): string {
 // GET /api/v1/qrcodes/export — download the caller's codes as CSV.
 export const GET = withAuth(
   async (_request, auth) => {
-    const { data, error } = await auth.db
-      .from("qr_codes")
-      .select("name, short_slug, destination_url, scan_count, is_active, tags, created_at")
-      .eq("user_id", auth.userId)
-      .order("created_at", { ascending: false });
+    // Page through in .range() chunks — a single query is silently truncated
+    // at PostgREST's max-rows, corrupting the export for large accounts.
+    const { rows, error } = await fetchAllRows((from, to) =>
+      auth.db
+        .from("qr_codes")
+        .select("name, short_slug, destination_url, scan_count, is_active, tags, created_at")
+        .eq("user_id", auth.userId)
+        .order("created_at", { ascending: false })
+        .range(from, to),
+    );
 
     if (error) return dbError(error);
 
     const lines = [COLUMNS.join(",")];
-    for (const row of data ?? []) {
+    for (const row of rows) {
       const enriched = { ...row, tracking_url: `${REDIRECT_DOMAIN}/r/${row.short_slug}` };
       lines.push(COLUMNS.map((col) => csvCell(enriched[col as keyof typeof enriched])).join(","));
     }

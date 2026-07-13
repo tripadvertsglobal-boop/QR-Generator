@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setDb } from "../helpers/route";
 import { jsonRequest, ctx } from "../helpers/request";
+import { isUrlSafe } from "@/lib/safe-browsing";
 import * as route from "@/app/api/v1/qrcodes/[id]/route";
 
 beforeEach(() => {
@@ -31,6 +32,32 @@ describe("PATCH /api/v1/qrcodes/[id]", () => {
     setDb([]);
     const res = await route.PATCH(jsonRequest("PATCH", {}), ctx({ id: "abc" }));
     expect(res.status).toBe(400);
+  });
+
+  it("rejects an unsafe A/B destination with 400", async () => {
+    setDb([]);
+    // No destination_url in the patch, so only the two A/B arms are screened.
+    vi.mocked(isUrlSafe).mockResolvedValueOnce(false);
+    const res = await route.PATCH(
+      jsonRequest("PATCH", {
+        ab_destinations: [
+          { url: "https://malware.test", weight: 50 },
+          { url: "https://ok.test", weight: 50 },
+        ],
+      }),
+      ctx({ id: "abc" }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a folder the caller does not own with 400", async () => {
+    setDb([{ data: null }]); // folder ownership lookup finds nothing
+    const res = await route.PATCH(
+      jsonRequest("PATCH", { folder_id: "22222222-2222-4222-8222-222222222222" }),
+      ctx({ id: "abc" }),
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe("Folder not found");
   });
 });
 

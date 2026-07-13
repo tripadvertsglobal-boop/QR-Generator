@@ -32,8 +32,29 @@ export const PATCH = withAuth(
       );
     }
 
-    if (parsed.data.destination_url && !(await isUrlSafe(parsed.data.destination_url))) {
+    // Screen every URL a scanner can be sent to — A/B arms included, since
+    // pickDestination routes real traffic to them.
+    const urls = [
+      ...(parsed.data.destination_url ? [parsed.data.destination_url] : []),
+      ...(parsed.data.ab_destinations ?? []).map((d) => d.url),
+    ];
+    const safety = await Promise.all(urls.map(isUrlSafe));
+    if (safety.some((ok) => !ok)) {
       return NextResponse.json({ error: "Destination URL was flagged as unsafe" }, { status: 400 });
+    }
+
+    // The FK only proves the folder exists — ownership must be checked here,
+    // since under API-key auth the service client bypasses RLS.
+    if (parsed.data.folder_id) {
+      const { data: folder } = await auth.db
+        .from("folders")
+        .select("id")
+        .eq("id", parsed.data.folder_id)
+        .eq("user_id", auth.userId)
+        .maybeSingle();
+      if (!folder) {
+        return NextResponse.json({ error: "Folder not found" }, { status: 400 });
+      }
     }
 
     const fields = await toDbFields(parsed.data);

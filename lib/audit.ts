@@ -59,11 +59,20 @@ type AuditEntry = {
   request?: Request;
 };
 
+// Data minimization: store only the network prefix, matching the hashed-IP
+// posture of scan_logs. Enough for the owner to spot an unfamiliar origin,
+// not enough to identify a device. IPv4 keeps /24, IPv6 keeps /48.
+export function maskIp(ip: string): string {
+  if (ip.includes(":")) return ip.split(":").slice(0, 3).join(":") + "::";
+  return ip.replace(/\.\d+$/, ".0");
+}
+
 // Fire-and-forget audit write (after the response is sent). Failures are
 // swallowed — auditing must never break the mutation it records.
 export function logAudit(entry: AuditEntry): void {
-  const ip =
-    entry.request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const rawIp =
+    entry.request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  const ip = rawIp ? maskIp(rawIp) : null;
   const userAgent = entry.request?.headers.get("user-agent") ?? null;
 
   after(async () => {

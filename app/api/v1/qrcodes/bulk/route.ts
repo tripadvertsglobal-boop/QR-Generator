@@ -4,6 +4,7 @@ import { dbError } from "@/lib/api-error";
 import { setConfig, delConfig } from "@/lib/kv";
 import { buildConfig } from "@/lib/slug-config";
 import { generateSlug } from "@/lib/slug";
+import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
 import { bulkCreateSchema, bulkDeleteSchema } from "@/lib/validation";
 
@@ -25,6 +26,36 @@ export const POST = withAuth(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
+    }
+
+    // Same Safe Browsing gate as single create — bulk must not be the cheap
+    // path to mint malicious links. Results are KV-cached, so dupes are cheap.
+    const safety = await Promise.all(
+      parsed.data.codes.map((c) => isUrlSafe(c.destination_url)),
+    );
+    const flagged = safety.findIndex((ok) => !ok);
+    if (flagged !== -1) {
+      return NextResponse.json(
+        { error: `codes[${flagged}].destination_url was flagged as unsafe` },
+        { status: 400 },
+      );
+    }
+
+    // The FK only proves a folder exists — ownership must be checked here,
+    // since under API-key auth the service client bypasses RLS.
+    const folderIds = [
+      ...new Set(parsed.data.codes.map((c) => c.folder_id).filter((v): v is string => !!v)),
+    ];
+    if (folderIds.length > 0) {
+      const { data: owned, error: folderError } = await auth.db
+        .from("folders")
+        .select("id")
+        .eq("user_id", auth.userId)
+        .in("id", folderIds);
+      if (folderError) return dbError(folderError);
+      if ((owned ?? []).length !== folderIds.length) {
+        return NextResponse.json({ error: "Folder not found" }, { status: 400 });
+      }
     }
 
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -51,9 +82,19 @@ export const POST = withAuth(
         newValue: { count: data.length, ids: data.map((row) => row.id) },
         request,
       });
+      // Same curated contract as single create — never the raw row (which
+      // would expose password_hash and internal columns).
       const codes = data.map((row) => ({
-        ...row,
+        id: row.id,
+        name: row.name,
+        destination_url: row.destination_url,
+        short_slug: row.short_slug,
         tracking_url: `${REDIRECT_DOMAIN}/r/${row.short_slug}`,
+        qr_svg_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/v1/qrcodes/${row.id}/qr.svg`,
+        folder_id: row.folder_id,
+        tags: row.tags,
+        is_active: row.is_active,
+        created_at: row.created_at,
       }));
       return NextResponse.json({ created: codes.length, codes }, { status: 201 });
     }

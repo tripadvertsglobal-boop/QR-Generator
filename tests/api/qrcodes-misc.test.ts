@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setDb } from "../helpers/route";
+import { authState } from "../helpers/auth-state";
 import { jsonRequest, ctx } from "../helpers/request";
 import * as analytics from "@/app/api/v1/qrcodes/[id]/analytics/route";
 import * as qrsvg from "@/app/api/v1/qrcodes/[id]/qr.svg/route";
@@ -28,6 +29,19 @@ describe("GET /api/v1/qrcodes/[id]/analytics", () => {
     setDb([{ error: { message: "Forbidden: not owner" } }]);
     const res = await analytics.GET(jsonRequest("GET"), ctx({ id: "abc" }));
     expect(res.status).toBe(403);
+  });
+
+  it("uses the service-role RPC (with the key's user id) under API-key auth", async () => {
+    const mock = setDb([{ data: [] }]);
+    authState.current.authType = "apikey";
+    const res = await analytics.GET(jsonRequest("GET"), ctx({ id: "abc" }));
+    expect(res.status).toBe(200);
+    expect(mock.calls).toContainEqual(
+      expect.objectContaining({
+        method: "rpc",
+        args: ["get_scan_timeseries_svc", expect.objectContaining({ p_user_id: "user-1" })],
+      }),
+    );
   });
 });
 

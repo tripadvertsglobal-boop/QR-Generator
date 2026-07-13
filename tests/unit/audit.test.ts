@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { auditDiff, auditSnapshot } from "@/lib/audit";
+import { auditDiff, auditSnapshot, maskIp } from "@/lib/audit";
 
 describe("auditSnapshot", () => {
   it("returns null for empty input", () => {
@@ -46,5 +46,14 @@ describe("auditDiff", () => {
   it("treats missing before as null old values (create-like)", () => {
     const diff = auditDiff(null, { name: "B" }, ["name"]);
     expect(diff).toEqual({ oldValue: { name: null }, newValue: { name: "B" } });
+  });
+});
+
+describe("maskIp", () => {
+  it("zeroes the last IPv4 octet", () => {
+    expect(maskIp("203.0.113.45")).toBe("203.0.113.0");
+  });
+  it("keeps only the /48 of an IPv6 address", () => {
+    expect(maskIp("2001:db8:abcd:12:34:56:78:90")).toBe("2001:db8:abcd::");
   });
 });

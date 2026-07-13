@@ -128,6 +128,14 @@ export async function resolveAuth(request: Request): Promise<AuthContext | null>
 
 type WithAuthOptions = { scope?: string; jwtOnly?: boolean };
 
+// Pre-auth IP throttle: without it, unauthenticated traffic (e.g. API-key
+// guessing) never reaches the per-user/per-key limiter and each attempt costs a
+// DB lookup. Generous enough that NAT'd legitimate users never trip it.
+const PRE_AUTH_IP_LIMIT = 1000; // requests/min per IP
+
+const retryAfter = (reset: number) =>
+  String(Math.max(1, reset - Math.floor(Date.now() / 1000)));
+
 /**
  * Wraps an API route handler with: CORS (incl. OPTIONS preflight), dual auth
  * (session JWT or X-API-Key), scope + jwt-only gating, and KV rate limiting
@@ -142,6 +150,16 @@ export function withAuth<C>(
 
     if (request.method === "OPTIONS") {
       return new NextResponse(null, { status: 204, headers: cors });
+    }
+
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const pre = await checkRateLimit(`preauth:${ip}`, PRE_AUTH_IP_LIMIT);
+    if (!pre.ok) {
+      return applyHeaders(
+        NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 }),
+        { ...cors, "Retry-After": retryAfter(pre.reset) },
+      );
     }
 
     const auth = await resolveAuth(request);
@@ -173,7 +191,7 @@ export function withAuth<C>(
     if (!rl.ok) {
       return applyHeaders(
         NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 }),
-        { ...cors, ...rlHeaders },
+        { ...cors, ...rlHeaders, "Retry-After": retryAfter(rl.reset) },
       );
     }
 

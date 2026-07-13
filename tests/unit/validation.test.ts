@@ -3,6 +3,7 @@ import {
   createQrSchema,
   updateQrSchema,
   createWebhookSchema,
+  updateWebhookSchema,
   createKeySchema,
 } from "@/lib/validation";
 
@@ -29,6 +30,30 @@ describe("createQrSchema", () => {
       createQrSchema.safeParse({ destination_url: "https://x.com", password: "abcd" }).success,
     ).toBe(true);
   });
+  it("rejects an active window that ends before it starts", () => {
+    expect(
+      createQrSchema.safeParse({
+        destination_url: "https://x.com",
+        active_from: "2026-07-10T00:00:00.000Z",
+        active_until: "2026-07-01T00:00:00.000Z",
+      }).success,
+    ).toBe(false);
+    expect(
+      createQrSchema.safeParse({
+        destination_url: "https://x.com",
+        active_from: "2026-07-01T00:00:00.000Z",
+        active_until: "2026-07-10T00:00:00.000Z",
+      }).success,
+    ).toBe(true);
+  });
+  it("accepts a single-ended active window", () => {
+    expect(
+      createQrSchema.safeParse({
+        destination_url: "https://x.com",
+        active_from: "2026-07-01T00:00:00.000Z",
+      }).success,
+    ).toBe(true);
+  });
 });
 
 describe("updateQrSchema", () => {
@@ -37,6 +62,22 @@ describe("updateQrSchema", () => {
   });
   it("accepts a single field", () => {
     expect(updateQrSchema.safeParse({ is_active: false }).success).toBe(true);
+  });
+  it("rejects an active window that ends before it starts", () => {
+    expect(
+      updateQrSchema.safeParse({
+        active_from: "2026-07-10T00:00:00.000Z",
+        active_until: "2026-07-01T00:00:00.000Z",
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("updateWebhookSchema", () => {
+  it("requires a boolean is_active", () => {
+    expect(updateWebhookSchema.safeParse({ is_active: true }).success).toBe(true);
+    expect(updateWebhookSchema.safeParse({ is_active: "yes" }).success).toBe(false);
+    expect(updateWebhookSchema.safeParse({}).success).toBe(false);
   });
 });
 

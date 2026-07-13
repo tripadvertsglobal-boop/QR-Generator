@@ -29,11 +29,32 @@ export const POST = withAuth(
       );
     }
 
-    if (!(await isUrlSafe(parsed.data.destination_url))) {
+    // Screen every URL a scanner can be sent to — A/B arms included, since
+    // pickDestination routes real traffic to them.
+    const urls = [
+      parsed.data.destination_url,
+      ...(parsed.data.ab_destinations ?? []).map((d) => d.url),
+    ];
+    const safety = await Promise.all(urls.map(isUrlSafe));
+    if (safety.some((ok) => !ok)) {
       return NextResponse.json(
         { error: "Destination URL was flagged as unsafe" },
         { status: 400 },
       );
+    }
+
+    // The FK only proves the folder exists — ownership must be checked here,
+    // since under API-key auth the service client bypasses RLS.
+    if (parsed.data.folder_id) {
+      const { data: folder } = await auth.db
+        .from("folders")
+        .select("id")
+        .eq("id", parsed.data.folder_id)
+        .eq("user_id", auth.userId)
+        .maybeSingle();
+      if (!folder) {
+        return NextResponse.json({ error: "Folder not found" }, { status: 400 });
+      }
     }
 
     const fields = await toDbFields(parsed.data);
@@ -92,12 +113,16 @@ export const POST = withAuth(
   { scope: "qrcodes:write" },
 );
 
-// GET /api/v1/qrcodes — list the caller's codes. Filters: ?folder=<uuid|none>, ?tag=<tag>.
+// GET /api/v1/qrcodes — list the caller's codes. Filters: ?folder=<uuid|none>,
+// ?tag=<tag>. Pagination: ?limit=<1..1000> (default 1000), ?offset=<n> —
+// PostgREST caps responses at max-rows, so an explicit range keeps paging honest.
 export const GET = withAuth(
   async (request, auth) => {
     const sp = new URL(request.url).searchParams;
     const folder = sp.get("folder");
     const tag = sp.get("tag");
+    const limit = Math.min(1000, Math.max(1, Number(sp.get("limit")) || 1000));
+    const offset = Math.max(0, Number(sp.get("offset")) || 0);
 
     // Explicit column list keeps the password hash out of API responses.
     let query = auth.db
@@ -106,7 +131,8 @@ export const GET = withAuth(
         "id, user_id, short_slug, destination_url, name, is_active, scan_count, folder_id, tags, active_from, active_until, ab_destinations, created_at, updated_at",
       )
       .eq("user_id", auth.userId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
     if (folder === "none") query = query.is("folder_id", null);
     else if (folder) query = query.eq("folder_id", folder);
     if (tag) query = query.contains("tags", [tag]);

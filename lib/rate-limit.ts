@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { log } from "@/lib/log";
 
 const url = process.env.KV_REST_API_URL;
 const token = process.env.KV_REST_API_TOKEN;
@@ -29,14 +30,23 @@ export async function checkRateLimit(
   const now = Date.now();
   const windowStart = now - windowSeconds * 1000;
 
-  const pipe = redis.pipeline();
-  pipe.zremrangebyscore(key, 0, windowStart);
-  pipe.zadd(key, { score: now, member: `${now}-${Math.random()}` });
-  pipe.zcard(key);
-  pipe.expire(key, windowSeconds);
-  const res = (await pipe.exec()) as [unknown, unknown, number, unknown];
+  try {
+    const pipe = redis.pipeline();
+    pipe.zremrangebyscore(key, 0, windowStart);
+    pipe.zadd(key, { score: now, member: `${now}-${Math.random()}` });
+    pipe.zcard(key);
+    pipe.expire(key, windowSeconds);
+    const res = (await pipe.exec()) as [unknown, unknown, number, unknown];
 
-  const count = res[2] ?? 0;
-  const remaining = Math.max(0, limit - count);
-  return { ok: count <= limit, limit, remaining, reset };
+    const count = res[2] ?? 0;
+    const remaining = Math.max(0, limit - count);
+    return { ok: count <= limit, limit, remaining, reset };
+  } catch (err) {
+    // Redis unreachable: fail open (allow) — an Upstash blip must not take down
+    // every API request and redirect. Logged so the unprotected window is visible.
+    log("warn", "rate_limit_error", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: true, limit, remaining: limit, reset };
+  }
 }
