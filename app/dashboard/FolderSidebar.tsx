@@ -2,25 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/app/_components/ui/Button";
 import { Input } from "@/app/_components/ui/Input";
 import type { Folder } from "./types";
 
+// Rendered as an indented submenu under the "QR codes" nav item in
+// DashboardShell. `sectionActive` is true only when the QR codes section is
+// the current route, so folder rows never highlight while on other pages.
 export default function FolderSidebar({
   folders,
   counts,
   total,
   unfiled,
-  activeFolder,
+  sectionActive,
+  onNavigate,
 }: {
   folders: Folder[];
   counts: Record<string, number>;
   total: number;
   unfiled: number;
-  activeFolder: string | null;
+  sectionActive: boolean;
+  onNavigate?: () => void;
 }) {
   const router = useRouter();
+  const activeFolder = useSearchParams().get("folder");
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [color, setColor] = useState("#6366f1");
@@ -55,12 +61,20 @@ export default function FolderSidebar({
     }`;
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-0.5 lg:w-56">
-      <Link href="/dashboard" className={rowCls(activeFolder === null)}>
+    <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-2">
+      <Link
+        href="/dashboard"
+        onClick={onNavigate}
+        className={rowCls(sectionActive && activeFolder === null)}
+      >
         <span>All codes</span>
         <span className="tabular-nums text-muted-2">{total}</span>
       </Link>
-      <Link href="/dashboard?folder=none" className={rowCls(activeFolder === "none")}>
+      <Link
+        href="/dashboard?folder=none"
+        onClick={onNavigate}
+        className={rowCls(sectionActive && activeFolder === "none")}
+      >
         <span>Unfiled</span>
         <span className="tabular-nums text-muted-2">{unfiled}</span>
       </Link>
@@ -100,8 +114,12 @@ export default function FolderSidebar({
       )}
 
       {folders.map((f) => (
-        <div key={f.id} className={rowCls(activeFolder === f.id)}>
-          <Link href={`/dashboard?folder=${f.id}`} className="flex min-w-0 flex-1 items-center gap-2">
+        <div key={f.id} className={rowCls(sectionActive && activeFolder === f.id)}>
+          <Link
+            href={`/dashboard?folder=${f.id}`}
+            onClick={onNavigate}
+            className="flex min-w-0 flex-1 items-center gap-2"
+          >
             <span
               className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: f.color ?? "#9ca3af" }}
@@ -119,6 +137,6 @@ export default function FolderSidebar({
           </button>
         </div>
       ))}
-    </aside>
+    </div>
   );
 }

@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ComponentType, type ReactNode, type SVGProps } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+  type ComponentType,
+  type ReactNode,
+  type SVGProps,
+} from "react";
 import { siteConfig } from "@/site.config";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
+import FolderSidebar from "../FolderSidebar";
+import type { Folder } from "../types";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 type NavItem = { href: string; label: string; icon: Icon; exact?: boolean };
@@ -32,10 +41,32 @@ function useActive() {
   };
 }
 
-export default function DashboardShell({ email, children }: { email: string; children: ReactNode }) {
+export default function DashboardShell({
+  email,
+  folders,
+  counts,
+  total,
+  unfiled,
+  children,
+}: {
+  email: string;
+  folders: Folder[];
+  counts: Record<string, number>;
+  total: number;
+  unfiled: number;
+  children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const isActive = useActive();
   const router = useRouter();
+
+  // The "QR codes" item (NAV[0]) owns the folder submenu. It auto-opens when
+  // you enter that section, and the chevron lets you toggle it anywhere.
+  const qrActive = isActive(NAV[0]);
+  const [folderOpen, setFolderOpen] = useState(qrActive);
+  useEffect(() => {
+    if (qrActive) setFolderOpen(true);
+  }, [qrActive]);
 
   async function signOut() {
     await createClient().auth.signOut();
@@ -48,22 +79,52 @@ export default function DashboardShell({ email, children }: { email: string; chi
       {NAV.map((item) => {
         const active = isActive(item);
         const Icon = item.icon;
+        const isQr = item.href === NAV[0].href;
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              active
-                ? "bg-brand-tint text-brand"
-                : "text-muted hover:bg-black/[0.04] hover:text-foreground",
+          <div key={item.href}>
+            <div className="flex items-center gap-1">
+              <Link
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex flex-1 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-brand-tint text-brand"
+                    : "text-muted hover:bg-black/[0.04] hover:text-foreground",
+                )}
+              >
+                <Icon
+                  className={cn("h-[18px] w-[18px] shrink-0", active ? "text-brand" : "text-muted-2")}
+                />
+                {item.label}
+              </Link>
+              {isQr && (
+                <button
+                  onClick={() => setFolderOpen((v) => !v)}
+                  aria-label={folderOpen ? "Collapse folders" : "Expand folders"}
+                  aria-expanded={folderOpen}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-2 transition-colors hover:bg-black/[0.04] hover:text-foreground"
+                >
+                  <ChevronIcon
+                    className={cn("h-4 w-4 transition-transform", folderOpen && "rotate-180")}
+                  />
+                </button>
+              )}
+            </div>
+            {isQr && folderOpen && (
+              <Suspense fallback={null}>
+                <FolderSidebar
+                  folders={folders}
+                  counts={counts}
+                  total={total}
+                  unfiled={unfiled}
+                  sectionActive={qrActive}
+                  onNavigate={onNavigate}
+                />
+              </Suspense>
             )}
-          >
-            <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-brand" : "text-muted-2")} />
-            {item.label}
-          </Link>
+          </div>
         );
       })}
     </nav>
@@ -227,6 +288,13 @@ function CloseIcon(p: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base(p)}>
       <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}
+function ChevronIcon(p: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(p)}>
+      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }

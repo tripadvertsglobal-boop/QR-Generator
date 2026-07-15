@@ -1,7 +1,6 @@
 import { createUserClient } from "@/lib/supabase/server";
 import PageHeader from "@/app/_components/ui/PageHeader";
 import CreateQrForm from "./CreateQrForm";
-import FolderSidebar from "./FolderSidebar";
 import TagFilterBar from "./TagFilterBar";
 import QrList from "./QrList";
 import type { Folder, QrCode } from "./types";
@@ -34,13 +33,9 @@ export default async function DashboardPage({
     return { ...rest, has_password: !!password_hash } as QrCode;
   });
 
-  // Counts for the sidebar (computed from the full set).
-  const counts: Record<string, number> = {};
-  let unfiled = 0;
+  // Collect the tag set for the filter bar (folder counts now live in the shell).
   const tagSet = new Set<string>();
   for (const c of allCodes) {
-    if (c.folder_id) counts[c.folder_id] = (counts[c.folder_id] ?? 0) + 1;
-    else unfiled += 1;
     for (const t of c.tags) tagSet.add(t);
   }
 
@@ -60,20 +55,10 @@ export default async function DashboardPage({
         className="mb-8"
       />
 
-      <div className="flex flex-col gap-8 lg:flex-row">
-        <FolderSidebar
-          folders={folders}
-          counts={counts}
-          total={allCodes.length}
-          unfiled={unfiled}
-          activeFolder={folder}
-        />
-
-        <div className="flex flex-1 flex-col gap-6">
-          <CreateQrForm folders={folders} />
-          <TagFilterBar tags={[...tagSet].sort()} activeTag={tag} folder={folder} />
-          <QrList codes={visible} />
-        </div>
+      <div className="flex flex-col gap-6">
+        <CreateQrForm folders={folders} />
+        <TagFilterBar tags={[...tagSet].sort()} activeTag={tag} folder={folder} />
+        <QrList codes={visible} />
       </div>
     </main>
   );
