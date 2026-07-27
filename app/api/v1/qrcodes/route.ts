@@ -8,6 +8,7 @@ import { generateSlug } from "@/lib/slug";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit, auditSnapshot } from "@/lib/audit";
 import { emitEvent } from "@/lib/webhooks";
+import { getPlanLimits, limitReached } from "@/lib/plan";
 import { createQrSchema } from "@/lib/validation";
 
 // POST /api/v1/qrcodes — create a dynamic QR: generate slug, insert (scoped to
@@ -27,6 +28,24 @@ export const POST = withAuth(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
+    }
+
+    // Plan quota, checked before the paid-for work (Safe Browsing, bcrypt).
+    // Enforced here rather than in a trigger: exceeding by one under a race is
+    // harmless for a quota, and a per-row trigger would fire 100x on bulk.
+    const limits = await getPlanLimits(auth.db, auth.userId);
+    if (limits.maxQrCodes !== Infinity) {
+      const { count, error: countError } = await auth.db
+        .from("qr_codes")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", auth.userId);
+      if (countError) return dbError(countError);
+      if ((count ?? 0) >= limits.maxQrCodes) {
+        return NextResponse.json(
+          { error: limitReached("QR codes", limits.maxQrCodes) },
+          { status: 402 },
+        );
+      }
     }
 
     // Screen every URL a scanner can be sent to — A/B arms included, since

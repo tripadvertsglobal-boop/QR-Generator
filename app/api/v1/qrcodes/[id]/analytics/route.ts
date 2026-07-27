@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
+import { isUuid } from "@/lib/validation";
 
 // GET /api/v1/qrcodes/[id]/analytics?days=30 — per-day scan timeseries.
 // JWT auth uses get_scan_timeseries (ownership via auth.uid()); API-key auth
@@ -9,6 +10,7 @@ import { dbError } from "@/lib/api-error";
 export const GET = withAuth(
   async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
+    if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const daysParam = Number(new URL(request.url).searchParams.get("days"));
     const days = Number.isFinite(daysParam) && daysParam > 0 && daysParam <= 365 ? daysParam : 30;

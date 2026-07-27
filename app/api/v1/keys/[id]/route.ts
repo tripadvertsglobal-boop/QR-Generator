@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { withAuth, purgeApiKeyCache } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { logAudit, auditSnapshot } from "@/lib/audit";
+import { isUuid } from "@/lib/validation";
 
 // DELETE /api/v1/keys/[id] — revoke a key. JWT only. Purges the KV cache so the
 // key stops authenticating immediately.
 export const DELETE = withAuth(
   async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
+    if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const { data, error } = await auth.db
       .from("api_keys")

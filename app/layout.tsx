@@ -18,9 +18,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const title = `${siteConfig.company.name} — ${siteConfig.company.tagline}`;
+
 export const metadata: Metadata = {
-  title: `${siteConfig.company.name} — ${siteConfig.company.tagline}`,
+  // Makes every relative metadata URL (canonical, OG image) absolute.
+  metadataBase: process.env.NEXT_PUBLIC_APP_URL
+    ? new URL(process.env.NEXT_PUBLIC_APP_URL)
+    : undefined,
+  title,
   description: siteConfig.company.description,
+  openGraph: {
+    title,
+    description: siteConfig.company.description,
+    siteName: siteConfig.company.name,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description: siteConfig.company.description,
+  },
 };
 
 export default async function RootLayout({

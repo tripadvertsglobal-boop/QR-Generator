@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { logAudit, auditSnapshot } from "@/lib/audit";
-import { updateWebhookSchema } from "@/lib/validation";
+import { updateWebhookSchema, isUuid } from "@/lib/validation";
 
 // PATCH /api/v1/webhooks/[id] — pause or re-enable a webhook. JWT only.
 // Re-enabling resets failure_count so an endpoint auto-disabled at MAX_FAILURES
@@ -10,6 +10,7 @@ import { updateWebhookSchema } from "@/lib/validation";
 export const PATCH = withAuth(
   async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
+    if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     let raw: unknown;
     try {
@@ -59,6 +60,7 @@ export const PATCH = withAuth(
 export const DELETE = withAuth(
   async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
+    if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const { data, error } = await auth.db
       .from("webhooks")

@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createUserClient } from "@/lib/supabase/server";
+import { limitsFor } from "@/lib/plan";
 import Badge from "@/app/_components/ui/Badge";
 import { buttonClasses } from "@/app/_components/ui/Button";
 import ScanChart from "./ScanChart";
@@ -31,19 +33,29 @@ export default async function QrDetailPage({
   // Scan geography. Recent scans come straight from scan_logs (RLS-scoped to the
   // owner); the country breakdown uses the ownership-guarded get_scan_geo RPC.
   // Fixed all-time bounds keep this render pure (no Date.now()).
-  const [{ data: recentScans }, { data: geo }] = await Promise.all([
+  // The country breakdown is a paid feature, so it is skipped entirely on Free
+  // rather than fetched and hidden.
+  // No .eq() and no getUser() round-trip needed: the owner_crud_profile policy
+  // already restricts user_profiles to the caller's own row.
+  const { data: profile } = await supabase.from("user_profiles").select("plan").maybeSingle();
+  const limits = limitsFor(profile?.plan);
+
+  const [{ data: recentScans }, geoResult] = await Promise.all([
     supabase
       .from("scan_logs")
       .select("scanned_at, country, region, city")
       .eq("qr_code_id", code.id)
       .order("scanned_at", { ascending: false })
       .limit(50),
-    supabase.rpc("get_scan_geo", {
-      p_qr_code_id: code.id,
-      p_start: "2020-01-01",
-      p_end: "2099-12-31",
-    }),
+    limits.geoAnalytics
+      ? supabase.rpc("get_scan_geo", {
+          p_qr_code_id: code.id,
+          p_start: "2020-01-01",
+          p_end: "2099-12-31",
+        })
+      : Promise.resolve({ data: null }),
   ]);
+  const geo = geoResult.data;
   const recent = (recentScans ?? []) as {
     scanned_at: string;
     country: string | null;
@@ -110,7 +122,14 @@ export default async function QrDetailPage({
       <div className="grid gap-6 sm:grid-cols-2">
         <section className="rounded-xl border border-border bg-surface p-5 shadow-card">
           <h2 className="mb-4 text-sm font-semibold">Scans by country</h2>
-          {countries.length === 0 ? (
+          {!limits.geoAnalytics ? (
+            <p className="text-sm text-muted-2">
+              Geographic breakdown is available on Pro.{" "}
+              <Link href="/pricing" className="text-brand hover:underline">
+                See plans
+              </Link>
+            </p>
+          ) : countries.length === 0 ? (
             <p className="text-sm text-muted-2">No scans recorded yet.</p>
           ) : (
             <ul className="flex flex-col gap-2.5">

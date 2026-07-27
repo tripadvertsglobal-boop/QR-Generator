@@ -3,6 +3,7 @@ import { setDb } from "../helpers/route";
 import { jsonRequest, ctx } from "../helpers/request";
 import * as webhooks from "@/app/api/v1/webhooks/route";
 import * as webhookId from "@/app/api/v1/webhooks/[id]/route";
+import { RES_ID, MISSING_ID } from "../helpers/ids";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -42,7 +43,7 @@ describe("GET /api/v1/webhooks", () => {
 describe("PATCH /api/v1/webhooks/[id]", () => {
   it("re-enables a webhook and resets failure_count", async () => {
     const mock = setDb([{ data: { id: "w1", is_active: true, failure_count: 0 } }]);
-    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: true }), ctx({ id: "w1" }));
+    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: true }), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
     expect(mock.calls).toContainEqual(
       expect.objectContaining({ method: "update", args: [{ is_active: true, failure_count: 0 }] }),
@@ -51,7 +52,7 @@ describe("PATCH /api/v1/webhooks/[id]", () => {
 
   it("pauses a webhook without touching failure_count", async () => {
     const mock = setDb([{ data: { id: "w1", is_active: false } }]);
-    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: false }), ctx({ id: "w1" }));
+    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: false }), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
     expect(mock.calls).toContainEqual(
       expect.objectContaining({ method: "update", args: [{ is_active: false }] }),
@@ -60,13 +61,13 @@ describe("PATCH /api/v1/webhooks/[id]", () => {
 
   it("returns 404 when not found", async () => {
     setDb([{ error: { code: "PGRST116" } }]);
-    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: true }), ctx({ id: "missing" }));
+    const res = await webhookId.PATCH(jsonRequest("PATCH", { is_active: true }), ctx({ id: MISSING_ID }));
     expect(res.status).toBe(404);
   });
 
   it("rejects an invalid body with 400", async () => {
     setDb([]);
-    const res = await webhookId.PATCH(jsonRequest("PATCH", {}), ctx({ id: "w1" }));
+    const res = await webhookId.PATCH(jsonRequest("PATCH", {}), ctx({ id: RES_ID }));
     expect(res.status).toBe(400);
   });
 });
@@ -74,13 +75,13 @@ describe("PATCH /api/v1/webhooks/[id]", () => {
 describe("DELETE /api/v1/webhooks/[id]", () => {
   it("deletes a webhook", async () => {
     setDb([{ data: { id: "w1" } }]);
-    const res = await webhookId.DELETE(jsonRequest("DELETE"), ctx({ id: "w1" }));
+    const res = await webhookId.DELETE(jsonRequest("DELETE"), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
   });
 
   it("returns 404 when not found", async () => {
     setDb([{ error: { code: "PGRST116" } }]);
-    const res = await webhookId.DELETE(jsonRequest("DELETE"), ctx({ id: "missing" }));
+    const res = await webhookId.DELETE(jsonRequest("DELETE"), ctx({ id: MISSING_ID }));
     expect(res.status).toBe(404);
   });
 });

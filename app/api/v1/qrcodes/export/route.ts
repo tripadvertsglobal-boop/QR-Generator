@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { fetchAllRows } from "@/lib/paginate";
+import { getPlanLimits, upgradeRequired } from "@/lib/plan";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN;
 
@@ -27,6 +28,13 @@ function csvCell(value: unknown): string {
 // GET /api/v1/qrcodes/export — download the caller's codes as CSV.
 export const GET = withAuth(
   async (_request, auth) => {
+    // CSV export is a paid feature. The GDPR archive at /api/v1/account/export
+    // is deliberately NOT gated — data portability is a legal right, not a tier.
+    const limits = await getPlanLimits(auth.db, auth.userId);
+    if (!limits.bulkOperations) {
+      return NextResponse.json({ error: upgradeRequired("CSV export") }, { status: 402 });
+    }
+
     // Page through in .range() chunks — a single query is silently truncated
     // at PostgREST's max-rows, corrupting the export for large accounts.
     const { rows, error } = await fetchAllRows((from, to) =>

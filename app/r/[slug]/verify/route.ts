@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createUnlockToken, unlockCookieName } from "@/lib/link-token";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
 
 // POST /r/[slug]/verify — check a submitted password (bcrypt) and, on success,
 // set an HMAC-signed unlock cookie the edge redirect can verify. Node runtime
@@ -12,7 +13,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   // Throttle password guesses per-IP-per-slug to blunt brute force (no-ops
   // without KV configured).
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = clientIp(request) ?? "unknown";
   const rl = await checkRateLimit(`verify:${slug}:${ip}`, 10);
   if (!rl.ok) {
     return NextResponse.json(

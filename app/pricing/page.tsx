@@ -54,16 +54,30 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <Link
-                href={plan.href}
-                className={`mt-8 rounded-md px-4 py-2.5 text-center text-sm font-medium ${
-                  plan.highlighted
-                    ? "text-[var(--brand-fg)] [background:var(--brand)] hover:[background:var(--brand-hover)]"
-                    : "border border-black/15 hover:border-black/40"
-                }`}
-              >
-                {plan.cta}
-              </Link>
+              {plan.available ? (
+                <Link
+                  href={plan.href}
+                  className={`mt-8 rounded-md px-4 py-2.5 text-center text-sm font-medium ${
+                    plan.highlighted
+                      ? "text-[var(--brand-fg)] [background:var(--brand)] hover:[background:var(--brand-hover)]"
+                      : "border border-black/15 hover:border-black/40"
+                  }`}
+                >
+                  {plan.cta}
+                </Link>
+              ) : (
+                <div className="mt-8">
+                  <p
+                    aria-disabled="true"
+                    className="cursor-not-allowed rounded-md border border-black/10 px-4 py-2.5 text-center text-sm font-medium text-black/40"
+                  >
+                    {plan.cta}
+                  </p>
+                  <p className="mt-2 text-center text-xs text-black/50">
+                    Self-serve upgrades aren’t open yet.
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QR Studio
 
-## Getting Started
+Dynamic QR codes: generate a code once, change where it points at any time, and
+track every scan. The printed code encodes a tracking URL (`/r/<slug>`), never
+the destination, so the destination stays editable forever.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router). Note: `middleware.ts` is renamed to `proxy.ts`,
+  route `params` is a `Promise`, and fire-and-forget work uses `after()` from
+  `next/server`. See `AGENTS.md`.
+- **Supabase** — Postgres + Auth, with row-level security on every table.
+- **Upstash Redis** — slug cache for the redirect hot path, plus rate limiting.
+- **Vercel** — hosting, cron, and analytics.
+
+## Getting started
 
 ```bash
+cp .env.example .env.local   # then fill it in — see the contract below
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app runs without Redis, Safe Browsing, or Sentry configured; each simply
+degrades (see the comments in `.env.example`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Migrations live in `supabase/migrations/` and are applied in filename order.
 
-## Learn More
+```bash
+supabase db start    # local Postgres with every migration applied (needs Docker)
+supabase db diff     # should report no changes — CI fails on drift
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+npm run typecheck
+npm test             # vitest — unit, API route, and component tests
+npm run test:e2e     # playwright (opt-in; needs a live Supabase project)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+CI runs lint, typecheck, tests, and a production build on every PR.
 
-## Deploy on Vercel
+## Configuration contract
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`lib/env.ts` is the single source of truth for which environment variables are
+required. A **production** build (`VERCEL_ENV=production`) fails outright if a
+required variable is missing, or if `site.config.ts` still contains placeholder
+company contact details. Local and CI builds are unaffected.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Branding, marketing copy, and pricing all live in `site.config.ts`.
+
+## Plans
+
+`lib/plan.ts` defines the tiers advertised on `/pricing` and the limits the API
+enforces. Billing is not implemented yet: every account is `free`, and an
+operator upgrades one by setting `user_profiles.plan` to `pro` or `business`
+directly. That column is not writable by the account itself — see migration
+`00017`. When billing ships it writes the same column.
+
+## Architecture notes
+
+- **Redirects** (`app/r/[slug]/route.ts`) run on the edge runtime and resolve
+  from Redis, falling back to a `SECURITY DEFINER` RPC on a cache miss. Scan
+  recording happens in `after()`, off the response path.
+- **API** (`app/api/v1/*`) accepts either a session cookie/JWT or an
+  `X-API-Key`. Under API-key auth the service client bypasses RLS, so every
+  query is explicitly scoped by `user_id` — see the note in `lib/auth.ts`.
+- **Secrets** are never returned: password hashes are stripped from responses
+  and excluded from audit entries.

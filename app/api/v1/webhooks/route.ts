@@ -4,6 +4,7 @@ import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { logAudit, auditSnapshot } from "@/lib/audit";
 import { isPublicWebhookUrlResolved } from "@/lib/ssrf";
+import { getPlanLimits, upgradeRequired } from "@/lib/plan";
 import { createWebhookSchema } from "@/lib/validation";
 
 // POST /api/v1/webhooks — register a webhook. JWT only. Returns the signing
@@ -23,6 +24,11 @@ export const POST = withAuth(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
+    }
+
+    const limits = await getPlanLimits(auth.db, auth.userId);
+    if (!limits.apiAccess) {
+      return NextResponse.json({ error: upgradeRequired("Webhooks") }, { status: 402 });
     }
 
     if (!(await isPublicWebhookUrlResolved(parsed.data.url))) {

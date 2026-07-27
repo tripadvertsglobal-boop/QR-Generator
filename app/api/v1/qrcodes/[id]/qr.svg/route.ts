@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { withAuth } from "@/lib/auth";
+import { isUuid } from "@/lib/validation";
 
 // GET /api/v1/qrcodes/[id]/qr.svg            -> scannable SVG of the tracking URL
 // GET /api/v1/qrcodes/[id]/qr.svg?format=png -> PNG (256px)
@@ -9,6 +10,7 @@ import { withAuth } from "@/lib/auth";
 export const GET = withAuth(
   async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
+  if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { data: code } = await auth.db
     .from("qr_codes")

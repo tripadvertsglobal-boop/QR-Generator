@@ -6,6 +6,7 @@ import { buildConfig } from "@/lib/slug-config";
 import { generateSlug } from "@/lib/slug";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
+import { getPlanLimits, limitReached, upgradeRequired } from "@/lib/plan";
 import { bulkCreateSchema, bulkDeleteSchema } from "@/lib/validation";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN;
@@ -26,6 +27,26 @@ export const POST = withAuth(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
+    }
+
+    // Bulk creation is a paid feature, and it must not be the cheap path around
+    // the per-plan QR quota either — check both before any other work.
+    const limits = await getPlanLimits(auth.db, auth.userId);
+    if (!limits.bulkOperations) {
+      return NextResponse.json({ error: upgradeRequired("Bulk creation") }, { status: 402 });
+    }
+    if (limits.maxQrCodes !== Infinity) {
+      const { count, error: countError } = await auth.db
+        .from("qr_codes")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", auth.userId);
+      if (countError) return dbError(countError);
+      if ((count ?? 0) + parsed.data.codes.length > limits.maxQrCodes) {
+        return NextResponse.json(
+          { error: limitReached("QR codes", limits.maxQrCodes) },
+          { status: 402 },
+        );
+      }
     }
 
     // Same Safe Browsing gate as single create — bulk must not be the cheap

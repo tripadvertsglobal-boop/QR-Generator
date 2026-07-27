@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { hashKey } from "@/lib/apikey";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { corsHeaders, applyHeaders } from "@/lib/cors";
+import { clientIp } from "@/lib/client-ip";
 import { log, captureException } from "@/lib/log";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -136,6 +137,40 @@ const PRE_AUTH_IP_LIMIT = 1000; // requests/min per IP
 const retryAfter = (reset: number) =>
   String(Math.max(1, reset - Math.floor(Date.now() / 1000)));
 
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/**
+ * CSRF defence for cookie-authenticated mutations. Supabase's session cookies
+ * are SameSite=Lax, which already blocks cross-site POSTs, but that leaves the
+ * app relying on a browser default rather than a check of its own.
+ *
+ * Only applies when the caller presented no explicit credential (no X-API-Key,
+ * no Authorization header) — i.e. the ambient-cookie case, the only one CSRF
+ * can exploit. A missing Origin is allowed: browsers always send it on
+ * non-simple requests, so its absence means a non-browser client.
+ */
+function isCsrfSuspect(request: Request): boolean {
+  if (SAFE_METHODS.has(request.method)) return false;
+  if (request.headers.get("x-api-key") || request.headers.get("authorization")) return false;
+
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+
+  const allowed = new Set(
+    [process.env.NEXT_PUBLIC_APP_URL, new URL(request.url).origin]
+      .filter((v): v is string => !!v)
+      .map((v) => {
+        try {
+          return new URL(v).origin;
+        } catch {
+          return "";
+        }
+      })
+      .filter(Boolean),
+  );
+  return !allowed.has(origin);
+}
+
 /**
  * Wraps an API route handler with: CORS (incl. OPTIONS preflight), dual auth
  * (session JWT or X-API-Key), scope + jwt-only gating, and KV rate limiting
@@ -152,8 +187,14 @@ export function withAuth<C>(
       return new NextResponse(null, { status: 204, headers: cors });
     }
 
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (isCsrfSuspect(request)) {
+      return applyHeaders(
+        NextResponse.json({ error: "Cross-origin request rejected" }, { status: 403 }),
+        cors,
+      );
+    }
+
+    const ip = clientIp(request) ?? "unknown";
     const pre = await checkRateLimit(`preauth:${ip}`, PRE_AUTH_IP_LIMIT);
     if (!pre.ok) {
       return applyHeaders(

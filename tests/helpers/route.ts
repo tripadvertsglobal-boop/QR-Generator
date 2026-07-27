@@ -12,9 +12,10 @@ const ALL_SCOPES = [
   "account:write",
 ];
 
-// Install a per-test auth context backed by a queued Supabase mock.
-export function setDb(results: DbResult[] = [], userId = "user-1") {
-  const mock = createDbMock(results);
+// Install a per-test auth context backed by a queued Supabase mock. Defaults to
+// the `pro` plan so plan gating is out of the way unless a test opts into it.
+export function setDb(results: DbResult[] = [], userId = "user-1", plan = "pro") {
+  const mock = createDbMock(results, plan);
   authState.current = { userId, authType: "jwt", scopes: ALL_SCOPES, db: mock.db };
   return mock;
 }

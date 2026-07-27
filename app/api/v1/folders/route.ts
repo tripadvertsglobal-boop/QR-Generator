@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { logAudit, auditSnapshot } from "@/lib/audit";
+import { getPlanLimits, limitReached } from "@/lib/plan";
 import { createFolderSchema } from "@/lib/validation";
 
 // POST /api/v1/folders — create a folder (owner-scoped, unique name per user).
@@ -20,6 +21,21 @@ export const POST = withAuth(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
+    }
+
+    const limits = await getPlanLimits(auth.db, auth.userId);
+    if (limits.maxFolders !== Infinity) {
+      const { count, error: countError } = await auth.db
+        .from("folders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", auth.userId);
+      if (countError) return dbError(countError);
+      if ((count ?? 0) >= limits.maxFolders) {
+        return NextResponse.json(
+          { error: limitReached("folders", limits.maxFolders) },
+          { status: 402 },
+        );
+      }
     }
 
     const { data, error } = await auth.db

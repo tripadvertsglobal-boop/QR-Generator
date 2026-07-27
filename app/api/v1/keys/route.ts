@@ -3,6 +3,7 @@ import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { generateApiKey, MAX_API_KEYS } from "@/lib/apikey";
 import { logAudit, auditSnapshot } from "@/lib/audit";
+import { getPlanLimits, upgradeRequired } from "@/lib/plan";
 import { createKeySchema } from "@/lib/validation";
 
 // POST /api/v1/keys — mint a key. JWT only (API keys can't create keys). The raw
@@ -22,6 +23,11 @@ export const POST = withAuth(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
+    }
+
+    const limits = await getPlanLimits(auth.db, auth.userId);
+    if (!limits.apiAccess) {
+      return NextResponse.json({ error: upgradeRequired("API access") }, { status: 402 });
     }
 
     // Cap active keys per account. The DB trigger is the race-proof backstop;
@@ -50,7 +56,12 @@ export const POST = withAuth(
         key_hash: key.hash,
         key_prefix: key.prefix,
         scopes: parsed.data.scopes ?? ["qrcodes:read", "qrcodes:write"],
-        rate_limit: parsed.data.rate_limit ?? 100,
+        // The plan's ceiling is what makes "higher API rate limits" real —
+        // otherwise any caller could request 10000 and opt themselves up a tier.
+        rate_limit: Math.min(
+          parsed.data.rate_limit ?? limits.defaultKeyRateLimit,
+          limits.defaultKeyRateLimit,
+        ),
         expires_at: parsed.data.expires_at ?? null,
       })
       .select("id, name, key_prefix, scopes, rate_limit, expires_at, created_at")

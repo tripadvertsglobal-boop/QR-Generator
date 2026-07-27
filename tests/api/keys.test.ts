@@ -3,6 +3,7 @@ import { setDb } from "../helpers/route";
 import { jsonRequest, ctx } from "../helpers/request";
 import * as keys from "@/app/api/v1/keys/route";
 import * as keyId from "@/app/api/v1/keys/[id]/route";
+import { RES_ID, MISSING_ID } from "../helpers/ids";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -45,14 +46,14 @@ describe("GET /api/v1/keys", () => {
 describe("DELETE /api/v1/keys/[id]", () => {
   it("revokes a key", async () => {
     setDb([{ data: { key_hash: "h" } }]);
-    const res = await keyId.DELETE(jsonRequest("DELETE"), ctx({ id: "k1" }));
+    const res = await keyId.DELETE(jsonRequest("DELETE"), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true });
   });
 
   it("returns 404 when not found", async () => {
     setDb([{ error: { code: "PGRST116" } }]);
-    const res = await keyId.DELETE(jsonRequest("DELETE"), ctx({ id: "missing" }));
+    const res = await keyId.DELETE(jsonRequest("DELETE"), ctx({ id: MISSING_ID }));
     expect(res.status).toBe(404);
   });
 });

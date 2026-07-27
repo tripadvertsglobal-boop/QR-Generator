@@ -3,6 +3,7 @@ import { setDb } from "../helpers/route";
 import { jsonRequest, ctx } from "../helpers/request";
 import * as folders from "@/app/api/v1/folders/route";
 import * as folderId from "@/app/api/v1/folders/[id]/route";
+import { RES_ID, MISSING_ID } from "../helpers/ids";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -40,13 +41,13 @@ describe("GET /api/v1/folders", () => {
 describe("PATCH /api/v1/folders/[id]", () => {
   it("renames a folder", async () => {
     setDb([{ data: { id: "f1", name: "Old" } }, { data: { id: "f1", name: "New" } }]);
-    const res = await folderId.PATCH(jsonRequest("PATCH", { name: "New" }), ctx({ id: "f1" }));
+    const res = await folderId.PATCH(jsonRequest("PATCH", { name: "New" }), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
   });
 
   it("returns 404 when not found", async () => {
     setDb([{ data: null }, { error: { code: "PGRST116" } }]);
-    const res = await folderId.PATCH(jsonRequest("PATCH", { name: "x" }), ctx({ id: "missing" }));
+    const res = await folderId.PATCH(jsonRequest("PATCH", { name: "x" }), ctx({ id: MISSING_ID }));
     expect(res.status).toBe(404);
   });
 });
@@ -54,13 +55,13 @@ describe("PATCH /api/v1/folders/[id]", () => {
 describe("DELETE /api/v1/folders/[id]", () => {
   it("deletes a folder", async () => {
     setDb([{ data: { id: "f1" } }]);
-    const res = await folderId.DELETE(jsonRequest("DELETE"), ctx({ id: "f1" }));
+    const res = await folderId.DELETE(jsonRequest("DELETE"), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
   });
 
   it("returns 404 when not found", async () => {
     setDb([{ error: { code: "PGRST116" } }]);
-    const res = await folderId.DELETE(jsonRequest("DELETE"), ctx({ id: "missing" }));
+    const res = await folderId.DELETE(jsonRequest("DELETE"), ctx({ id: MISSING_ID }));
     expect(res.status).toBe(404);
   });
 });

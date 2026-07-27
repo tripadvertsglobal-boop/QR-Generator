@@ -19,7 +19,9 @@ const hexColor = z
   .regex(/^#[0-9a-fA-F]{6}$/, "Color must be a #rrggbb hex value");
 
 // M7 advanced-link fields.
-const password = z.string().min(4).max(200);
+// 8 minimum: the unlock gate is brute-forceable at 10 guesses/min per IP, and a
+// 4-character password does not survive that for long.
+const password = z.string().min(8).max(200);
 const abDestinations = z
   .array(z.object({ url: httpUrl, weight: z.number().int().min(1).max(100) }))
   .min(2, "A/B split needs at least two destinations")
@@ -118,6 +120,16 @@ export const updateAccountSchema = z
     timezone: z.string().trim().min(1).max(64).optional(),
   })
   .refine((d) => Object.keys(d).length > 0, "No fields to update");
+
+// Route params reach PostgREST as `.eq("id", ...)`. A non-UUID string makes
+// Postgres raise 22P02 (invalid input syntax), which surfaces as a generic 400
+// instead of the 404 the caller should get. Shape-check first — this matches
+// what Postgres accepts for the hyphenated form, so anything passing here casts.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
 
 export type CreateQrInput = z.infer<typeof createQrSchema>;
 export type UpdateQrInput = z.infer<typeof updateQrSchema>;

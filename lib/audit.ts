@@ -1,5 +1,6 @@
 import { after } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { clientIp } from "@/lib/client-ip";
 
 type Row = Record<string, unknown>;
 
@@ -70,8 +71,7 @@ export function maskIp(ip: string): string {
 // Fire-and-forget audit write (after the response is sent). Failures are
 // swallowed — auditing must never break the mutation it records.
 export function logAudit(entry: AuditEntry): void {
-  const rawIp =
-    entry.request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  const rawIp = entry.request ? clientIp(entry.request) : null;
   const ip = rawIp ? maskIp(rawIp) : null;
   const userAgent = entry.request?.headers.get("user-agent") ?? null;
 

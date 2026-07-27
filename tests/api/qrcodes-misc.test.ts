@@ -5,6 +5,7 @@ import { jsonRequest, ctx } from "../helpers/request";
 import * as analytics from "@/app/api/v1/qrcodes/[id]/analytics/route";
 import * as qrsvg from "@/app/api/v1/qrcodes/[id]/qr.svg/route";
 import * as exportRoute from "@/app/api/v1/qrcodes/export/route";
+import { RES_ID, MISSING_ID } from "../helpers/ids";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -17,7 +18,7 @@ describe("GET /api/v1/qrcodes/[id]/analytics", () => {
     setDb([{ data: [{ day: "2026-06-01", scans: 5 }] }]);
     const res = await analytics.GET(
       jsonRequest("GET", undefined, "http://test.local/api/v1/qrcodes/abc/analytics?days=7"),
-      ctx({ id: "abc" }),
+      ctx({ id: RES_ID }),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -27,14 +28,14 @@ describe("GET /api/v1/qrcodes/[id]/analytics", () => {
 
   it("maps an ownership failure to 403", async () => {
     setDb([{ error: { message: "Forbidden: not owner" } }]);
-    const res = await analytics.GET(jsonRequest("GET"), ctx({ id: "abc" }));
+    const res = await analytics.GET(jsonRequest("GET"), ctx({ id: RES_ID }));
     expect(res.status).toBe(403);
   });
 
   it("uses the service-role RPC (with the key's user id) under API-key auth", async () => {
     const mock = setDb([{ data: [] }]);
     authState.current.authType = "apikey";
-    const res = await analytics.GET(jsonRequest("GET"), ctx({ id: "abc" }));
+    const res = await analytics.GET(jsonRequest("GET"), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
     expect(mock.calls).toContainEqual(
       expect.objectContaining({
@@ -48,7 +49,7 @@ describe("GET /api/v1/qrcodes/[id]/analytics", () => {
 describe("GET /api/v1/qrcodes/[id]/qr.svg", () => {
   it("returns an SVG by default", async () => {
     setDb([{ data: { short_slug: "abc" } }]);
-    const res = await qrsvg.GET(jsonRequest("GET"), ctx({ id: "abc" }));
+    const res = await qrsvg.GET(jsonRequest("GET"), ctx({ id: RES_ID }));
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/svg+xml");
   });
@@ -57,7 +58,7 @@ describe("GET /api/v1/qrcodes/[id]/qr.svg", () => {
     setDb([{ data: { short_slug: "abc" } }]);
     const res = await qrsvg.GET(
       jsonRequest("GET", undefined, "http://test.local/api/v1/qrcodes/abc/qr.svg?format=png"),
-      ctx({ id: "abc" }),
+      ctx({ id: RES_ID }),
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/png");
@@ -65,7 +66,7 @@ describe("GET /api/v1/qrcodes/[id]/qr.svg", () => {
 
   it("returns 404 for a code the caller does not own", async () => {
     setDb([{ data: null }]);
-    const res = await qrsvg.GET(jsonRequest("GET"), ctx({ id: "missing" }));
+    const res = await qrsvg.GET(jsonRequest("GET"), ctx({ id: MISSING_ID }));
     expect(res.status).toBe(404);
   });
 });

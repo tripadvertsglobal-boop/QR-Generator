@@ -23,17 +23,20 @@ export const siteConfig = {
   /* ---------------------------------------------------------------- */
   /* Contact details                                                   */
   /* ---------------------------------------------------------------- */
+  /* These are the contact details of record in the Terms and Privacy Policy.
+     Any value still prefixed with TODO_ fails the production build — see
+     lib/env.ts. Replace all three before going live. */
   contact: {
-    email: "hello@qrstudio.com",
-    phone: "+1 (555) 010-2030",
-    address: "123 Market Street, San Francisco, CA",
+    email: "TODO_SET_CONTACT_EMAIL",
+    phone: "TODO_SET_CONTACT_PHONE",
+    address: "TODO_SET_CONTACT_ADDRESS",
   },
 
   /* Social links — leave a value empty ("") to hide that link. */
   social: {
-    twitter: "https://twitter.com/",
-    github: "https://github.com/",
-    linkedin: "https://linkedin.com/",
+    twitter: "",
+    github: "",
+    linkedin: "",
   },
 
   /* ---------------------------------------------------------------- */
@@ -111,6 +114,10 @@ export const siteConfig = {
   pricing: {
     heading: "Simple, transparent pricing",
     subheading: "Start free. Upgrade when you grow. Cancel anytime.",
+    /* Every feature listed here is either enforced in lib/plan.ts or available
+       to all accounts. Do not add a bullet that nothing enforces.
+       `available: false` renders the plan without a working CTA — self-serve
+       upgrades open when billing ships. */
     plans: [
       {
         name: "Free",
@@ -121,11 +128,13 @@ export const siteConfig = {
           "Up to 10 dynamic QR codes",
           "Basic scan analytics",
           "1 folder",
+          "Audit log & GDPR data export",
           "Community support",
         ],
         cta: "Get started",
         href: "/signup",
         highlighted: false,
+        available: true,
       },
       {
         name: "Pro",
@@ -137,12 +146,13 @@ export const siteConfig = {
           "Full analytics with geography",
           "Unlimited folders & tags",
           "API access & webhooks",
-          "Bulk export",
+          "Bulk create & CSV export",
           "Email support",
         ],
         cta: "Start Pro",
         href: "/signup",
         highlighted: true,
+        available: false,
       },
       {
         name: "Business",
@@ -151,14 +161,14 @@ export const siteConfig = {
         description: "For organizations that need more.",
         features: [
           "Everything in Pro",
-          "Higher API rate limits",
-          "Audit logs & GDPR export",
+          "10× higher API rate limits",
           "Priority support",
           "Onboarding assistance",
         ],
         cta: "Contact sales",
         href: "/signup",
         highlighted: false,
+        available: false,
       },
     ],
   },

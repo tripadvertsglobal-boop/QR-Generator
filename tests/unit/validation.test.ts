@@ -5,6 +5,7 @@ import {
   createWebhookSchema,
   updateWebhookSchema,
   createKeySchema,
+  isUuid,
 } from "@/lib/validation";
 
 describe("createQrSchema", () => {
@@ -28,6 +29,9 @@ describe("createQrSchema", () => {
     ).toBe(false);
     expect(
       createQrSchema.safeParse({ destination_url: "https://x.com", password: "abcd" }).success,
+    ).toBe(false);
+    expect(
+      createQrSchema.safeParse({ destination_url: "https://x.com", password: "abcdefgh" }).success,
     ).toBe(true);
   });
   it("rejects an active window that ends before it starts", () => {
@@ -98,5 +102,22 @@ describe("createKeySchema", () => {
   it("only allows qrcodes scopes", () => {
     expect(createKeySchema.safeParse({ name: "k", scopes: ["qrcodes:read"] }).success).toBe(true);
     expect(createKeySchema.safeParse({ name: "k", scopes: ["keys:write"] }).success).toBe(false);
+  });
+});
+
+describe("isUuid", () => {
+  it("accepts the hyphenated UUIDs the API issues", () => {
+    expect(isUuid("11111111-1111-4111-8111-111111111111")).toBe(true);
+    expect(isUuid("A1B2C3D4-E5F6-7890-ABCD-EF1234567890")).toBe(true);
+  });
+
+  it("rejects anything Postgres would fail to cast", () => {
+    // Each of these reached .eq("id", …) before and surfaced as a generic 400.
+    expect(isUuid("abc")).toBe(false);
+    expect(isUuid("")).toBe(false);
+    expect(isUuid("11111111-1111-4111-8111-11111111111")).toBe(false); // too short
+    expect(isUuid("11111111-1111-4111-8111-111111111111x")).toBe(false);
+    expect(isUuid("1111111g-1111-4111-8111-111111111111")).toBe(false); // non-hex
+    expect(isUuid("11111111111141118111111111111111")).toBe(false); // unhyphenated
   });
 });

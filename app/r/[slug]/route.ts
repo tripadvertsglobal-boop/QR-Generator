@@ -7,6 +7,7 @@ import { crossedMilestone, dispatchEvent } from "@/lib/webhooks";
 import { statusPage } from "@/lib/status-page";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isBotUserAgent, hashIp } from "@/lib/scan-agent";
+import { clientIp } from "@/lib/client-ip";
 
 const IP_RATE_LIMIT = 5000; // requests/min per IP
 
@@ -29,10 +30,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { slug } = await params;
 
   // Edge IP throttle to blunt abusive scan floods (skips if KV unconfigured).
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown";
+  // Must be a platform-supplied IP: a spoofable one lets a flood rotate past
+  // both this limiter and record_scan's dedup on ip_hash.
+  const ip = clientIp(request) ?? "unknown";
   const rl = await checkRateLimit(`ip:${ip}`, IP_RATE_LIMIT);
   if (!rl.ok) {
     return new NextResponse("Too many requests", {

@@ -7,7 +7,7 @@ import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit, auditDiff, auditSnapshot } from "@/lib/audit";
 import { emitEvent } from "@/lib/webhooks";
-import { updateQrSchema } from "@/lib/validation";
+import { updateQrSchema, isUuid } from "@/lib/validation";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -16,6 +16,7 @@ type Ctx = { params: Promise<{ id: string }> };
 export const PATCH = withAuth(
   async (request, auth, { params }: Ctx) => {
     const { id } = await params;
+    if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     let raw: unknown;
     try {
@@ -108,6 +109,7 @@ export const PATCH = withAuth(
 export const DELETE = withAuth(
   async (request, auth, { params }: Ctx) => {
     const { id } = await params;
+    if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const { data, error } = await auth.db
       .from("qr_codes")
