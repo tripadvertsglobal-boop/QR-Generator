@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Button from "@/app/_components/ui/Button";
 import { buttonClasses } from "@/app/_components/ui/Button";
 import QrRow from "./QrRow";
 import type { QrCode } from "./types";
 
-export default function QrList({ codes }: { codes: QrCode[] }) {
+export default function QrList({ codes, canExport }: { codes: QrCode[]; canExport: boolean }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -54,11 +55,24 @@ export default function QrList({ codes }: { codes: QrCode[] }) {
               Delete selected
             </Button>
           )}
-          {/* File download endpoint, not a page — must be a real anchor. */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/api/v1/qrcodes/export" className={buttonClasses("secondary", "sm")}>
-            Export CSV
-          </a>
+          {/* CSV export is Pro-gated: the endpoint 402s on Free, and this is a
+              plain navigation, so without the check the browser would render the
+              raw JSON error. Point at /pricing instead. */}
+          {canExport ? (
+            /* File download endpoint, not a page — must be a real anchor. */
+            /* eslint-disable-next-line @next/next/no-html-link-for-pages */
+            <a href="/api/v1/qrcodes/export" className={buttonClasses("secondary", "sm")}>
+              Export CSV
+            </a>
+          ) : (
+            <Link
+              href="/pricing"
+              title="CSV export is available on Pro"
+              className={buttonClasses("secondary", "sm")}
+            >
+              Export CSV ↑
+            </Link>
+          )}
         </div>
       </div>
 

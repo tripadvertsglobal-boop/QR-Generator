@@ -1,4 +1,5 @@
 import { createUserClient } from "@/lib/supabase/server";
+import { limitsFor } from "@/lib/plan";
 import PageHeader from "@/app/_components/ui/PageHeader";
 import CreateQrForm from "./CreateQrForm";
 import TagFilterBar from "./TagFilterBar";
@@ -16,7 +17,7 @@ export default async function DashboardPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: folderData }, { data: codeData }] = await Promise.all([
+  const [{ data: folderData }, { data: codeData }, { data: profile }] = await Promise.all([
     supabase.from("folders").select("id, name, color").order("name"),
     supabase
       .from("qr_codes")
@@ -24,8 +25,10 @@ export default async function DashboardPage({
         "id, short_slug, destination_url, name, is_active, scan_count, folder_id, tags, active_from, active_until, ab_destinations, password_hash, created_at",
       )
       .order("created_at", { ascending: false }),
+    supabase.from("user_profiles").select("plan").maybeSingle(),
   ]);
 
+  const limits = limitsFor(profile?.plan);
   const folders = (folderData ?? []) as Folder[];
   // Map to has_password and drop the hash before it reaches client components.
   const allCodes: QrCode[] = (codeData ?? []).map((row) => {
@@ -47,18 +50,25 @@ export default async function DashboardPage({
     return true;
   });
 
+  // On a capped plan, show usage against the cap so the limit is visible before
+  // a create is rejected with 402.
+  const usage =
+    limits.maxQrCodes === Infinity
+      ? `${allCodes.length} ${allCodes.length === 1 ? "code" : "codes"}`
+      : `${allCodes.length} of ${limits.maxQrCodes} codes`;
+
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8">
       <PageHeader
         title="QR codes"
-        description={`${allCodes.length} ${allCodes.length === 1 ? "code" : "codes"} · ${user?.email ?? ""}`}
+        description={`${usage} · ${user?.email ?? ""}`}
         className="mb-8"
       />
 
       <div className="flex flex-col gap-6">
         <CreateQrForm folders={folders} />
         <TagFilterBar tags={[...tagSet].sort()} activeTag={tag} folder={folder} />
-        <QrList codes={visible} />
+        <QrList codes={visible} canExport={limits.bulkOperations} />
       </div>
     </main>
   );

@@ -1,16 +1,23 @@
 import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
 import { MAX_API_KEYS } from "@/lib/apikey";
+import { limitsFor } from "@/lib/plan";
 import PageHeader from "@/app/_components/ui/PageHeader";
+import UpgradeNotice from "@/app/dashboard/_components/UpgradeNotice";
 import KeysManager from "./KeysManager";
 
 export default async function KeysPage() {
   const supabase = await createUserClient();
-  const { data } = await supabase
-    .from("api_keys")
-    .select("id, name, key_prefix, scopes, rate_limit, is_active, last_used_at, expires_at, created_at")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+  // RLS scopes both reads to the caller.
+  const [{ data: profile }, { data }] = await Promise.all([
+    supabase.from("user_profiles").select("plan").maybeSingle(),
+    supabase
+      .from("api_keys")
+      .select("id, name, key_prefix, scopes, rate_limit, is_active, last_used_at, expires_at, created_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false }),
+  ]);
+  const limits = limitsFor(profile?.plan);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8">
@@ -26,7 +33,14 @@ export default async function KeysPage() {
         }
         className="mb-8"
       />
-      <KeysManager initial={data ?? []} />
+      {limits.apiAccess ? (
+        <KeysManager initial={data ?? []} />
+      ) : (
+        <UpgradeNotice
+          feature="API access"
+          description="Mint scoped API keys and call the QR endpoints programmatically. Your existing QR codes and analytics stay available on the Free plan."
+        />
+      )}
     </main>
   );
 }
