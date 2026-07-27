@@ -7,8 +7,9 @@ setup("authenticate", async ({ page }) => {
   const { email, password } = JSON.parse(readFileSync(CREDS_PATH, "utf8"));
 
   await page.goto("/login");
-  await page.getByPlaceholder("you@example.com").fill(email);
-  await page.getByPlaceholder("Password").fill(password);
+  // Select by label, not placeholder — the password placeholder is a bullet run.
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Log in" }).click();
 
   await page.waitForURL("**/dashboard");

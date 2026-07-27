@@ -31,6 +31,23 @@ export default async function globalSetup() {
   }
   const user = (await res.json()) as { id: string };
 
+  // The specs exercise API keys and webhooks, which lib/plan.ts gates behind a
+  // paid plan — a default 'free' user 402s on both. Upgrade via PostgREST with
+  // the service role: migration 00017 revoked UPDATE(plan) from authenticated,
+  // so an account genuinely cannot do this to itself.
+  const patch = await fetch(`${url}/rest/v1/user_profiles?id=eq.${user.id}`, {
+    method: "PATCH",
+    headers: {
+      apikey: serviceRole,
+      Authorization: `Bearer ${serviceRole}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ plan: "pro" }),
+  });
+  if (!patch.ok) {
+    throw new Error(`Failed to set E2E user plan (${patch.status}): ${await patch.text()}`);
+  }
+
   mkdirSync("e2e/.auth", { recursive: true });
   writeFileSync(CREDS_PATH, JSON.stringify({ email, password, userId: user.id }));
 }

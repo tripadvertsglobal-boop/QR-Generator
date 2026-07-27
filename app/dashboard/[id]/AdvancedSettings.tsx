@@ -91,7 +91,7 @@ export default function AdvancedSettings({
       >
         <Input
           type="text"
-          placeholder={hasPassword ? "Enter a new password to change it" : "Set a password (min 4 chars)"}
+          placeholder={hasPassword ? "Enter a new password to change it" : "Set a password (min 8 chars)"}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           disabled={clearPassword}
