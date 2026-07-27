@@ -23,6 +23,20 @@ const supabaseOrigin = (() => {
 })();
 const supabaseWs = supabaseOrigin.replace(/^http/, "ws");
 
+// Origin the browser Sentry SDK POSTs events to, parsed out of the DSN
+// (https://<key>@o<org>.ingest.<region>.sentry.io/<project>). Without it in
+// connect-src, promoting the CSP to enforcing silently kills client-side error
+// reporting — the one thing that would tell you the CSP broke something.
+const sentryOrigin = (() => {
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+  if (!dsn) return "";
+  try {
+    return new URL(dsn).origin;
+  } catch {
+    return "";
+  }
+})();
+
 const CSP_REPORT_PATH = "/api/csp-report";
 // Reporting-Endpoints takes a URL; make it absolute when the origin is known,
 // since a relative value is not reliably accepted.
@@ -55,15 +69,17 @@ const securityHeaders = [
 // Violations are posted to CSP_REPORT_PATH, which logs them — without a report
 // destination a Report-Only policy is inert and can never be validated. Both
 // report-to (current) and report-uri (older browsers) are sent.
-// Promote to `Content-Security-Policy` (enforcing) once the reports come back
-// clean; note that 'unsafe-inline' in script-src limits what enforcement buys
-// until Next's inline scripts are moved to a nonce.
+// Promote by setting CSP_ENFORCE=1 once the reports come back clean — the
+// switch is an env var rather than a code edit so the cutover (and the rollback,
+// if something was missed) is a redeploy and not a PR. Note that 'unsafe-inline'
+// in script-src limits what enforcement buys until Next's inline scripts are
+// moved to a nonce.
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
-  `connect-src 'self' ${supabaseOrigin} ${supabaseWs}`.trim(),
+  `connect-src 'self' ${supabaseOrigin} ${supabaseWs} ${sentryOrigin}`.replace(/\s+/g, " ").trim(),
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
@@ -72,6 +88,10 @@ const csp = [
   `report-uri ${CSP_REPORT_PATH}`,
 ].join("; ");
 
+const cspHeader = process.env.CSP_ENFORCE
+  ? "Content-Security-Policy"
+  : "Content-Security-Policy-Report-Only";
+
 const nextConfig: NextConfig = {
   // Don't advertise the framework.
   poweredByHeader: false,
@@ -79,10 +99,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: [
-          ...securityHeaders,
-          { key: "Content-Security-Policy-Report-Only", value: csp },
-        ],
+        headers: [...securityHeaders, { key: cspHeader, value: csp }],
       },
     ];
   },
