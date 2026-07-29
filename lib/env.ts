@@ -58,9 +58,16 @@ export function checkProductionConfig(env: Record<string, string | undefined>): 
   // Placeholder company details must never reach a real user: they render in
   // the footer and are named as the contact of record in the Terms and the
   // Privacy Policy.
+  //
+  // ALLOW_PLACEHOLDER_CONTACT downgrades this to a warning. It is a deliberate,
+  // temporary escape hatch for shipping before the real details are known — the
+  // placeholders are still visible to every visitor. Fill in siteConfig.contact
+  // and drop the variable to re-arm the check.
+  const contactIsBlocking = !env.ALLOW_PLACEHOLDER_CONTACT?.trim();
   for (const [field, value] of Object.entries(siteConfig.contact)) {
     if (isPlaceholder(value)) {
-      errors.push(`siteConfig.contact.${field} is still the placeholder "${value}"`);
+      const message = `siteConfig.contact.${field} is still the placeholder "${value}"`;
+      (contactIsBlocking ? errors : warnings).push(message);
     }
   }
 

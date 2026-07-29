@@ -30,5 +30,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  // cloudflare-worker.ts imports `.open-next/worker.js`, which only exists after
+  // `opennextjs-cloudflare build` — so it resolves or not depending on when the
+  // checker runs. Excluding it keeps `tsc --noEmit` deterministic; wrangler
+  // type-strips the file at deploy time.
+  "exclude": ["node_modules", "cloudflare-worker.ts"]
 }

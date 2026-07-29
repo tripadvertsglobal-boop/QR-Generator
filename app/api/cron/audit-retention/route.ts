@@ -3,8 +3,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { dbError } from "@/lib/api-error";
 
 // GET /api/cron/audit-retention — purge audit_logs older than 90 days.
-// Invoked by Vercel Cron (see vercel.json). Protected by CRON_SECRET: Vercel
-// sends `Authorization: Bearer <CRON_SECRET>` when the env var is set.
+// Invoked by the Cloudflare cron trigger (see wrangler.jsonc + cloudflare-worker.ts).
+// Protected by CRON_SECRET, which the caller sends as `Authorization: Bearer <CRON_SECRET>`.
 // Fail closed: a missing secret in production must not leave the purge public.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;

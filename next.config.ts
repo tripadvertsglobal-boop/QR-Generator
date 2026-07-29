@@ -4,9 +4,13 @@ import { assertProductionConfig } from "./lib/env";
 
 // Fail the *build* — not the deployed site — when a production deployment is
 // missing a required secret or still carries placeholder company details.
-// Gated on VERCEL_ENV so local dev and CI (which build with throwaway values)
-// are unaffected.
-if (process.env.VERCEL_ENV === "production") {
+// Gated on the platform's own production signal (Vercel's VERCEL_ENV, Cloudflare
+// Workers Builds' branch) so local dev and CI (which build with throwaway
+// values) are unaffected.
+const isProductionBuild =
+  process.env.VERCEL_ENV === "production" || process.env.WORKERS_CI_BRANCH === "main";
+
+if (isProductionBuild) {
   for (const warning of assertProductionConfig(process.env)) {
     console.warn(`[config] ${warning}`);
   }

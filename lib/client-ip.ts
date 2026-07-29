@@ -9,15 +9,20 @@ import type { NextRequest } from "next/server";
  * IP to bypass every per-IP limit and to defeat scan dedup.
  *
  * Preference order:
- *  1. `x-real-ip` — a single value written by the platform edge, not appendable.
- *  2. `x-vercel-forwarded-for` — Vercel's own record of the connecting client.
- *  3. the RIGHTMOST `x-forwarded-for` entry — the hop appended by the proxy
+ *  1. `cf-connecting-ip` — Cloudflare's own record of the connecting client,
+ *     overwritten by the edge on every request so it cannot be spoofed.
+ *  2. `x-real-ip` — a single value written by the platform edge, not appendable.
+ *  3. `x-vercel-forwarded-for` — Vercel's own record of the connecting client.
+ *  4. the RIGHTMOST `x-forwarded-for` entry — the hop appended by the proxy
  *     directly in front of us, i.e. the last one a client could not have forged.
  *
  * Returns null when no header is usable, so callers can decide whether to skip
  * (dedup) or bucket as unknown (rate limiting).
  */
 export function clientIp(request: Request | NextRequest): string | null {
+  const cloudflare = request.headers.get("cf-connecting-ip")?.trim();
+  if (cloudflare) return cloudflare;
+
   const realIp = request.headers.get("x-real-ip")?.trim();
   if (realIp) return realIp;
 

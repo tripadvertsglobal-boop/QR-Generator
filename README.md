@@ -6,12 +6,14 @@ the destination, so the destination stays editable forever.
 
 ## Stack
 
-- **Next.js 16** (App Router). Note: `middleware.ts` is renamed to `proxy.ts`,
-  route `params` is a `Promise`, and fire-and-forget work uses `after()` from
-  `next/server`. See `AGENTS.md`.
+- **Next.js 16** (App Router). Note: route `params` is a `Promise`, and
+  fire-and-forget work uses `after()` from `next/server`. See `AGENTS.md`.
+  Next 16 renames `middleware.ts` to `proxy.ts`, but this app deliberately keeps
+  `middleware.ts` — see the comment at the top of that file.
 - **Supabase** — Postgres + Auth, with row-level security on every table.
 - **Upstash Redis** — slug cache for the redirect hot path, plus rate limiting.
-- **Vercel** — hosting, cron, and analytics.
+- **Cloudflare Workers** — hosting and cron, via the `@opennextjs/cloudflare`
+  adapter (`wrangler.jsonc`, `open-next.config.ts`, `cloudflare-worker.ts`).
 
 ## Getting started
 

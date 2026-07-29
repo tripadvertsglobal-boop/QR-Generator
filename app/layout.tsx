@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { siteConfig } from "@/site.config";
 import { createUserClient } from "@/lib/supabase/server";
 import AuthProvider from "./_components/AuthProvider";
@@ -62,8 +60,6 @@ export default async function RootLayout({
           <SiteHeader />
           {children}
         </AuthProvider>
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );

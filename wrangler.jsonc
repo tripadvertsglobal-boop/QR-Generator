@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "qrgenerator",
+  // `main` is our own entrypoint, not `.open-next/worker.js` directly: it
+  // re-exports OpenNext's fetch handler and adds the `scheduled` handler that
+  // Cloudflare's cron trigger below invokes (see cloudflare-worker.ts).
+  "main": "./cloudflare-worker.ts",
+  "compatibility_date": "2026-07-29",
+  // nodejs_compat: required by @opennextjs/cloudflare.
+  // global_fetch_strictly_public: makes fetch() to our own hostname go out to
+  // the public internet rather than looping back into this Worker.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  // Replaces the Vercel cron in vercel.json: purge audit_logs older than 90 days.
+  "triggers": {
+    "crons": ["0 4 * * *"]
+  },
+  // Non-secret runtime config. These are also set as *build* variables on the
+  // Workers Builds trigger, because NEXT_PUBLIC_* values are inlined into the
+  // browser bundle at build time. Secrets (SUPABASE_SERVICE_ROLE_KEY,
+  // LINK_UNLOCK_SECRET, CRON_SECRET, KV_REST_API_TOKEN) are Worker secrets and
+  // are deliberately not in this file.
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://rsyfcfqpookqtbmaclxy.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_cdAxxTutUND9mmjS9xCOMw_8avUPXxB",
+    "NEXT_PUBLIC_APP_URL": "https://qrbuilderstudio.com",
+    "NEXT_PUBLIC_REDIRECT_DOMAIN": "https://qrbuilderstudio.com",
+    "KV_REST_API_URL": "https://honest-shrimp-122602.upstash.io"
+  }
+}

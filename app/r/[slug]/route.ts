@@ -11,8 +11,6 @@ import { clientIp } from "@/lib/client-ip";
 
 const IP_RATE_LIMIT = 5000; // requests/min per IP
 
-export const runtime = "edge";
-
 const BACKFILL_TTL_SECONDS = 60 * 60 * 24;
 
 function anonClient() {
@@ -100,9 +98,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (isBotUserAgent(userAgent)) return;
     const { data } = await anonClient().rpc("record_scan", {
       p_slug: slug,
-      p_country: h.get("x-vercel-ip-country"),
-      p_region: h.get("x-vercel-ip-country-region"),
-      p_city: h.get("x-vercel-ip-city"),
+      // Cloudflare's visitor-location headers, added by the zone's
+      // "Add visitor location headers" managed transform.
+      p_country: h.get("cf-ipcountry"),
+      p_region: h.get("cf-region-code"),
+      p_city: h.get("cf-ipcity"),
       p_referer: h.get("referer"),
       p_ip_hash: ip === "unknown" ? null : await hashIp(ip),
     });

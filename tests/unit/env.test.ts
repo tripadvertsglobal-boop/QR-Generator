@@ -54,6 +54,23 @@ describe("production config contract", () => {
     expect(() => assertProductionConfig(complete)).toThrow(/Production configuration is incomplete/);
   });
 
+  it("downgrades the placeholder contact check to a warning under ALLOW_PLACEHOLDER_CONTACT", () => {
+    const env = { ...complete, ALLOW_PLACEHOLDER_CONTACT: "1" };
+    const { errors, warnings } = checkProductionConfig(env);
+    expect(warnings.some((w) => w.includes("siteConfig.contact"))).toBe(true);
+    expect(errors.some((e) => e.includes("siteConfig.contact"))).toBe(false);
+    expect(() => assertProductionConfig(env)).not.toThrow();
+  });
+
+  it("does not let the escape hatch excuse a missing required secret", () => {
+    const { errors } = checkProductionConfig({
+      ...complete,
+      ALLOW_PLACEHOLDER_CONTACT: "1",
+      LINK_UNLOCK_SECRET: undefined,
+    });
+    expect(errors.some((e) => e.includes("LINK_UNLOCK_SECRET"))).toBe(true);
+  });
+
   it("recognises the placeholder prefix", () => {
     expect(isPlaceholder("TODO_SET_CONTACT_EMAIL")).toBe(true);
     expect(isPlaceholder("hello@example.com")).toBe(false);
