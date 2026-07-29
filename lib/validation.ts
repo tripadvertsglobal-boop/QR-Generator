@@ -50,6 +50,9 @@ export const updateQrSchema = z
   .object({
     destination_url: httpUrl.optional(),
     is_active: z.boolean().optional(),
+    // true = archive (retire, stops resolving), false = restore. Maps to the
+    // archived_at timestamp in toDbFields.
+    archived: z.boolean().optional(),
     name: name.nullish(),
     folder_id: uuid.nullish(),
     tags: tags.optional(),
@@ -90,6 +93,11 @@ export const bulkCreateSchema = z.object({
 
 export const bulkDeleteSchema = z.object({
   ids: z.array(uuid).min(1).max(100),
+});
+
+export const bulkArchiveSchema = z.object({
+  ids: z.array(uuid).min(1).max(100),
+  archived: z.boolean(),
 });
 
 const apiScope = z.enum(["qrcodes:read", "qrcodes:write"]);

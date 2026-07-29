@@ -15,16 +15,24 @@ export type SlugConfig = {
 type QrRow = {
   destination_url: string;
   is_active: boolean;
+  archived_at?: string | null;
   active_from?: string | null;
   active_until?: string | null;
   password_hash?: string | null;
   ab_destinations?: AbDestination[] | null;
 };
 
+/** An archived code is not live, whatever its is_active flag says. */
+export function isLive(row: { is_active: boolean; archived_at?: string | null }): boolean {
+  return row.is_active && !row.archived_at;
+}
+
 export function buildConfig(row: QrRow): SlugConfig {
   return {
     destination_url: row.destination_url,
-    is_active: row.is_active,
+    // Folded, matching resolve_slug_config (00019): the edge then resolves an
+    // archived code through the existing "paused" path and serves its 410.
+    is_active: isLive(row),
     active_from: row.active_from ?? null,
     active_until: row.active_until ?? null,
     has_password: !!row.password_hash,

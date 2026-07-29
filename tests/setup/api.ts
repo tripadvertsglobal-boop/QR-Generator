@@ -36,7 +36,13 @@ vi.mock("@/lib/audit", () => ({
 }));
 vi.mock("@/lib/webhooks", () => ({ emitEvent: vi.fn() }));
 vi.mock("@/lib/safe-browsing", () => ({ isUrlSafe: vi.fn(async () => true) }));
-vi.mock("@/lib/slug-config", () => ({ buildConfig: vi.fn(() => ({})) }));
+// buildConfig is stubbed (routes only pass its result to the KV mock), but
+// isLive decides whether a route warms or evicts the cache — keep it real so
+// archive/pause behaviour is actually exercised.
+vi.mock("@/lib/slug-config", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/slug-config")>()),
+  buildConfig: vi.fn(() => ({})),
+}));
 vi.mock("@/lib/qr-write", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toDbFields: vi.fn(async (d: any) => d),

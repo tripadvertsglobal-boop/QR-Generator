@@ -11,7 +11,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const [{ data: userData }, { data: folderData }, { data: codeRows }] = await Promise.all([
     supabase.auth.getUser(),
     supabase.from("folders").select("id, name, color").order("name"),
-    supabase.from("qr_codes").select("folder_id"),
+    // Folder counts track the live list, which excludes archived codes.
+    supabase.from("qr_codes").select("folder_id").is("archived_at", null),
   ]);
 
   const folders = (folderData ?? []) as Folder[];

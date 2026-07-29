@@ -60,7 +60,10 @@ const groups: Group[] = [
         path: "/api/v1/qrcodes",
         auth: "scope qrcodes:read",
         summary: "List your QR codes (newest first). Password hashes are never returned.",
-        details: ["Query: ?folder=<uuid|none>, ?tag=<tag>"],
+        details: [
+          "Query: ?folder=<uuid|none>, ?tag=<tag>",
+          "Archived codes are excluded by default. ?archived=true returns only archived, ?archived=all returns both.",
+        ],
         response: `200 OK
 [
   {
@@ -79,8 +82,11 @@ const groups: Group[] = [
         method: "PATCH",
         path: "/api/v1/qrcodes/{id}",
         auth: "scope qrcodes:write",
-        summary: "Update destination, is_active, name, folder, tags, or advanced-link fields.",
-        details: ["Editing the destination updates the redirect instantly (KV is kept in sync)."],
+        summary: "Update destination, is_active, archived, name, folder, tags, or advanced-link fields.",
+        details: [
+          "Editing the destination updates the redirect instantly (KV is kept in sync).",
+          'Send { "archived": true } to retire a code and { "archived": false } to restore it. An archived code stops resolving (410) but keeps its scan history and its slug.',
+        ],
         request: `{ "destination_url": "https://example.com/new-landing" }`,
         response: `200 OK
 {
@@ -95,7 +101,10 @@ const groups: Group[] = [
         method: "DELETE",
         path: "/api/v1/qrcodes/{id}",
         auth: "scope qrcodes:write",
-        summary: "Delete a code. The slug 404s on the next scan.",
+        summary: "Permanently delete a code. The slug 404s on the next scan and is freed for reuse.",
+        details: [
+          "Destructive and irreversible — the row and its scan history are gone. To retire a code reversibly, PATCH { \"archived\": true } instead.",
+        ],
       },
       {
         method: "GET",
@@ -140,11 +149,21 @@ const groups: Group[] = [
 }`,
       },
       {
+        method: "PATCH",
+        path: "/api/v1/qrcodes/bulk",
+        auth: "scope qrcodes:write",
+        summary: "Archive or restore up to 100 codes by id.",
+        details: ["Body: { ids: [uuid] (1–100), archived: boolean }"],
+        request: `{ "ids": ["8f3c0b2e-…", "1a2b3c4d-…"], "archived": true }`,
+        response: `200 OK
+{ "archived": 2 }`,
+      },
+      {
         method: "DELETE",
         path: "/api/v1/qrcodes/bulk",
         auth: "scope qrcodes:write",
-        summary: "Delete up to 100 codes by id.",
-        details: ["Body: { ids: [uuid] } (1–100)"],
+        summary: "Permanently delete up to 100 codes by id.",
+        details: ["Body: { ids: [uuid] } (1–100). Irreversible — see PATCH above to archive instead."],
       },
       {
         method: "GET",

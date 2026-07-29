@@ -12,6 +12,8 @@ export type QrCode = {
   destination_url: string;
   name: string | null;
   is_active: boolean;
+  /** Non-null = retired: stays out of the default list and stops resolving. */
+  archived_at: string | null;
   scan_count: number;
   folder_id: string | null;
   tags: string[];

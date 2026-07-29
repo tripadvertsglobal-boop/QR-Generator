@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { setConfig, delConfig } from "@/lib/kv";
-import { buildConfig } from "@/lib/slug-config";
+import { buildConfig, isLive } from "@/lib/slug-config";
 import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit, auditDiff, auditSnapshot } from "@/lib/audit";
@@ -82,8 +82,9 @@ export const PATCH = withAuth(
       return dbError(error);
     }
 
-    // Keep KV in sync with the full config (paused codes are evicted).
-    if (data.is_active) await setConfig(data.short_slug, buildConfig(data));
+    // Keep KV in sync with the full config (paused *and* archived are evicted,
+    // so a live cache entry can never outlive the code being retired).
+    if (isLive(data)) await setConfig(data.short_slug, buildConfig(data));
     else await delConfig(data.short_slug);
 
     const diff = auditDiff(before, data, Object.keys(parsed.data));

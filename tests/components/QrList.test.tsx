@@ -13,6 +13,7 @@ const code = (id: string): QrCode =>
     destination_url: "https://example.com",
     name: `code-${id}`,
     is_active: true,
+    archived_at: null,
     scan_count: 0,
     folder_id: null,
     tags: [],

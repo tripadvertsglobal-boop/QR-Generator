@@ -42,6 +42,9 @@ export const GET = withAuth(
         .from("qr_codes")
         .select("name, short_slug, destination_url, scan_count, is_active, tags, created_at")
         .eq("user_id", auth.userId)
+        // Live codes only, matching the dashboard list. The GDPR archive at
+        // /api/v1/account/export is the one that returns everything.
+        .is("archived_at", null)
         .order("created_at", { ascending: false })
         .range(from, to),
     );

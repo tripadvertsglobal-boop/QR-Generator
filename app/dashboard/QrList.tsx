@@ -8,7 +8,15 @@ import { buttonClasses } from "@/app/_components/ui/Button";
 import QrRow from "./QrRow";
 import type { QrCode } from "./types";
 
-export default function QrList({ codes, canExport }: { codes: QrCode[]; canExport: boolean }) {
+export default function QrList({
+  codes,
+  canExport,
+  viewingArchived = false,
+}: {
+  codes: QrCode[];
+  canExport: boolean;
+  viewingArchived?: boolean;
+}) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -25,6 +33,28 @@ export default function QrList({ codes, canExport }: { codes: QrCode[]; canExpor
   const allSelected = codes.length > 0 && selected.size === codes.length;
   function toggleAll() {
     setSelected(allSelected ? new Set() : new Set(codes.map((c) => c.id)));
+  }
+
+  async function archiveSelected(archived: boolean) {
+    if (
+      archived &&
+      !confirm(
+        `Archive ${selected.size} QR code(s)? Printed codes will stop working. You can restore them later.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    const res = await fetch("/api/v1/qrcodes/bulk", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [...selected], archived }),
+    });
+    setBusy(false);
+    if (res.ok) {
+      setSelected(new Set());
+      router.refresh();
+    }
   }
 
   async function deleteSelected() {
@@ -51,9 +81,19 @@ export default function QrList({ codes, canExport }: { codes: QrCode[]; canExpor
         </label>
         <div className="flex items-center gap-2">
           {selected.size > 0 && (
-            <Button size="sm" variant="ghost" disabled={busy} onClick={deleteSelected} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
-              Delete selected
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => archiveSelected(!viewingArchived)}
+              >
+                {viewingArchived ? "Restore selected" : "Archive selected"}
+              </Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={deleteSelected} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
+                Delete selected
+              </Button>
+            </>
           )}
           {/* CSV export is Pro-gated: the endpoint 402s on Free, and this is a
               plain navigation, so without the check the browser would render the
@@ -79,7 +119,7 @@ export default function QrList({ codes, canExport }: { codes: QrCode[]; canExpor
       <ul className="flex flex-col gap-3">
         {codes.length === 0 && (
           <li className="rounded-xl border border-dashed border-border bg-black/[0.015] px-6 py-12 text-center text-sm text-muted">
-            No QR codes here yet.
+            {viewingArchived ? "Nothing archived." : "No QR codes here yet."}
           </li>
         )}
         {codes.map((code) => (

@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth";
 import { dbError } from "@/lib/api-error";
 import { setConfig, delConfig } from "@/lib/kv";
-import { buildConfig } from "@/lib/slug-config";
+import { buildConfig, isLive } from "@/lib/slug-config";
 import { generateSlug } from "@/lib/slug";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit } from "@/lib/audit";
 import { getPlanLimits, limitReached, upgradeRequired } from "@/lib/plan";
-import { bulkCreateSchema, bulkDeleteSchema } from "@/lib/validation";
+import { bulkCreateSchema, bulkDeleteSchema, bulkArchiveSchema } from "@/lib/validation";
 
 const REDIRECT_DOMAIN = process.env.NEXT_PUBLIC_REDIRECT_DOMAIN;
 
@@ -36,10 +36,12 @@ export const POST = withAuth(
       return NextResponse.json({ error: upgradeRequired("Bulk creation") }, { status: 402 });
     }
     if (limits.maxQrCodes !== Infinity) {
+      // Archived codes are retired, not live — same rule as single create.
       const { count, error: countError } = await auth.db
         .from("qr_codes")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", auth.userId);
+        .eq("user_id", auth.userId)
+        .is("archived_at", null);
       if (countError) return dbError(countError);
       if ((count ?? 0) + parsed.data.codes.length > limits.maxQrCodes) {
         return NextResponse.json(
@@ -124,6 +126,59 @@ export const POST = withAuth(
       { error: "Could not allocate unique slugs, please retry" },
       { status: 503 },
     );
+  },
+  { scope: "qrcodes:write" },
+);
+
+// PATCH /api/v1/qrcodes/bulk — archive or restore up to 100 codes by id.
+// Archiving retires a code without destroying it: the row, its scan history and
+// its slug are kept, but it stops resolving. DELETE below still hard-purges.
+export const PATCH = withAuth(
+  async (request, auth) => {
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const parsed = bulkArchiveSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+        { status: 400 },
+      );
+    }
+
+    const { ids, archived } = parsed.data;
+    const { data, error } = await auth.db
+      .from("qr_codes")
+      .update({ archived_at: archived ? new Date().toISOString() : null })
+      .eq("user_id", auth.userId)
+      .in("id", ids)
+      .select();
+
+    if (error) return dbError(error);
+
+    // Archiving evicts; restoring re-warms only what is genuinely live again
+    // (a code that was paused before archiving stays paused after restore).
+    await Promise.all(
+      (data ?? []).map((row) =>
+        isLive(row) ? setConfig(row.short_slug, buildConfig(row)) : delConfig(row.short_slug),
+      ),
+    );
+
+    logAudit({
+      userId: auth.userId,
+      action: archived ? "qr.bulk_archive" : "qr.bulk_restore",
+      resourceType: "qr_code",
+      newValue: {
+        count: data?.length ?? 0,
+        ids: (data ?? []).map((r) => r.id),
+      },
+      request,
+    });
+    return NextResponse.json({ [archived ? "archived" : "restored"]: data?.length ?? 0 });
   },
   { scope: "qrcodes:write" },
 );

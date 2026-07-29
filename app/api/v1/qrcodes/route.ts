@@ -35,10 +35,13 @@ export const POST = withAuth(
     // harmless for a quota, and a per-row trigger would fire 100x on bulk.
     const limits = await getPlanLimits(auth.db, auth.userId);
     if (limits.maxQrCodes !== Infinity) {
+      // Archived codes are retired, not live, so they don't consume quota —
+      // otherwise archiving would be strictly worse than deleting.
       const { count, error: countError } = await auth.db
         .from("qr_codes")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", auth.userId);
+        .eq("user_id", auth.userId)
+        .is("archived_at", null);
       if (countError) return dbError(countError);
       if ((count ?? 0) >= limits.maxQrCodes) {
         return NextResponse.json(
@@ -140,6 +143,9 @@ export const GET = withAuth(
     const sp = new URL(request.url).searchParams;
     const folder = sp.get("folder");
     const tag = sp.get("tag");
+    // Archived codes are retired, so they stay out of the default listing.
+    // ?archived=true returns only archived, ?archived=all returns both.
+    const archived = sp.get("archived");
     const limit = Math.min(1000, Math.max(1, Number(sp.get("limit")) || 1000));
     const offset = Math.max(0, Number(sp.get("offset")) || 0);
 
@@ -147,11 +153,13 @@ export const GET = withAuth(
     let query = auth.db
       .from("qr_codes")
       .select(
-        "id, user_id, short_slug, destination_url, name, is_active, scan_count, folder_id, tags, active_from, active_until, ab_destinations, created_at, updated_at",
+        "id, user_id, short_slug, destination_url, name, is_active, archived_at, scan_count, folder_id, tags, active_from, active_until, ab_destinations, created_at, updated_at",
       )
       .eq("user_id", auth.userId)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
+    if (archived === "true") query = query.not("archived_at", "is", null);
+    else if (archived !== "all") query = query.is("archived_at", null);
     if (folder === "none") query = query.is("folder_id", null);
     else if (folder) query = query.eq("folder_id", folder);
     if (tag) query = query.contains("tags", [tag]);

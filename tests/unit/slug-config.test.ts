@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { scheduleState, pickDestination, buildConfig, type SlugConfig } from "@/lib/slug-config";
+import { scheduleState, pickDestination, buildConfig, isLive, type SlugConfig } from "@/lib/slug-config";
 
 const base: SlugConfig = {
   destination_url: "https://primary.example.com",
@@ -70,5 +70,28 @@ describe("buildConfig", () => {
   });
   it("has_password false when null", () => {
     expect(buildConfig({ destination_url: "https://x", is_active: true }).has_password).toBe(false);
+  });
+  // Archiving must reach the edge as "not live", so the cached config and
+  // resolve_slug_config agree and the scan gets the 410 rather than a redirect.
+  it("folds archived_at into is_active so an archived code resolves as paused", () => {
+    const cfg = buildConfig({
+      destination_url: "https://x",
+      is_active: true,
+      archived_at: "2026-07-01T00:00:00.000Z",
+    });
+    expect(cfg.is_active).toBe(false);
+    expect(scheduleState(cfg)).toBe("paused");
+  });
+});
+
+describe("isLive", () => {
+  it("true only when active and not archived", () => {
+    expect(isLive({ is_active: true, archived_at: null })).toBe(true);
+    expect(isLive({ is_active: false, archived_at: null })).toBe(false);
+    expect(isLive({ is_active: true, archived_at: "2026-07-01T00:00:00.000Z" })).toBe(false);
+    expect(isLive({ is_active: false, archived_at: "2026-07-01T00:00:00.000Z" })).toBe(false);
+  });
+  it("treats a missing archived_at as not archived", () => {
+    expect(isLive({ is_active: true })).toBe(true);
   });
 });

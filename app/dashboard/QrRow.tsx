@@ -54,6 +54,17 @@ export default function QrRow({
     if (await patch({ is_active: !code.is_active })) router.refresh();
   }
 
+  async function toggleArchived() {
+    const archiving = !code.archived_at;
+    if (
+      archiving &&
+      !confirm("Archive this QR code? Printed codes will stop working. You can restore it later.")
+    ) {
+      return;
+    }
+    if (await patch({ archived: archiving })) router.refresh();
+  }
+
   async function remove() {
     if (!confirm("Delete this QR code? Printed codes will stop working.")) return;
     setBusy(true);
@@ -81,9 +92,17 @@ export default function QrRow({
             >
               {code.name ?? "Untitled"}
             </Link>
-            <Badge tone={code.is_active ? "emerald" : "gray"} dot>
-              {code.is_active ? "Active" : "Paused"}
-            </Badge>
+            {/* Archived wins over active/paused — it's the state that decides
+                whether the code resolves. */}
+            {code.archived_at ? (
+              <Badge tone="amber" dot>
+                Archived
+              </Badge>
+            ) : (
+              <Badge tone={code.is_active ? "emerald" : "gray"} dot>
+                {code.is_active ? "Active" : "Paused"}
+              </Badge>
+            )}
             {code.has_password && <Badge tone="gray">Password</Badge>}
             {(code.active_from || code.active_until) && <Badge tone="gray">Scheduled</Badge>}
             {code.ab_destinations && code.ab_destinations.length > 0 && (
@@ -153,11 +172,20 @@ export default function QrRow({
           </form>
         ) : (
           <div className="flex flex-wrap gap-2 pt-0.5">
-            <Button size="sm" variant="secondary" disabled={busy} onClick={() => setEditing(true)}>
-              Edit
-            </Button>
-            <Button size="sm" variant="secondary" disabled={busy} onClick={toggleActive}>
-              {code.is_active ? "Pause" : "Activate"}
+            {/* An archived code is retired: editing and pausing it are
+                meaningless until it is restored. */}
+            {!code.archived_at && (
+              <>
+                <Button size="sm" variant="secondary" disabled={busy} onClick={() => setEditing(true)}>
+                  Edit
+                </Button>
+                <Button size="sm" variant="secondary" disabled={busy} onClick={toggleActive}>
+                  {code.is_active ? "Pause" : "Activate"}
+                </Button>
+              </>
+            )}
+            <Button size="sm" variant="secondary" disabled={busy} onClick={toggleArchived}>
+              {code.archived_at ? "Restore" : "Archive"}
             </Button>
             <Button size="sm" variant="ghost" disabled={busy} onClick={remove} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
               Delete

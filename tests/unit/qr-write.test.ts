@@ -21,6 +21,20 @@ describe("toDbFields", () => {
     const fields = await toDbFields({ destination_url: "https://x", tags: ["a"] });
     expect(fields).toMatchObject({ destination_url: "https://x", tags: ["a"] });
   });
+  it("archived: true stamps archived_at", async () => {
+    const fields = await toDbFields({ archived: true });
+    expect(typeof fields.archived_at).toBe("string");
+    expect(Number.isNaN(Date.parse(fields.archived_at as string))).toBe(false);
+    expect("archived" in fields).toBe(false);
+  });
+  it("archived: false clears archived_at (restore)", async () => {
+    const fields = await toDbFields({ archived: false });
+    expect(fields.archived_at).toBeNull();
+  });
+  it("archived undefined leaves archived_at untouched", async () => {
+    const fields = await toDbFields({ name: "x" });
+    expect("archived_at" in fields).toBe(false);
+  });
 });
 
 describe("stripSecret", () => {
