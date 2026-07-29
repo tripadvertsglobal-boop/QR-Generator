@@ -150,6 +150,11 @@ export const PATCH = withAuth(
       );
     }
 
+    const limits = await getPlanLimits(auth.db, auth.userId);
+    if (!limits.archiving) {
+      return NextResponse.json({ error: upgradeRequired("Archiving") }, { status: 402 });
+    }
+
     const { ids, archived } = parsed.data;
     const { data, error } = await auth.db
       .from("qr_codes")

@@ -38,7 +38,9 @@ export default async function AccountPage() {
             ? `${used} QR ${used === 1 ? "code" : "codes"} · unlimited`
             : `${used} of ${limits.maxQrCodes} QR codes used`}
           {" · "}
-          {limits.apiAccess ? "API & webhooks enabled" : "API, webhooks, and CSV export are Pro features"}
+          {limits.apiAccess
+            ? "API & webhooks enabled"
+            : "API, webhooks, CSV export, and archiving are Pro features"}
         </p>
         {plan === "free" && (
           <Link href="/pricing" className={buttonClasses("secondary", "md", "self-start")}>

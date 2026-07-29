@@ -98,6 +98,7 @@ export default async function DashboardPage({
         <QrList
           codes={visible}
           canExport={limits.bulkOperations}
+          canArchive={limits.archiving}
           viewingArchived={viewingArchived}
         />
       </div>

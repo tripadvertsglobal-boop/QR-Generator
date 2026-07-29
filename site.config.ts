@@ -125,7 +125,8 @@ export const siteConfig = {
         period: "/month",
         description: "Everything you need to get started.",
         features: [
-          "Up to 10 dynamic QR codes",
+          "Up to 3 dynamic QR codes",
+          "Create, edit, and delete anytime",
           "Basic scan analytics",
           "1 folder",
           "Audit log & GDPR data export",
@@ -143,6 +144,7 @@ export const siteConfig = {
         description: "For creators and small teams.",
         features: [
           "Unlimited QR codes",
+          "Archive & restore codes",
           "Full analytics with geography",
           "Unlimited folders & tags",
           "API access & webhooks",

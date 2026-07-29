@@ -11,10 +11,12 @@ import type { QrCode } from "./types";
 export default function QrList({
   codes,
   canExport,
+  canArchive,
   viewingArchived = false,
 }: {
   codes: QrCode[];
   canExport: boolean;
+  canArchive: boolean;
   viewingArchived?: boolean;
 }) {
   const router = useRouter();
@@ -36,6 +38,11 @@ export default function QrList({
   }
 
   async function archiveSelected(archived: boolean) {
+    // Pro-gated; the API 402s. Send Free users to the plans page instead.
+    if (!canArchive) {
+      router.push("/pricing");
+      return;
+    }
     if (
       archived &&
       !confirm(
@@ -87,8 +94,10 @@ export default function QrList({
                 variant="secondary"
                 disabled={busy}
                 onClick={() => archiveSelected(!viewingArchived)}
+                title={canArchive ? undefined : "Archiving is available on Pro"}
               >
                 {viewingArchived ? "Restore selected" : "Archive selected"}
+                {!canArchive && " ↑"}
               </Button>
               <Button size="sm" variant="ghost" disabled={busy} onClick={deleteSelected} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
                 Delete selected
@@ -128,6 +137,7 @@ export default function QrList({
             code={code}
             selected={selected.has(code.id)}
             onSelectChange={onSelectChange}
+            canArchive={canArchive}
           />
         ))}
       </ul>

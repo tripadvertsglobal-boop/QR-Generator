@@ -17,11 +17,20 @@ describe("plan limits", () => {
 
   it("gates the paid features on free", () => {
     const free = PLAN_LIMITS.free;
-    expect(free.maxQrCodes).toBe(10);
+    expect(free.maxQrCodes).toBe(3);
     expect(free.maxFolders).toBe(1);
     expect(free.apiAccess).toBe(false);
     expect(free.bulkOperations).toBe(false);
     expect(free.geoAnalytics).toBe(false);
+    expect(free.archiving).toBe(false);
+  });
+
+  // Free keeps the destructive path: gating delete would leave an account at
+  // the cap with no way to make room.
+  it("gives every plan archiving except free, and never gates delete", () => {
+    expect(PLAN_LIMITS.pro.archiving).toBe(true);
+    expect(PLAN_LIMITS.business.archiving).toBe(true);
+    expect("canDelete" in PLAN_LIMITS.free).toBe(false);
   });
 
   it("gives business a higher API rate limit than pro", () => {

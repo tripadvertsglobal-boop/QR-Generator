@@ -22,17 +22,26 @@ export type PlanLimits = {
   bulkOperations: boolean;
   /** Country breakdown on the QR detail page. */
   geoAnalytics: boolean;
+  /**
+   * Archive and restore. Deleting is NOT gated — every plan can delete its own
+   * codes, so a Free account is never stuck with a code it cannot get rid of.
+   * Restore is gated with archiving because they are one feature; the practical
+   * effect is that a Pro account which archived codes and later dropped to Free
+   * can delete them but not bring them back.
+   */
+  archiving: boolean;
   /** Default rate_limit stamped on a newly minted API key. */
   defaultKeyRateLimit: number;
 };
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   free: {
-    maxQrCodes: 10,
+    maxQrCodes: 3,
     maxFolders: 1,
     apiAccess: false,
     bulkOperations: false,
     geoAnalytics: false,
+    archiving: false,
     defaultKeyRateLimit: 0,
   },
   pro: {
@@ -41,6 +50,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     apiAccess: true,
     bulkOperations: true,
     geoAnalytics: true,
+    archiving: true,
     defaultKeyRateLimit: 100,
   },
   business: {
@@ -49,6 +59,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     apiAccess: true,
     bulkOperations: true,
     geoAnalytics: true,
+    archiving: true,
     defaultKeyRateLimit: 1000,
   },
 };

@@ -26,13 +26,13 @@ const code = (id: string): QrCode =>
 
 describe("QrList export gating", () => {
   it("links straight to the export endpoint when the plan allows it", () => {
-    render(<QrList codes={[code("1")]} canExport />);
+    render(<QrList codes={[code("1")]} canExport canArchive />);
     const link = screen.getByRole("link", { name: /Export CSV/ });
     expect(link.getAttribute("href")).toBe("/api/v1/qrcodes/export");
   });
 
   it("sends a plan without bulk operations to /pricing instead", () => {
-    render(<QrList codes={[code("1")]} canExport={false} />);
+    render(<QrList codes={[code("1")]} canExport={false} canArchive={false} />);
     const link = screen.getByRole("link", { name: /Export CSV/ });
     expect(link.getAttribute("href")).toBe("/pricing");
   });

@@ -7,6 +7,7 @@ import { toDbFields, stripSecret } from "@/lib/qr-write";
 import { isUrlSafe } from "@/lib/safe-browsing";
 import { logAudit, auditDiff, auditSnapshot } from "@/lib/audit";
 import { emitEvent } from "@/lib/webhooks";
+import { getPlanLimits, upgradeRequired } from "@/lib/plan";
 import { updateQrSchema, isUuid } from "@/lib/validation";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -31,6 +32,16 @@ export const PATCH = withAuth(
         { error: parsed.error.issues[0]?.message ?? "Invalid input" },
         { status: 400 },
       );
+    }
+
+    // Archiving is a paid feature. Checked only when the patch actually touches
+    // it, so an ordinary update still costs no extra query. Deleting stays
+    // ungated on every plan.
+    if (parsed.data.archived !== undefined) {
+      const limits = await getPlanLimits(auth.db, auth.userId);
+      if (!limits.archiving) {
+        return NextResponse.json({ error: upgradeRequired("Archiving") }, { status: 402 });
+      }
     }
 
     // Screen every URL a scanner can be sent to — A/B arms included, since

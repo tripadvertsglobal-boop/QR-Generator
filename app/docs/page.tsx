@@ -86,6 +86,7 @@ const groups: Group[] = [
         details: [
           "Editing the destination updates the redirect instantly (KV is kept in sync).",
           'Send { "archived": true } to retire a code and { "archived": false } to restore it. An archived code stops resolving (410) but keeps its scan history and its slug.',
+          "Archiving requires a paid plan — Free returns 402. Deleting is available on every plan.",
         ],
         request: `{ "destination_url": "https://example.com/new-landing" }`,
         response: `200 OK
@@ -153,7 +154,10 @@ const groups: Group[] = [
         path: "/api/v1/qrcodes/bulk",
         auth: "scope qrcodes:write",
         summary: "Archive or restore up to 100 codes by id.",
-        details: ["Body: { ids: [uuid] (1–100), archived: boolean }"],
+        details: [
+          "Body: { ids: [uuid] (1–100), archived: boolean }",
+          "Requires a paid plan — Free returns 402.",
+        ],
         request: `{ "ids": ["8f3c0b2e-…", "1a2b3c4d-…"], "archived": true }`,
         response: `200 OK
 { "archived": 2 }`,

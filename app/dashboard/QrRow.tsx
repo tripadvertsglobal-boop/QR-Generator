@@ -14,10 +14,12 @@ export default function QrRow({
   code,
   selected,
   onSelectChange,
+  canArchive,
 }: {
   code: QrCode;
   selected: boolean;
   onSelectChange: (id: string, checked: boolean) => void;
+  canArchive: boolean;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -55,6 +57,12 @@ export default function QrRow({
   }
 
   async function toggleArchived() {
+    // Archiving is Pro-gated; the API 402s. Send Free users to the plans page
+    // rather than letting them hit a failure they can't act on.
+    if (!canArchive) {
+      router.push("/pricing");
+      return;
+    }
     const archiving = !code.archived_at;
     if (
       archiving &&
@@ -184,8 +192,15 @@ export default function QrRow({
                 </Button>
               </>
             )}
-            <Button size="sm" variant="secondary" disabled={busy} onClick={toggleArchived}>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy}
+              onClick={toggleArchived}
+              title={canArchive ? undefined : "Archiving is available on Pro"}
+            >
               {code.archived_at ? "Restore" : "Archive"}
+              {!canArchive && " ↑"}
             </Button>
             <Button size="sm" variant="ghost" disabled={busy} onClick={remove} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
               Delete

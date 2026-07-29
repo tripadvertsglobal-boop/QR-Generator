@@ -95,10 +95,63 @@ describe("PATCH /api/v1/qrcodes/bulk — archive", () => {
   });
 });
 
+describe("archiving is a paid feature", () => {
+  it("402s a free account archiving a single code", async () => {
+    setDb([], "user-1", "free");
+    const res = await idRoute.PATCH(
+      jsonRequest("PATCH", { archived: true }),
+      ctx({ id: RES_ID }),
+    );
+    expect(res.status).toBe(402);
+    expect((await res.json()).error).toMatch(/Archiving is not available on the Free plan/);
+  });
+
+  // Restore is part of the same feature, so it is gated too — a downgraded
+  // account can still delete an archived code, just not bring it back.
+  it("402s a free account restoring a code", async () => {
+    setDb([], "user-1", "free");
+    const res = await idRoute.PATCH(
+      jsonRequest("PATCH", { archived: false }),
+      ctx({ id: RES_ID }),
+    );
+    expect(res.status).toBe(402);
+  });
+
+  it("402s a free account on bulk archive", async () => {
+    setDb([], "user-1", "free");
+    const res = await bulkRoute.PATCH(
+      jsonRequest("PATCH", { ids: [RES_ID], archived: true }),
+      ctx(),
+    );
+    expect(res.status).toBe(402);
+  });
+
+  // The gate must not tax ordinary edits with an extra plan lookup, and must
+  // not block a Free user from editing at all.
+  it("leaves an ordinary update on free untouched", async () => {
+    setDb(
+      [{ data: liveRow }, { data: { ...liveRow, destination_url: "https://new.test" } }],
+      "user-1",
+      "free",
+    );
+    const res = await idRoute.PATCH(
+      jsonRequest("PATCH", { destination_url: "https://new.test" }),
+      ctx({ id: RES_ID }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("leaves delete available on free", async () => {
+    setDb([{ data: liveRow }], "user-1", "free");
+    const res = await idRoute.DELETE(jsonRequest("DELETE"), ctx({ id: RES_ID }));
+    expect(res.status).toBe(200);
+  });
+});
+
 describe("archived codes and the plan quota", () => {
   // Archiving has to free a slot, or it would be strictly worse than deleting.
   it("counts only live codes against the cap", async () => {
-    const mock = setDb([{ count: 9 }, { data: { id: "new", short_slug: "n" } }], "user-1", "free");
+    const mock = setDb([{ count: 2 }, { data: { id: "new", short_slug: "n" } }], "user-1", "free");
     const res = await listRoute.POST(
       jsonRequest("POST", { destination_url: "https://example.com" }),
       ctx(),

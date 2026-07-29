@@ -16,17 +16,17 @@ const free = (results: Parameters<typeof setDb>[0] = []) => setDb(results, "user
 
 describe("free plan quotas", () => {
   it("refuses a new QR code at the cap with 402", async () => {
-    free([{ count: 10 }]);
+    free([{ count: 3 }]);
     const res = await qrcodes.POST(
       jsonRequest("POST", { destination_url: "https://x.com" }),
       ctx(),
     );
     expect(res.status).toBe(402);
-    expect((await res.json()).error).toMatch(/Free plan limit reached \(10 QR codes\)/);
+    expect((await res.json()).error).toMatch(/Free plan limit reached \(3 QR codes\)/);
   });
 
   it("allows a new QR code below the cap", async () => {
-    free([{ count: 9 }, { data: { id: "q", short_slug: "s", destination_url: "https://x.com" } }]);
+    free([{ count: 2 }, { data: { id: "q", short_slug: "s", destination_url: "https://x.com" } }]);
     const res = await qrcodes.POST(
       jsonRequest("POST", { destination_url: "https://x.com" }),
       ctx(),
@@ -75,8 +75,8 @@ describe("free plan quotas", () => {
 
 describe("bulk creation against the quota", () => {
   it("refuses a batch that would cross the cap", async () => {
-    // 5 existing + 8 requested > 10.
-    setDb([{ count: 5 }], "user-1", "free");
+    // 2 existing + 8 requested > 3.
+    setDb([{ count: 2 }], "user-1", "free");
     const res = await bulk.POST(
       jsonRequest("POST", {
         codes: Array.from({ length: 8 }, () => ({ destination_url: "https://x.com" })),
