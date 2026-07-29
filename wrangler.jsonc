@@ -35,6 +35,10 @@
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_cdAxxTutUND9mmjS9xCOMw_8avUPXxB",
     "NEXT_PUBLIC_APP_URL": "https://qrbuilderstudio.com",
     "NEXT_PUBLIC_REDIRECT_DOMAIN": "https://qrbuilderstudio.com",
-    "KV_REST_API_URL": "https://honest-shrimp-122602.upstash.io"
+    "KV_REST_API_URL": "https://honest-shrimp-122602.upstash.io",
+    // CORS allow-list for /api/v1/* (lib/cors.ts). Only affects browser callers
+    // on another origin; server-side X-API-Key calls never involve CORS. Add a
+    // third party's origin here to let its browser code call the API.
+    "ALLOWED_ORIGINS": "https://qrbuilderstudio.com"
   }
 }
