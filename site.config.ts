@@ -25,11 +25,11 @@ export const siteConfig = {
   /* ---------------------------------------------------------------- */
   /* These are the contact details of record in the Terms and Privacy Policy.
      Any value still prefixed with TODO_ fails the production build — see
-     lib/env.ts. Replace all three before going live. */
+     lib/env.ts. Leave a value empty ("") to omit it from the footer. */
   contact: {
-    email: "TODO_SET_CONTACT_EMAIL",
-    phone: "TODO_SET_CONTACT_PHONE",
-    address: "TODO_SET_CONTACT_ADDRESS",
+    email: "hello@qrbuilderstudio.com",
+    phone: "",
+    address: "",
   },
 
   /* Social links — leave a value empty ("") to hide that link. */

@@ -1,8 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { checkProductionConfig, assertProductionConfig, isPlaceholder } from "@/lib/env";
 
-// A complete production env, minus the site.config placeholders (which are
-// checked separately and are expected to be unset in the repo today).
+// site.config is mocked back to placeholders so these tests exercise the
+// detection logic rather than whatever the shipped config happens to hold —
+// the real one is asserted to be clean in its own test below.
+vi.mock("@/site.config", () => ({
+  siteConfig: {
+    contact: { email: "TODO_SET_CONTACT_EMAIL", phone: "", address: "" },
+  },
+}));
+
 const complete = {
   NEXT_PUBLIC_SUPABASE_URL: "https://x.supabase.co",
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
@@ -74,5 +81,15 @@ describe("production config contract", () => {
   it("recognises the placeholder prefix", () => {
     expect(isPlaceholder("TODO_SET_CONTACT_EMAIL")).toBe(true);
     expect(isPlaceholder("hello@example.com")).toBe(false);
+  });
+
+  it("ships a site.config with no placeholder contact details left", async () => {
+    // Guards the real config, which the mock above deliberately hides.
+    const { siteConfig } = await vi.importActual<typeof import("@/site.config")>("@/site.config");
+    for (const [field, value] of Object.entries(siteConfig.contact)) {
+      expect(isPlaceholder(value), `siteConfig.contact.${field}`).toBe(false);
+    }
+    // The address of record in the Terms must be reachable.
+    expect(siteConfig.contact.email).toMatch(/.+@.+\..+/);
   });
 });

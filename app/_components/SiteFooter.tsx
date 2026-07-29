@@ -28,8 +28,8 @@ export default function SiteFooter() {
                 {contact.email}
               </a>
             </li>
-            <li>{contact.phone}</li>
-            <li>{contact.address}</li>
+            {contact.phone && <li>{contact.phone}</li>}
+            {contact.address && <li>{contact.address}</li>}
           </ul>
         </div>
 

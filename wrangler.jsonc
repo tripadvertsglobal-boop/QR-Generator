@@ -17,6 +17,10 @@
   "observability": {
     "enabled": true
   },
+  // Serve only on the custom domain. Without these, wrangler enables both by
+  // default and the app is also public on qrgenerator.<subdomain>.workers.dev.
+  "workers_dev": false,
+  "preview_urls": false,
   // Replaces the Vercel cron in vercel.json: purge audit_logs older than 90 days.
   "triggers": {
     "crons": ["0 4 * * *"]
