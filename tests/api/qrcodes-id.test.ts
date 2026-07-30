@@ -11,6 +11,46 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_REDIRECT_DOMAIN", "https://qr.test");
 });
 
+describe("GET /api/v1/qrcodes/[id]", () => {
+  it("returns the code without its password hash", async () => {
+    setDb([
+      {
+        data: {
+          id: "abc",
+          short_slug: "s",
+          destination_url: "https://old.test",
+          password_hash: "$2a$10$secret",
+        },
+      },
+    ]);
+    const res = await route.GET(jsonRequest("GET"), ctx({ id: RES_ID }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.short_slug).toBe("s");
+    expect(body).not.toHaveProperty("password_hash");
+  });
+
+  it("returns an archived code", async () => {
+    setDb([{ data: { id: "abc", short_slug: "s", archived_at: "2026-07-01T00:00:00.000Z" } }]);
+    const res = await route.GET(jsonRequest("GET"), ctx({ id: RES_ID }));
+    expect(res.status).toBe(200);
+    expect((await res.json()).archived_at).toBe("2026-07-01T00:00:00.000Z");
+  });
+
+  it("returns 404 when the code is not found / not owned", async () => {
+    setDb([{ data: null }]);
+    const res = await route.GET(jsonRequest("GET"), ctx({ id: MISSING_ID }));
+    expect(res.status).toBe(404);
+  });
+
+  it("404s a malformed id without touching the database", async () => {
+    const mock = setDb([]);
+    const res = await route.GET(jsonRequest("GET"), ctx({ id: NOT_A_UUID }));
+    expect(res.status).toBe(404);
+    expect(mock.calls).toHaveLength(0);
+  });
+});
+
 describe("PATCH /api/v1/qrcodes/[id]", () => {
   it("updates a code and returns it", async () => {
     // First query snapshots the pre-update row for auditing, then the update.

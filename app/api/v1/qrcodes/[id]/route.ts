@@ -12,6 +12,30 @@ import { updateQrSchema, isUuid } from "@/lib/validation";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+// GET /api/v1/qrcodes/[id] — fetch one code. Same shape as a PATCH response and
+// as an item in the listing. Archived codes are returned too: unlike the
+// listing, a request by id already says which code it wants.
+export const GET = withAuth(
+  async (_request, auth, { params }: Ctx) => {
+    const { id } = await params;
+    if (!isUuid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Explicit user scoping so service-role (API-key) requests stay tenant-isolated.
+    const { data, error } = await auth.db
+      .from("qr_codes")
+      .select()
+      .eq("id", id)
+      .eq("user_id", auth.userId)
+      .maybeSingle();
+
+    if (error) return dbError(error);
+    if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    return NextResponse.json(stripSecret(data));
+  },
+  { scope: "qrcodes:read" },
+);
+
 // PATCH /api/v1/qrcodes/[id] — update destination / is_active / name / folder /
 // tags and keep the KV cache in sync (warm active, evict paused).
 export const PATCH = withAuth(

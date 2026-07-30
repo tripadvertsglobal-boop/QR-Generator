@@ -46,6 +46,12 @@ vi.mock("@/lib/slug-config", async (importOriginal) => ({
 vi.mock("@/lib/qr-write", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toDbFields: vi.fn(async (d: any) => d),
+  // Mirrors the real implementation (no bcrypt involved), so route tests can
+  // assert the password hash really is kept out of responses.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  stripSecret: (d: any) => d,
+  stripSecret: (row: any) => {
+    const { password_hash: _omit, ...safe } = row;
+    void _omit;
+    return safe;
+  },
 }));
