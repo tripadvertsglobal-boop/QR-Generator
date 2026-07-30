@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/site.config";
+import { pageMetadata } from "@/lib/seo";
 import LegalPage from "../_components/LegalPage";
 
 const { company, contact } = siteConfig;
 
-export const metadata: Metadata = {
-  title: `Acceptable Use Policy — ${company.name}`,
+export const metadata: Metadata = pageMetadata({
+  title: "Acceptable Use Policy",
   description: `The rules for what you can and cannot do with ${company.name}.`,
-};
+  path: "/acceptable-use",
+});
 
 export default function AcceptableUsePage() {
   return (

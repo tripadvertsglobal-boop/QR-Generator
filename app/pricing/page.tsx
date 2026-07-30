@@ -1,18 +1,47 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { siteConfig } from "@/site.config";
+import { ORG_ID, absoluteUrl, breadcrumbSchema, graph, pageMetadata } from "@/lib/seo";
 import MarketingShell from "../_components/MarketingShell";
+import JsonLd from "../_components/JsonLd";
 
-export const metadata: Metadata = {
-  title: `Pricing — ${siteConfig.company.name}`,
-  description: siteConfig.pricing.subheading,
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Pricing",
+  description: `${siteConfig.pricing.subheading} ${siteConfig.pricing.plans[0].features[0]} free, no credit card required.`,
+  path: "/pricing",
+});
 
 export default function PricingPage() {
   const { pricing } = siteConfig;
 
   return (
     <MarketingShell>
+      <JsonLd
+        data={graph(
+          breadcrumbSchema([{ name: "Pricing", path: "/pricing" }]),
+          {
+            "@type": "Product",
+            "@id": absoluteUrl("/pricing#product"),
+            name: siteConfig.company.name,
+            description: siteConfig.company.description,
+            brand: { "@id": ORG_ID },
+            // availability tracks plan.available: self-serve checkout is only
+            // open on the free plan, and claiming otherwise in rich results
+            // would send people to a CTA that does not work.
+            offers: pricing.plans.map((plan) => ({
+              "@type": "Offer",
+              name: plan.name,
+              description: plan.description,
+              price: plan.price.replace(/[^0-9.]/g, ""),
+              priceCurrency: "USD",
+              url: absoluteUrl("/pricing"),
+              availability: plan.available
+                ? "https://schema.org/InStock"
+                : "https://schema.org/PreOrder",
+            })),
+          },
+        )}
+      />
       <section className="mx-auto w-full max-w-6xl px-6 pt-20 pb-12 text-center sm:pt-28">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           {pricing.heading}

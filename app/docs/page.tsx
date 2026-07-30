@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/site.config";
+import { ORG_ID, absoluteUrl, breadcrumbSchema, graph, pageMetadata } from "@/lib/seo";
 import MarketingShell from "../_components/MarketingShell";
+import JsonLd from "../_components/JsonLd";
 
-export const metadata: Metadata = {
-  title: `API docs — ${siteConfig.company.name}`,
-  description: `REST API reference for ${siteConfig.company.name}: authentication, rate limits, and every endpoint.`,
-};
+export const metadata: Metadata = pageMetadata({
+  title: "QR Code API reference",
+  description: `REST API reference for ${siteConfig.company.name}: authentication, scopes, rate limits, webhooks, and every endpoint for creating and tracking QR codes programmatically.`,
+  path: "/docs",
+});
 
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -77,6 +80,28 @@ const groups: Group[] = [
     "created_at": "2026-06-14T21:00:00.000Z"
   }
 ]`,
+      },
+      {
+        method: "GET",
+        path: "/api/v1/qrcodes/{id}",
+        auth: "scope qrcodes:read",
+        summary: "Fetch a single QR code by id. Password hashes are never returned.",
+        details: [
+          "Same shape as a listing item. Archived codes are returned too — unlike the listing, a request by id is explicit.",
+          "Unknown or not-owned id → 404.",
+        ],
+        response: `200 OK
+{
+  "id": "8f3c0b2e-4d1a-4c9b-9f2e-1a2b3c4d5e6f",
+  "short_slug": "a1B2c3",
+  "destination_url": "https://example.com/landing",
+  "name": "Spring Campaign",
+  "is_active": true,
+  "archived_at": null,
+  "scan_count": 42,
+  "tags": ["q2"],
+  "created_at": "2026-06-14T21:00:00.000Z"
+}`,
       },
       {
         method: "PATCH",
@@ -345,6 +370,20 @@ function EndpointRow({ ep }: { ep: Endpoint }) {
 export default function DocsPage() {
   return (
     <MarketingShell>
+      <JsonLd
+        data={graph(
+          breadcrumbSchema([{ name: "API reference", path: "/docs" }]),
+          {
+            "@type": "TechArticle",
+            "@id": absoluteUrl("/docs"),
+            headline: `${siteConfig.company.name} QR Code API reference`,
+            description: `REST API reference for ${siteConfig.company.name}.`,
+            inLanguage: "en",
+            author: { "@id": ORG_ID },
+            publisher: { "@id": ORG_ID },
+          },
+        )}
+      />
       <div className="mx-auto w-full max-w-3xl px-6 py-16">
         <h1 className="text-4xl font-bold tracking-tight">API reference</h1>
         <p className="mt-4 text-black/60">

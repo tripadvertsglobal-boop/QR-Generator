@@ -12,7 +12,7 @@ export const siteConfig = {
   /* Company / brand identity                                          */
   /* ---------------------------------------------------------------- */
   company: {
-    name: "QR Studio",
+    name: "QRStudio Builder",
     // Shown in the browser tab and used for SEO metadata.
     tagline: "Dynamic QR codes that you can edit, track, and trust.",
     // One or two sentences describing the product. Used in the hero section.
@@ -105,6 +105,89 @@ export const siteConfig = {
       title: "Private & secure",
       description:
         "Row-level security, audit logs, and GDPR data export keep your data yours.",
+    },
+  ],
+
+  /* Use cases shown on the landing page. These carry the search terms
+     people actually type ("QR code for a restaurant menu"), so keep the
+     wording concrete rather than abstract. */
+  useCases: [
+    {
+      title: "Restaurant menus",
+      description:
+        "Print one code on the table and swap the menu it opens each season — or each day. No new table talkers, no stickers over old codes.",
+    },
+    {
+      title: "Packaging & print",
+      description:
+        "Boxes and flyers ship with a code you can't recall. Point it at a fresh landing page after the print run and the old stock keeps working.",
+    },
+    {
+      title: "Events & conferences",
+      description:
+        "Badges, posters, and slide decks share one code. Schedule it to open the agenda during the event and the recording afterwards.",
+    },
+    {
+      title: "Real estate signage",
+      description:
+        "A yard sign outlives a listing. Re-point the code to the next property and see which boards actually get scanned.",
+    },
+    {
+      title: "Retail & product labels",
+      description:
+        "Give every SKU its own code with bulk creation, then compare scans by product to see where attention really goes.",
+    },
+    {
+      title: "Marketing campaigns",
+      description:
+        "Split scans between two landing pages, tag codes by channel, and pull the numbers into your own reports through the API.",
+    },
+  ],
+
+  /* Landing-page FAQ. Also emitted as FAQPage structured data, which Google
+     only honours when the questions are visible on the page — so every entry
+     here must stay rendered, and every answer must stay true to what
+     lib/plan.ts actually enforces. */
+  faq: [
+    {
+      question: "What is a dynamic QR code?",
+      answer:
+        "A dynamic QR code encodes a short tracking link instead of your destination. Because the printed pattern points at that link, you can change where it leads at any time and the code on the page never has to change. A static QR code bakes the destination in permanently — if the URL changes, the code is dead.",
+    },
+    {
+      question: "Can I change where a QR code points after it's printed?",
+      answer:
+        "Yes. Edit the destination in the dashboard or through the API and the next scan goes to the new URL, usually within a second. This works on every plan, including the free one.",
+    },
+    {
+      question: "Can I see who scans my QR codes?",
+      answer:
+        "You get total scans, a per-day trend, and a breakdown by country, region, and city. Scans are recorded without storing raw IP addresses, and crawler or link-preview fetches are filtered out so your numbers reflect real people.",
+    },
+    {
+      question: "Is there a free plan?",
+      answer:
+        "Yes. The free plan includes 3 dynamic QR codes, one folder, basic scan analytics, an audit log, and GDPR data export. No credit card is required to start.",
+    },
+    {
+      question: "Do the QR codes expire?",
+      answer:
+        "No. A code keeps resolving until you pause, archive, or delete it. You can also schedule an active window in advance if you want one to start or stop on a set date.",
+    },
+    {
+      question: "Can I password-protect or A/B test a code?",
+      answer:
+        "Both. A code can sit behind a password gate, and you can split scans across two or more destinations by weight to test which landing page performs better.",
+    },
+    {
+      question: "Is there an API for creating QR codes programmatically?",
+      answer:
+        "Yes. Paid plans include scoped API keys, bulk creation, webhooks, and print-ready SVG or PNG output. The full REST reference is on the API docs page.",
+    },
+    {
+      question: "What happens if I delete a QR code?",
+      answer:
+        "Deleting is permanent: the slug stops resolving and its scan history is gone. To retire a code without losing its numbers, archive it instead — archived codes stop resolving but keep their history and their slug.",
     },
   ],
 

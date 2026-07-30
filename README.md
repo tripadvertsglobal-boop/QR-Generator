@@ -1,4 +1,4 @@
-# QR Studio
+# QRStudio Builder
 
 Dynamic QR codes: generate a code once, change where it points at any time, and
 track every scan. The printed code encodes a tracking URL (`/r/<slug>`), never

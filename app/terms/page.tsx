@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/site.config";
+import { pageMetadata } from "@/lib/seo";
 import LegalPage from "../_components/LegalPage";
 
 const { company, contact } = siteConfig;
 
-export const metadata: Metadata = {
-  title: `Terms of Service — ${company.name}`,
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
   description: `The terms that govern your use of ${company.name}.`,
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (
