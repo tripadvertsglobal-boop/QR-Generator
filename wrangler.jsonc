@@ -39,6 +39,13 @@
     // CORS allow-list for /api/v1/* (lib/cors.ts). Only affects browser callers
     // on another origin; server-side X-API-Key calls never involve CORS. Add a
     // third party's origin here to let its browser code call the API.
-    "ALLOWED_ORIGINS": "https://qrbuilderstudio.com"
+    "ALLOWED_ORIGINS": "https://qrbuilderstudio.com",
+    // Stripe recurring price IDs (live). Not secret — a price ID is public the
+    // moment a Checkout page renders. STRIPE_SECRET_KEY and
+    // STRIPE_WEBHOOK_SECRET are Worker secrets and stay out of this file.
+    // All four are also required as *build* variables: lib/env.ts asserts the
+    // contract from next.config.ts when WORKERS_CI_BRANCH is `main`.
+    "STRIPE_PRICE_PRO": "price_1Tz2do1wP2GH31b7MZxhB8FN",
+    "STRIPE_PRICE_BUSINESS": "price_1Tz2dv1wP2GH31b7G7hnCFla"
   }
 }

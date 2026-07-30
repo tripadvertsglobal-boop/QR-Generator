@@ -5,10 +5,17 @@ import PageHeader from "@/app/_components/ui/PageHeader";
 import Badge from "@/app/_components/ui/Badge";
 import { buttonClasses } from "@/app/_components/ui/Button";
 import DeleteAccount from "./DeleteAccount";
+import ManageBilling from "./ManageBilling";
 
 const PLAN_LABEL: Record<Plan, string> = { free: "Free", pro: "Pro", business: "Business" };
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
+  // Stripe Checkout sends the customer back here with ?checkout=success.
+  const { checkout } = await searchParams;
   const supabase = await createUserClient();
   const {
     data: { user },
@@ -16,7 +23,7 @@ export default async function AccountPage() {
 
   // RLS scopes both to the caller.
   const [{ data: profile }, { count }] = await Promise.all([
-    supabase.from("user_profiles").select("plan").maybeSingle(),
+    supabase.from("user_profiles").select("plan, stripe_customer_id").maybeSingle(),
     supabase.from("qr_codes").select("id", { count: "exact", head: true }),
   ]);
 
@@ -42,7 +49,18 @@ export default async function AccountPage() {
             ? "API & webhooks enabled"
             : "API, webhooks, CSV export, and archiving are Pro features"}
         </p>
-        {plan === "free" && (
+        {/* The plan above is written by the Stripe webhook, which can land a
+            moment after the browser gets back from Checkout. Saying so beats
+            showing a stale "Free" badge with no explanation. */}
+        {checkout === "success" && (
+          <p className="rounded-lg border border-border bg-black/[0.02] p-3 text-sm">
+            Payment received. If your plan still shows as Free, reload in a few seconds — we
+            are waiting on confirmation from Stripe.
+          </p>
+        )}
+        {profile?.stripe_customer_id ? (
+          <ManageBilling />
+        ) : (
           <Link href="/pricing" className={buttonClasses("secondary", "md", "self-start")}>
             See plans
           </Link>

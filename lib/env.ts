@@ -29,6 +29,15 @@ const REQUIRED = [
   "LINK_UNLOCK_SECRET",
   // Without it the cron route fails closed with 503 and audit logs grow forever.
   "CRON_SECRET",
+  // Billing. /pricing renders working Checkout CTAs for Pro and Business, so
+  // any of these missing means a visitor clicks Buy and gets a 502 — broken,
+  // not degraded. STRIPE_WEBHOOK_SECRET is the load-bearing one: without it the
+  // webhook cannot verify signatures, so a paid subscription never becomes a
+  // plan and the customer is charged for nothing.
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "STRIPE_PRICE_PRO",
+  "STRIPE_PRICE_BUSINESS",
 ] as const;
 
 /** Absent = the app still works, but a safety net is silently switched off. */
