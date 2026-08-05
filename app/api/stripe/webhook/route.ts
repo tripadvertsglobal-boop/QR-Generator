@@ -73,7 +73,14 @@ export async function POST(request: Request) {
   return NextResponse.json({ received: true });
 }
 
-async function applySubscription(subscription: Stripe.Subscription): Promise<void> {
+async function applySubscription(delivered: Stripe.Subscription): Promise<void> {
+  // Re-fetch rather than trust the payload. Stripe does not guarantee delivery
+  // order, so an older `updated` can arrive after a newer one — applying it
+  // would leave a customer on the wrong plan until the next event happened to
+  // correct it. The event is used only for the id; the live object decides.
+  // A failure here throws, which 500s and lets Stripe retry.
+  const subscription = await stripe().subscriptions.retrieve(delivered.id);
+
   const plan = planForSubscription(subscription);
   if (plan === null) {
     // A subscription for some other product on this Stripe account. Not ours to

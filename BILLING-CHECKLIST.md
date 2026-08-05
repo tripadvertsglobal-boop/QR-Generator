@@ -70,9 +70,12 @@ sell. Do not "simplify" that null case away.
 - [ ] Signed-out visitor clicking **Start Pro** lands on `/signup` and, after signing up,
       goes to the dashboard rather than back to checkout. Fixing it means adding `next`
       param plumbing to `AuthForm` — and doing so without opening a redirect hole.
-- [ ] The webhook trusts each event payload instead of re-fetching the subscription, so
-      genuinely out-of-order delivery could transiently set the wrong plan. Self-heals on the
-      next event.
+- [x] The webhook trusts each event payload instead of re-fetching the subscription. Fixed
+      2026-08-05: `applySubscription` now retrieves the live subscription and uses the event
+      only for its id. Costs one extra API call per event; a failed retrieve 500s and Stripe
+      retries. The receiver also had **no tests at all** — `tests/api/stripe-webhook.test.ts`
+      now covers signature rejection, tier mapping, `past_due` grace, deletion, foreign
+      subscriptions, customer-id fallback, and out-of-order delivery (14 tests).
 - [ ] Business-tier bullets *priority support* and *onboarding assistance* are not
       enforceable in code. Pre-existing, and `lib/plan.ts` documents that deliberately.
 
