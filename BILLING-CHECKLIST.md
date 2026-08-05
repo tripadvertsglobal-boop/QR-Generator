@@ -51,8 +51,8 @@ sell. Do not "simplify" that null case away.
 
 ## Non-blocking, worth deciding
 
-- [ ] Portal `privacy_policy_url` / `terms_of_service_url` are `null`. The app has `/privacy`
-      and `/terms`; the portal just won't link to them.
+- [x] Portal `privacy_policy_url` / `terms_of_service_url` were `null`. Set 2026-08-05 to
+      `https://qrbuilderstudio.com/privacy` and `/terms`.
 - [x] Portal `proration_behavior` is `always_invoice` — but `schedule_at_period_end.conditions`
       is `[decreasing_item_amount, shortening_interval]`, so downgrades are already deferred
       to period end. `always_invoice` only bites on upgrades. No change needed.
@@ -61,9 +61,12 @@ sell. Do not "simplify" that null case away.
       live `sk_live_` key**. `lib/env.ts` needs all four, so billing routes still 502 under
       `npm run dev`. Swap in test-mode keys before adding the rest — a live key here means
       dev checkouts create real subscriptions and real charges.
-- [ ] `qrgenerator-testing` Supabase project (`gyoqcwgregxfvhpdubym`) is 5 migrations behind
-      (stuck at 00015, needs 00016–00021). Pre-existing, not caused by billing work, but it
-      means billing can't be tested there.
+- [x] `qrgenerator-testing` Supabase project (`gyoqcwgregxfvhpdubym`) was 5 migrations behind.
+      Caught up 2026-08-05: 00016–00021 applied, now level with prod. Verified `authenticated`
+      still holds UPDATE on only `avatar_url, display_name, timezone`, so `plan` and the
+      billing columns stay service-role-only there too. Security advisors show no new
+      findings (the SECURITY DEFINER warnings are the deliberate anon redirect path and the
+      owner analytics RPCs).
 
 ## Known gaps in the code as shipped
 
