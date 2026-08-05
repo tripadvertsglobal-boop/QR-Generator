@@ -67,9 +67,12 @@ sell. Do not "simplify" that null case away.
 
 ## Known gaps in the code as shipped
 
-- [ ] Signed-out visitor clicking **Start Pro** lands on `/signup` and, after signing up,
-      goes to the dashboard rather than back to checkout. Fixing it means adding `next`
-      param plumbing to `AuthForm` — and doing so without opening a redirect hole.
+- [x] Signed-out visitor clicking **Start Pro** lost the checkout intent. Fixed 2026-08-05,
+      but **not** with a general `next` param: `lib/checkout-intent.ts` carries only
+      `?plan=pro|business`, which narrows to null on anything else, so there is no arbitrary
+      path to validate and no redirect hole to get wrong. The intent survives password
+      login/signup, the confirmation email, the Google round trip via `/auth/callback`, and
+      the login↔signup cross-links; `/pricing?checkout=<plan>` then resumes checkout.
 - [x] The webhook trusts each event payload instead of re-fetching the subscription. Fixed
       2026-08-05: `applySubscription` now retrieves the live subscription and uses the event
       only for its id. Costs one extra API call per event; a failed retrieve 500s and Stripe

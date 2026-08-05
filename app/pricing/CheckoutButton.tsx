@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-// The plan union is inlined rather than imported from lib/stripe so that no
-// import path exists from a client component into the Stripe SDK.
-type PaidPlan = "pro" | "business";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { checkoutPlan, type CheckoutPlan as PaidPlan } from "@/lib/checkout-intent";
 
 // CTA for a paid plan on /pricing. Styling mirrors the <Link> CTA next to it in
 // page.tsx — this page is marketing-shell styled and does not use ui/Button.
@@ -19,10 +16,11 @@ export default function CheckoutButton({
   highlighted: boolean;
 }) {
   const router = useRouter();
+  const resuming = checkoutPlan(useSearchParams().get("checkout")) === plan;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function startCheckout() {
+  const startCheckout = useCallback(async () => {
     setBusy(true);
     setError(null);
     try {
@@ -32,9 +30,10 @@ export default function CheckoutButton({
         body: JSON.stringify({ plan }),
       });
 
-      // Signed out — there is no account yet to attach a subscription to.
+      // Signed out — there is no account yet to attach a subscription to. Carry
+      // the plan so signup can send them back here to finish.
       if (res.status === 401) {
-        router.push("/signup");
+        router.push(`/signup?plan=${plan}`);
         return;
       }
 
@@ -52,7 +51,17 @@ export default function CheckoutButton({
       setError("Could not reach checkout. Please try again.");
       setBusy(false);
     }
-  }
+  }, [plan, router]);
+
+  // Resume the checkout the visitor started before signing up. The ref guards
+  // against firing twice under React's development double-invoke.
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (resuming && !resumed.current) {
+      resumed.current = true;
+      void startCheckout();
+    }
+  }, [resuming, startCheckout]);
 
   return (
     <div className="mt-8">

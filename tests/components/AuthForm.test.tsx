@@ -101,3 +101,58 @@ describe("AuthForm (Google)", () => {
     expect(await screen.findByText("Unsupported provider")).toBeInTheDocument();
   });
 });
+
+// A visitor who clicked a paid CTA while signed out should land back on the
+// purchase, not on the dashboard having forgotten why they signed up.
+describe("AuthForm (resuming a checkout)", () => {
+  it("returns to the plan after logging in", async () => {
+    signIn.mockResolvedValue({ error: null });
+    render(<AuthForm mode="login" resumePlan="pro" />);
+    fill();
+    fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => expect(routerMock.push).toHaveBeenCalledWith("/pricing?checkout=pro"));
+  });
+
+  it("returns to the plan after signing up", async () => {
+    signUp.mockResolvedValue({ data: { session: { user: {} } }, error: null });
+    render(<AuthForm mode="signup" resumePlan="business" />);
+    fill("secret123");
+    fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
+
+    await waitFor(() => expect(routerMock.push).toHaveBeenCalledWith("/pricing?checkout=business"));
+  });
+
+  it("points the confirmation email back at the plan", async () => {
+    signUp.mockResolvedValue({ data: { session: null }, error: null });
+    render(<AuthForm mode="signup" resumePlan="pro" />);
+    fill("secret123");
+    fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
+
+    await waitFor(() =>
+      expect(signUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: { emailRedirectTo: `${window.location.origin}/pricing?checkout=pro` },
+        }),
+      ),
+    );
+  });
+
+  it("carries the plan through the Google round trip", async () => {
+    signInWithOAuth.mockResolvedValue({ error: null });
+    render(<AuthForm mode="signup" resumePlan="pro" />);
+    fireEvent.click(screen.getByRole("button", { name: /Continue with Google/i }));
+
+    await waitFor(() =>
+      expect(signInWithOAuth).toHaveBeenCalledWith({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback?plan=pro` },
+      }),
+    );
+  });
+
+  it("keeps the intent on the link between login and signup", () => {
+    render(<AuthForm mode="signup" resumePlan="pro" />);
+    expect(screen.getByRole("link", { name: "Log in" })).toHaveAttribute("href", "/login?plan=pro");
+  });
+});
