@@ -39,15 +39,31 @@ sell. Do not "simplify" that null case away.
 - [ ] **Merge `stripe-billing` → main and push.** Do this *after* the two items above;
       pushing to `main` auto-deploys, and the build will fail otherwise.
 
-## End-to-end verification — nothing has been exercised against real Stripe yet
+## End-to-end verification
 
-- [ ] Real checkout completes and the webhook flips `user_profiles.plan` to `pro`.
-- [ ] Signature verification actually works on Workers in production (`constructEventAsync`;
-      the sync variant throws there — this is the highest-risk unverified assumption).
+Exercised 2026-08-10 in **test mode** against `qrgenerator-testing`, via `stripe listen`
+forwarding to `npm run dev`. Test fixtures: `prod_V30DiuMw8lNbw3` / `prod_V30DmUcTTld8z2`.
+Read the scope note below before treating any of this as production evidence.
+
+- [x] Webhook flips `user_profiles.plan` to `pro`. Real Stripe events, real signatures:
+      `free` → `pro` on `customer.subscription.created`, with `subscription_status`,
+      `stripe_subscription_id` and `plan_period_end` all written.
+- [x] Plan switch Pro↔Business — swapping the subscription item price moved `plan` to
+      `business`.
+- [x] Cancel → plan drops to `free` at period end, not immediately. Both halves checked:
+      `cancel_at_period_end=true` left the account on `business` with `status=active`;
+      deleting the subscription moved it to `free` with `status=canceled`.
+- [ ] **Signature verification on Workers** (`constructEventAsync`). Still the highest-risk
+      assumption. The runs above verified it against genuine Stripe signatures on **Node**,
+      which proves the raw-body handling and the async path — but `npm run dev` is not
+      workerd, so the runtime-specific failure this guards against remains untested.
+      Only a real deployment taking a real delivery closes this.
+- [ ] Checkout **Session** flow itself. The subscriptions above were created through the
+      API, not by completing a Stripe Checkout page, so `/api/v1/billing/checkout` and the
+      redirect back are not yet exercised.
 - [ ] Billing portal opens from **Manage billing** on `/dashboard/account`.
-- [ ] Cancel in the portal → plan drops to `free` at period end, not immediately.
-- [ ] Plan switch Pro↔Business works (after the portal products fix above).
-- [ ] A `past_due` subscription retains access (deliberate grace behaviour).
+- [ ] A `past_due` subscription retains access. Unit-tested in `tests/api/stripe-webhook.test.ts`,
+      but not reproduced live — it needs a failing card and a test clock.
 
 ## Non-blocking, worth deciding
 
