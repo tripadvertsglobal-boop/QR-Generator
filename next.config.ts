@@ -109,18 +109,24 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Only wrap when a DSN is configured, so a build without Sentry stays a plain
-// Next build (no plugin, no upload step, no warnings).
-export default process.env.SENTRY_DSN
-  ? withSentryConfig(nextConfig, {
-      silent: true,
-      // Source-map upload needs all three; without them the wrapper still
-      // instruments the app, it just skips the upload.
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      // Strip the uploaded maps from the client bundle so stack traces resolve
-      // in Sentry without shipping sources to users.
-      sourcemaps: { deleteSourcemapsAfterUpload: true },
-    })
-  : nextConfig;
+// Always wrapped, even without a DSN: bundleSizeOptimizations strips
+// @sentry/node's unused tracing auto-instrumentation (Kafka, MySQL,
+// LangChain, etc. — pulled in by the plain `import * as Sentry` in
+// sentry.server.config.ts before opennextjs-cloudflare's workerd-conditioned
+// bundling step ever runs), which is what pushed the Worker over Cloudflare's
+// 3 MiB size limit. Source-map upload still needs all three org/project/
+// authToken; without them the wrapper still instruments the app, it just
+// skips the upload.
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Strip the uploaded maps from the client bundle so stack traces resolve
+  // in Sentry without shipping sources to users.
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
+  // Tracing is already off (tracesSampleRate: 0 in both sentry.*.config.ts);
+  // this drops the auto-instrumentation code that backs it, which this app
+  // never uses. Debug statements are dev-only noise not needed in prod.
+  bundleSizeOptimizations: { excludeTracing: true, excludeDebugStatements: true },
+});
