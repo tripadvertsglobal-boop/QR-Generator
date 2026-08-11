@@ -199,10 +199,13 @@ export const siteConfig = {
     subheading: "Start free. Upgrade when you grow. Cancel anytime.",
     /* Every feature listed here is either enforced in lib/plan.ts or available
        to all accounts. Do not add a bullet that nothing enforces.
-       `available: false` renders the plan without a working CTA — self-serve
-       upgrades open when billing ships. */
+       `plan` must match a tier in lib/plan.ts — the paid ones are what the
+       /pricing CTA sends to Stripe Checkout.
+       `available: false` renders the plan without a working CTA. It is now a
+       kill switch for closing a tier, not a "billing hasn't shipped" flag. */
     plans: [
       {
+        plan: "free",
         name: "Free",
         price: "$0",
         period: "/month",
@@ -221,6 +224,7 @@ export const siteConfig = {
         available: true,
       },
       {
+        plan: "pro",
         name: "Pro",
         price: "$19",
         period: "/month",
@@ -237,9 +241,10 @@ export const siteConfig = {
         cta: "Start Pro",
         href: "/signup",
         highlighted: true,
-        available: false,
+        available: true,
       },
       {
+        plan: "business",
         name: "Business",
         price: "$49",
         period: "/month",
@@ -250,10 +255,10 @@ export const siteConfig = {
           "Priority support",
           "Onboarding assistance",
         ],
-        cta: "Contact sales",
+        cta: "Start Business",
         href: "/signup",
         highlighted: false,
-        available: false,
+        available: true,
       },
     ],
   },

@@ -4,6 +4,7 @@ import { siteConfig } from "@/site.config";
 import { ORG_ID, absoluteUrl, breadcrumbSchema, graph, pageMetadata } from "@/lib/seo";
 import MarketingShell from "../_components/MarketingShell";
 import JsonLd from "../_components/JsonLd";
+import CheckoutButton from "./CheckoutButton";
 
 export const metadata: Metadata = pageMetadata({
   title: "Pricing",
@@ -83,7 +84,19 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              {plan.available ? (
+              {!plan.available ? (
+                <div className="mt-8">
+                  <p
+                    aria-disabled="true"
+                    className="cursor-not-allowed rounded-md border border-black/10 px-4 py-2.5 text-center text-sm font-medium text-black/40"
+                  >
+                    {plan.cta}
+                  </p>
+                  <p className="mt-2 text-center text-xs text-black/50">
+                    This plan isn’t open for sign-up right now.
+                  </p>
+                </div>
+              ) : plan.plan === "free" ? (
                 <Link
                   href={plan.href}
                   className={`mt-8 rounded-md px-4 py-2.5 text-center text-sm font-medium ${
@@ -95,17 +108,14 @@ export default function PricingPage() {
                   {plan.cta}
                 </Link>
               ) : (
-                <div className="mt-8">
-                  <p
-                    aria-disabled="true"
-                    className="cursor-not-allowed rounded-md border border-black/10 px-4 py-2.5 text-center text-sm font-medium text-black/40"
-                  >
-                    {plan.cta}
-                  </p>
-                  <p className="mt-2 text-center text-xs text-black/50">
-                    Self-serve upgrades aren’t open yet.
-                  </p>
-                </div>
+                // Paid tiers go through Stripe Checkout rather than a link —
+                // the session has to be created server-side against the
+                // caller's account.
+                <CheckoutButton
+                  plan={plan.plan}
+                  label={plan.cta}
+                  highlighted={plan.highlighted}
+                />
               )}
             </div>
           ))}

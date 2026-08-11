@@ -6,6 +6,7 @@ import Link from "next/link";
 import Button from "@/app/_components/ui/Button";
 import { Input, Field } from "@/app/_components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
+import { afterAuthPath, type CheckoutPlan } from "@/lib/checkout-intent";
 
 function GoogleIcon() {
   return (
@@ -30,12 +31,17 @@ function GoogleIcon() {
 export default function AuthForm({
   mode,
   initialError = null,
+  resumePlan = null,
 }: {
   mode: "login" | "signup";
   /** Server-supplied message, e.g. the OAuth failure bounced back by /auth/callback. */
   initialError?: string | null;
+  /** Set when the visitor came from a paid CTA — send them back to finish. */
+  resumePlan?: CheckoutPlan | null;
 }) {
   const router = useRouter();
+  const afterAuth = afterAuthPath(resumePlan);
+  const planQuery = resumePlan ? `?plan=${resumePlan}` : "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -66,13 +72,13 @@ export default function AuthForm({
         setLoading(false);
         return;
       }
-      router.push("/dashboard");
+      router.push(afterAuth);
       router.refresh();
     } else {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+        options: { emailRedirectTo: `${window.location.origin}${afterAuth}` },
       });
       if (error) {
         setError(error.message);
@@ -80,7 +86,7 @@ export default function AuthForm({
         return;
       }
       if (data.session) {
-        router.push("/dashboard");
+        router.push(afterAuth);
         router.refresh();
       } else {
         setNotice("Check your email to confirm your account, then log in.");
@@ -97,7 +103,7 @@ export default function AuthForm({
     setGoogleLoading(true);
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback${planQuery}` },
     });
     if (error) {
       setError(error.message);
@@ -174,7 +180,7 @@ export default function AuthForm({
         {isLogin ? (
           <>
             No account?{" "}
-            <Link href="/signup" className="font-medium text-brand hover:underline">
+            <Link href={`/signup${planQuery}`} className="font-medium text-brand hover:underline">
               Sign up
             </Link>
             {" · "}
@@ -185,7 +191,7 @@ export default function AuthForm({
         ) : (
           <>
             Have an account?{" "}
-            <Link href="/login" className="font-medium text-brand hover:underline">
+            <Link href={`/login${planQuery}`} className="font-medium text-brand hover:underline">
               Log in
             </Link>
           </>
