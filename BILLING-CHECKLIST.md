@@ -26,18 +26,17 @@ sell. Do not "simplify" that null case away.
       from API responses unless you pass
       `expand[]=features.subscription_update.products`. Absence is not proof it failed.
 
-- [ ] **Cloudflare Worker secrets:** set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
-      The webhook secret is in the Stripe Dashboard under the endpoint above — it is
-      deliberately not recorded in this repo.
+- [x] **Cloudflare Worker secrets:** set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
+      Done 2026-08-11, verified present via the Workers API (names only — values were never
+      read back).
 
-- [ ] **Cloudflare *build* variables:** set all four `STRIPE_*` vars on the Workers Builds
-      trigger. `lib/env.ts` lists them as REQUIRED and `next.config.ts` asserts the contract
-      at build time when `WORKERS_CI_BRANCH=main`, so **the deploy fails without them**.
-      The two price IDs are already in `wrangler.jsonc` `vars`, but that only covers
-      *runtime* — build variables are configured separately.
+- [x] **Cloudflare *build* variables:** set all four `STRIPE_*` vars on the Workers Builds
+      trigger. Done 2026-08-11 on the "Deploy default branch" trigger, verified present via
+      the Builds API. `lib/env.ts` lists them as REQUIRED and `next.config.ts` asserts the
+      contract at build time when `WORKERS_CI_BRANCH=main`, so the deploy would otherwise fail.
 
-- [ ] **Merge `stripe-billing` → main and push.** Do this *after* the two items above;
-      pushing to `main` auto-deploys, and the build will fail otherwise.
+- [x] **Merge `stripe-billing` → main and push.** Done 2026-08-11, after both items above
+      were confirmed set.
 
 ## End-to-end verification
 
