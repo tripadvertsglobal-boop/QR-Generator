@@ -24,8 +24,14 @@ export async function register() {
   }
 }
 
-export const onRequestError: Instrumentation.onRequestError = async (...args) => {
+export const onRequestError: Instrumentation.onRequestError = async (
+  error,
+  errorRequest,
+  errorContext,
+) => {
   if (!process.env.SENTRY_DSN) return;
-  const Sentry = await import("@sentry/nextjs");
-  Sentry.captureRequestError(...args);
+  // captureException, not @sentry/nextjs's captureRequestError - see
+  // sentry.server.config.ts for why this runtime uses the lighter client.
+  const { captureException } = await import("@sentry/node-core/light");
+  captureException(error, { extra: { ...errorRequest, ...errorContext } });
 };
