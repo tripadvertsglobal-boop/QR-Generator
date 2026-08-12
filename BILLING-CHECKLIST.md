@@ -19,8 +19,28 @@ sell. Do not "simplify" that null case away.
 
 ## Blocking — payments cannot work until these are done
 
-- [ ] **CRITICAL: Checkout hangs and fails in production. Root cause found and fixed in the
-      working tree 2026-08-12 — NOT YET DEPLOYED OR VERIFIED LIVE.**
+- [ ] **CRITICAL, ACTIVE: `STRIPE_SECRET_KEY` on the Worker is invalid.** Found 2026-08-12
+      immediately after the hang below was fixed. Checkout now fails fast with a 502 instead of
+      hanging, and the Worker logs Stripe's actual rejection:
+      `Invalid API Key provided: mk_1SfhD***************T5CJ`.
+
+      `mk_` is a Stripe **managed API key** — per Stripe's docs, a secret key that a *hosting
+      platform* delivers to your app and rotates for you. This one is from the **Vercel** Stripe
+      integration, back when this project ran on Vercel. It was carried across in the Cloudflare
+      migration, but nothing on Cloudflare issues or rotates a managed key, so Stripe rejects it.
+
+      **Fix:** create a real live key for `acct_1SfhDB1wP2GH31b7` in the Stripe Dashboard —
+      Stripe now recommends a restricted key (`rk_live_…`) over a secret key (`sk_live_…`) — and
+      set it as the Worker secret: `npx wrangler secret put STRIPE_SECRET_KEY`.
+
+      **Why this hid for so long:** the entry below records these secrets as "verified present
+      via the Workers API (**names only** — values were never read back)". Presence was checked,
+      validity never was, and the 80s hang meant no Stripe response ever came back to reveal it.
+      `STRIPE_WEBHOOK_SECRET` was verified the same name-only way and is therefore equally
+      unproven until a real delivery verifies it.
+
+- [x] **Checkout hung ~80s and 502'd in production. FIXED and verified live 2026-08-12**
+      (commit `0d6a234`, build `93d9a55f`).
 
       *Symptom* (found 2026-08-12 via a real signup + click-through on the live site; throwaway
       account `claude-billing-verify-20260812@example.com`, id
@@ -45,17 +65,23 @@ sell. Do not "simplify" that null case away.
       same request succeed because they use plain global `fetch`, which is the discriminating
       evidence that general egress was never the problem.
 
-      *Fix.* `lib/stripe.ts` now passes `httpClient: Stripe.createFetchHttpClient()` explicitly,
-      forcing the fetch-based client regardless of which build gets bundled. `typecheck`, `lint`
-      and all 267 tests pass, but **none of them exercise this path** (Stripe is mocked in
-      tests), and the fix could not be run locally — Windows still can't do a real
-      `opennextjs-cloudflare build/preview` (symlink `EPERM`). So this is verified as correct
-      *reasoning*, not verified *working*. It stays checked-out-but-unticked until a real
-      checkout completes in production.
+      *Fix.* `lib/stripe.ts` passes `httpClient: Stripe.createFetchHttpClient()` explicitly,
+      forcing the fetch-based client regardless of which build gets bundled. Commit `da44b2d`
+      then did the same for the webhook's crypto provider
+      (`Stripe.createSubtleCryptoProvider()`), which had the identical latent problem:
+      `constructEventAsync` resolves to `NodeCryptoProvider`/`node:crypto` on the Node build, so
+      the async variant alone never selected WebCrypto the way the old comment claimed.
 
-      *To close this item:* deploy to `main`, then re-run a real signup + checkout on the live
-      site and confirm (a) a customer now appears in Stripe, (b) `stripe_customer_id` is
-      persisted, (c) the redirect to Stripe Checkout happens without the ~80s stall.
+      *Verified live 2026-08-12* by clicking **Start Pro** on qrbuilderstudio.com as the
+      throwaway account: `POST /api/v1/billing/checkout` now returns in seconds with a genuine
+      Stripe API response instead of stalling 80s. That response is an auth rejection, which is
+      the separate `mk_` key blocker recorded above — the networking half is fixed.
+
+      *The generalisable lesson:* on this stack the `workerd` export condition is never reached
+      for anything Next bundles into a Route Handler. If an SDK offers a Workers build behind
+      that condition, assume you are not getting it and pass the fetch/WebCrypto implementations
+      explicitly. A hang rather than an error is the signature of a `node:*` API that workerd
+      stubs rather than implements.
 
       *Tooling note for future sessions:* the Cloudflare Workers observability API **does**
       work and observability **is** enabled (`wrangler.jsonc` has `observability.enabled: true`)
