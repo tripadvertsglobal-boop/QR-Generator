@@ -86,7 +86,9 @@ describe("POST /api/stripe/webhook — rejection", () => {
     const body = '{"id":"evt_1","spacing":  "preserved"}';
     constructEventAsync.mockResolvedValue({ id: "evt_1", type: "invoice.paid", data: { object: {} } });
     await POST(new Request(url, { method: "POST", body, headers: { "stripe-signature": "t=1,v1=x" } }));
-    expect(constructEventAsync).toHaveBeenCalledWith(body, "t=1,v1=x", "whsec_test");
+    // Only the first three args are this test's concern; the trailing tolerance
+    // and crypto-provider args are runtime wiring, not raw-body handling.
+    expect(constructEventAsync.mock.calls[0].slice(0, 3)).toEqual([body, "t=1,v1=x", "whsec_test"]);
   });
 });
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type Stripe from "stripe";
+import Stripe from "stripe";
 import { createServiceClient } from "@/lib/supabase/service";
 import { periodEnd, planForSubscription, stripe } from "@/lib/stripe";
 import { log } from "@/lib/log";
@@ -33,10 +33,23 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    // Async variant is required: the sync `constructEvent` reaches for Node's
-    // crypto module, which does not exist on the Cloudflare Workers runtime
-    // this deploys to. It throws there even when the signature is valid.
-    event = await stripe().webhooks.constructEventAsync(payload, signature, secret);
+    // Both the async variant *and* the explicit crypto provider are required,
+    // for the same reason `lib/stripe.ts` passes an explicit `httpClient`: Next
+    // bundles this route's dependencies with Node export conditions at build
+    // time, so the SDK's Node build is what actually runs on workerd. That
+    // build's default provider is `NodeCryptoProvider` (`node:crypto`) on the
+    // async path too, so `constructEventAsync` alone does not select WebCrypto
+    // the way it would on the Workers build. Passing the provider explicitly
+    // removes the assumption rather than relying on `node:crypto` being
+    // polyfilled — the same assumption that hung checkout for 80s.
+    // `undefined` tolerance keeps the SDK default (5 minutes).
+    event = await stripe().webhooks.constructEventAsync(
+      payload,
+      signature,
+      secret,
+      undefined,
+      Stripe.createSubtleCryptoProvider(),
+    );
   } catch (error) {
     log("warn", "stripe_webhook_bad_signature", {
       message: error instanceof Error ? error.message : String(error),
