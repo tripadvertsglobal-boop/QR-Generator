@@ -1,6 +1,7 @@
 # Stripe billing — remaining work
 
-Status as of 2026-07-31. Branch `stripe-billing`, commit `990d26c` (not merged, not pushed).
+Status as of 2026-08-12. Merged to `main` (`c2d68be`) and **deployed to production** as of
+commit `a6dbea7`.
 
 Stripe account: **CapitalToMe** `acct_1SfhDB1wP2GH31b7`, **live mode**. This account also
 bills unrelated products (medical books, laptop/GPU procurement) — that is deliberate, and
@@ -38,6 +39,27 @@ sell. Do not "simplify" that null case away.
 - [x] **Merge `stripe-billing` → main and push.** Done 2026-08-11, after both items above
       were confirmed set.
 
+- [x] **Worker exceeded Cloudflare's 3 MiB free-plan size limit.** Discovered 2026-08-11:
+      the first two deploy attempts after merging failed at the `wrangler deploy` step, not
+      the build step — `next build` and tests were clean, but the bundled Worker (gzip
+      ~3.06–3.08 MiB) tripped `code: 10027`. Root cause was **not** the Stripe SDK (it already
+      resolves its lighter `workerd` build via package.json `exports`) but `@sentry/nextjs`:
+      on the `nodejs` runtime it resolves to `@sentry/node`, which statically pulls in
+      OpenTelemetry auto-instrumentation for ~25 unused libraries (Kafka, MySQL, LangChain,
+      etc.) plus `import-in-the-middle` — measured at ~2.3 MB raw in isolation via a
+      matching-config `esbuild` probe, since Windows can't run the real
+      `opennextjs-cloudflare build` locally (`EPERM` on a symlink it needs). Two things had to
+      change, not one: `sentry.server.config.ts` / `instrumentation.ts` (commit `b7898de`)
+      *and* `lib/log.ts`'s `captureException` (commit `a6dbea7`) — the latter is imported by
+      `lib/api-error.ts`, `lib/auth.ts`, `lib/rate-limit.ts` and reachable from nearly every
+      route, so fixing only the first two actually made the bundle *bigger* (added
+      `@sentry/node-core` without removing the still-reachable heavy path). All three now
+      import `@sentry/node-core/light` instead of `@sentry/nextjs` on the Node runtime — same
+      `captureException` API, no OpenTelemetry tracing tree (tracing was already off,
+      `tracesSampleRate: 0`, so nothing functional was lost). Deploy `f9bc6a22` succeeded
+      2026-08-12. `sentry.edge.config.ts` and `instrumentation-client.ts` (browser bundle)
+      were left on `@sentry/nextjs` — separate bundles, not implicated in this limit.
+
 ## End-to-end verification
 
 Exercised 2026-08-10 in **test mode** against `qrgenerator-testing`, via `stripe listen`
@@ -71,11 +93,10 @@ Read the scope note below before treating any of this as production evidence.
 - [x] Portal `proration_behavior` is `always_invoice` — but `schedule_at_period_end.conditions`
       is `[decreasing_item_amount, shortening_interval]`, so downgrades are already deferred
       to period end. `always_invoice` only bites on upgrades. No change needed.
-- [ ] Add `STRIPE_*` to local `.env.local`. As of 2026-08-05 only `STRIPE_SECRET_KEY` is
-      there (added under the typo'd name `STRIPA_SECRET_KEY`, since corrected) and **it is a
-      live `sk_live_` key**. `lib/env.ts` needs all four, so billing routes still 502 under
-      `npm run dev`. Swap in test-mode keys before adding the rest — a live key here means
-      dev checkouts create real subscriptions and real charges.
+- [x] Add `STRIPE_*` to local `.env.local`. Resolved by 2026-08-11: all four vars
+      (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO`,
+      `STRIPE_PRICE_BUSINESS`) are present, and `STRIPE_SECRET_KEY` is a test-mode `sk_test_`
+      key, not live — dev checkouts no longer risk real charges.
 - [x] `qrgenerator-testing` Supabase project (`gyoqcwgregxfvhpdubym`) was 5 migrations behind.
       Caught up 2026-08-05: 00016–00021 applied, now level with prod. Verified `authenticated`
       still holds UPDATE on only `avatar_url, display_name, timezone`, so `plan` and the
