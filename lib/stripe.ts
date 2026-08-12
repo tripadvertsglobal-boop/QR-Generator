@@ -20,13 +20,19 @@ let client: Stripe | undefined;
  * Lazy so that importing this module never throws at build time — the key is
  * only needed when a billing route actually runs. Cached per isolate.
  *
- * On Cloudflare the `workerd` export condition selects the SDK's Workers build
- * (fetch + SubtleCrypto) automatically; nothing has to be configured here.
+ * `httpClient` is passed explicitly and must stay that way. The SDK ships a
+ * Workers build behind a `workerd` export condition, but we never get it: Next
+ * bundles Route Handler dependencies at build time, so `stripe` is resolved
+ * with Node conditions during `next build`, long before OpenNext or workerd is
+ * involved. That bundles the Node build, whose default client issues requests
+ * through `node:https` — which hangs on workerd rather than erroring, so every
+ * call died at the SDK's 80s timeout with "Request aborted due to timeout being
+ * reached (80000ms)" and no request ever reached Stripe.
  */
 export function stripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  return (client ??= new Stripe(key));
+  return (client ??= new Stripe(key, { httpClient: Stripe.createFetchHttpClient() }));
 }
 
 const PRICE_ENV: Record<PaidPlan, string> = {

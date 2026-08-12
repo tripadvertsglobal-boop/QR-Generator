@@ -19,34 +19,51 @@ sell. Do not "simplify" that null case away.
 
 ## Blocking — payments cannot work until these are done
 
-- [ ] **CRITICAL, ACTIVE: Checkout hangs and fails in production.** Found 2026-08-12 via a
-      real signup + click-through on the live site (throwaway account
-      `claude-billing-verify-20260812@example.com`, id `f03920ef-b1bf-410b-9ca4-7419e97db628`
-      in prod `rsyfcfqpookqtbmaclxy` — safe to delete, plan stayed `free`, no subscription).
-      Signup → auto-resumed checkout-intent flow worked (redirected to
-      `/pricing?checkout=pro`, POSTed to `/api/v1/billing/checkout`), but the request hung for
-      ~80+ seconds and then failed with "Could not start checkout" (502, the route's catch-all).
-      `user_profiles.stripe_customer_id` was **still null** after the failure, meaning
-      `client.customers.create()` in `app/api/v1/billing/checkout/route.ts` — the *first*
-      Stripe API call the Worker makes — never completed. The ~80s stall matches the Stripe
-      Node SDK's default timeout, so this reads as the outbound `fetch()` from the Worker to
-      `api.stripe.com` hanging rather than erroring. Not reproducible locally (Windows can't
-      run a real `opennextjs-cloudflare build/preview` — symlink `EPERM`), and no working log
-      access was found this session: no Stripe MCP connected, and Cloudflare's
-      `workers/observability/telemetry/query` REST endpoint (found via the OpenAPI spec, tried
-      as an alternative to the WebSocket-only live-tail) returned bare `400`s with no inspectable
-      error body across a few parameter-shape attempts — likely enabled or requires a
-      wsUrl session outside this tool's plain request/response capability.
-      **Next steps for the next session:** (1) check Stripe Dashboard → Developers → Logs for
-      any request in the window 2026-08-12 09:46–09:48 UTC — absence means the request never
-      left the Worker (points to a Workers→Stripe networking/fetch issue); presence means the
-      response got lost on the way back. (2) Check Cloudflare dashboard → Worker → Logs
-      (real-time) while re-triggering, for the actual server-side error/stack. (3) Consider
-      whether `lib/stripe.ts`'s `new Stripe(key)` needs an explicit `httpClient` /
-      `timeout` / Workers-specific fetch config — the comment there assumes the `workerd`
-      export condition "just works" with no configuration, which this incident calls into
-      question. This blocks the entire billing launch: **checkout is currently non-functional
-      for real customers** even though the deploy itself is live and healthy otherwise.
+- [ ] **CRITICAL: Checkout hangs and fails in production. Root cause found and fixed in the
+      working tree 2026-08-12 — NOT YET DEPLOYED OR VERIFIED LIVE.**
+
+      *Symptom* (found 2026-08-12 via a real signup + click-through on the live site; throwaway
+      account `claude-billing-verify-20260812@example.com`, id
+      `f03920ef-b1bf-410b-9ca4-7419e97db628` in prod `rsyfcfqpookqtbmaclxy` — safe to delete,
+      plan stayed `free`, no subscription): signup → auto-resumed checkout-intent flow worked,
+      but `POST /api/v1/billing/checkout` hung ~80s then failed with "Could not start checkout"
+      (502). `user_profiles.stripe_customer_id` stayed null — `client.customers.create()`, the
+      first Stripe call the Worker makes, never completed.
+
+      *Root cause.* Confirmed from two sides. **Stripe side** (via Stripe MCP, live account):
+      `GET /v1/customers` returns **zero customers ever created** — the request never reached
+      Stripe at all, and Stripe's API was otherwise fully reachable, ruling out any
+      account/key/capability problem. **Cloudflare side** (via the Workers observability API —
+      it does work, see note below): the Worker logged
+      `Request aborted due to timeout being reached (80000ms)`, the Stripe SDK's own
+      `DEFAULT_TIMEOUT`. The reason the outbound call hangs: **Next bundles Route Handler
+      dependencies at build time**, so `stripe` is resolved with *Node* export conditions during
+      `next build`, long before OpenNext/workerd is involved. The SDK's `workerd` export
+      condition therefore never applies, the Node build gets bundled, and its
+      `createDefaultHttpClient()` returns a `NodeHttpClient` that issues requests through
+      `node:https` — which stalls on workerd instead of erroring. Supabase calls in the very
+      same request succeed because they use plain global `fetch`, which is the discriminating
+      evidence that general egress was never the problem.
+
+      *Fix.* `lib/stripe.ts` now passes `httpClient: Stripe.createFetchHttpClient()` explicitly,
+      forcing the fetch-based client regardless of which build gets bundled. `typecheck`, `lint`
+      and all 267 tests pass, but **none of them exercise this path** (Stripe is mocked in
+      tests), and the fix could not be run locally — Windows still can't do a real
+      `opennextjs-cloudflare build/preview` (symlink `EPERM`). So this is verified as correct
+      *reasoning*, not verified *working*. It stays checked-out-but-unticked until a real
+      checkout completes in production.
+
+      *To close this item:* deploy to `main`, then re-run a real signup + checkout on the live
+      site and confirm (a) a customer now appears in Stripe, (b) `stripe_customer_id` is
+      persisted, (c) the redirect to Stripe Checkout happens without the ~80s stall.
+
+      *Tooling note for future sessions:* the Cloudflare Workers observability API **does**
+      work and observability **is** enabled (`wrangler.jsonc` has `observability.enabled: true`)
+      — the earlier bare `400`s were a request-shape problem. The `events` view errors out when
+      non-fetch log lines are in range (schema expects `$workers.outcome`); a `calculations`
+      view with `count` grouped by `$metadata.message` sidesteps that and is what surfaced the
+      timeout error. Stripe has no API-accessible request-log endpoint — that data is dashboard
+      only (Developers → Logs).
 
 - [x] **Portal: add products to `subscription_update`.** Done 2026-08-05 via API on
       `bpc_1TzBEW1wP2GH31b7E8CnrPCR`: Pro then Business, one price each,
