@@ -19,6 +19,35 @@ sell. Do not "simplify" that null case away.
 
 ## Blocking — payments cannot work until these are done
 
+- [ ] **CRITICAL, ACTIVE: Checkout hangs and fails in production.** Found 2026-08-12 via a
+      real signup + click-through on the live site (throwaway account
+      `claude-billing-verify-20260812@example.com`, id `f03920ef-b1bf-410b-9ca4-7419e97db628`
+      in prod `rsyfcfqpookqtbmaclxy` — safe to delete, plan stayed `free`, no subscription).
+      Signup → auto-resumed checkout-intent flow worked (redirected to
+      `/pricing?checkout=pro`, POSTed to `/api/v1/billing/checkout`), but the request hung for
+      ~80+ seconds and then failed with "Could not start checkout" (502, the route's catch-all).
+      `user_profiles.stripe_customer_id` was **still null** after the failure, meaning
+      `client.customers.create()` in `app/api/v1/billing/checkout/route.ts` — the *first*
+      Stripe API call the Worker makes — never completed. The ~80s stall matches the Stripe
+      Node SDK's default timeout, so this reads as the outbound `fetch()` from the Worker to
+      `api.stripe.com` hanging rather than erroring. Not reproducible locally (Windows can't
+      run a real `opennextjs-cloudflare build/preview` — symlink `EPERM`), and no working log
+      access was found this session: no Stripe MCP connected, and Cloudflare's
+      `workers/observability/telemetry/query` REST endpoint (found via the OpenAPI spec, tried
+      as an alternative to the WebSocket-only live-tail) returned bare `400`s with no inspectable
+      error body across a few parameter-shape attempts — likely enabled or requires a
+      wsUrl session outside this tool's plain request/response capability.
+      **Next steps for the next session:** (1) check Stripe Dashboard → Developers → Logs for
+      any request in the window 2026-08-12 09:46–09:48 UTC — absence means the request never
+      left the Worker (points to a Workers→Stripe networking/fetch issue); presence means the
+      response got lost on the way back. (2) Check Cloudflare dashboard → Worker → Logs
+      (real-time) while re-triggering, for the actual server-side error/stack. (3) Consider
+      whether `lib/stripe.ts`'s `new Stripe(key)` needs an explicit `httpClient` /
+      `timeout` / Workers-specific fetch config — the comment there assumes the `workerd`
+      export condition "just works" with no configuration, which this incident calls into
+      question. This blocks the entire billing launch: **checkout is currently non-functional
+      for real customers** even though the deploy itself is live and healthy otherwise.
+
 - [x] **Portal: add products to `subscription_update`.** Done 2026-08-05 via API on
       `bpc_1TzBEW1wP2GH31b7E8CnrPCR`: Pro then Business, one price each,
       `adjustable_quantity.enabled=false` on both (it defaults to `true`, and no code reads
@@ -79,9 +108,10 @@ Read the scope note below before treating any of this as production evidence.
       which proves the raw-body handling and the async path — but `npm run dev` is not
       workerd, so the runtime-specific failure this guards against remains untested.
       Only a real deployment taking a real delivery closes this.
-- [ ] Checkout **Session** flow itself. The subscriptions above were created through the
-      API, not by completing a Stripe Checkout page, so `/api/v1/billing/checkout` and the
-      redirect back are not yet exercised.
+- [ ] Checkout **Session** flow itself. **Attempted live 2026-08-12 — failed.** See the
+      CRITICAL item at the top of "Blocking": the checkout POST hangs ~80s and 502s,
+      `client.customers.create()` never completes. Not a "not yet exercised" gap anymore —
+      this is a confirmed broken path.
 - [ ] Billing portal opens from **Manage billing** on `/dashboard/account`.
 - [ ] A `past_due` subscription retains access. Unit-tested in `tests/api/stripe-webhook.test.ts`,
       but not reproduced live — it needs a failing card and a test clock.
