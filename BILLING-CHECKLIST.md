@@ -19,10 +19,16 @@ sell. Do not "simplify" that null case away.
 
 ## Blocking — payments cannot work until these are done
 
-- [ ] **CRITICAL, ACTIVE: `STRIPE_SECRET_KEY` on the Worker is invalid.** Found 2026-08-12
-      immediately after the hang below was fixed. Checkout now fails fast with a 502 instead of
-      hanging, and the Worker logs Stripe's actual rejection:
+- [x] **`STRIPE_SECRET_KEY` on the Worker was invalid. FIXED and verified 2026-08-12.** Found
+      immediately after the hang below was fixed. Checkout failed fast with a 502 instead of
+      hanging, and the Worker logged Stripe's actual rejection:
       `Invalid API Key provided: mk_1SfhD***************T5CJ`.
+
+      Resolved by replacing it with a live **restricted key** (`rk_live_…`). Took two attempts:
+      the first replacement went into a typo'd secret name (`STRIP_SECRET_KEY`, missing the E)
+      that nothing reads, so the app kept using the old `mk_` value. Listing secret *names* via
+      `GET /accounts/{account_id}/workers/scripts/{script}/secrets` is what caught it — that
+      endpoint never returns values and is the fast way to check this.
 
       `mk_` is a Stripe **managed API key** — per Stripe's docs, a secret key that a *hosting
       platform* delivers to your app and rotates for you. This one is from the **Vercel** Stripe
@@ -151,10 +157,21 @@ Read the scope note below before treating any of this as production evidence.
       which proves the raw-body handling and the async path — but `npm run dev` is not
       workerd, so the runtime-specific failure this guards against remains untested.
       Only a real deployment taking a real delivery closes this.
-- [ ] Checkout **Session** flow itself. **Attempted live 2026-08-12 — failed.** See the
-      CRITICAL item at the top of "Blocking": the checkout POST hangs ~80s and 502s,
-      `client.customers.create()` never completes. Not a "not yet exercised" gap anymore —
-      this is a confirmed broken path.
+- [x] Checkout **Session** flow, up to the Stripe Checkout page. **Verified live 2026-08-12**
+      as `claude-billing-verify-20260812@example.com` (`f03920ef-…`):
+      `POST /api/v1/billing/checkout` returned **200 in 4.2s** with a live session URL
+      (`cs_live_a1osDZwz…`). Customer `cus_V3oS7P3O77KP1n` was created on the live account with
+      `metadata.user_id` matching, and `user_profiles.stripe_customer_id` now holds that id.
+      So `customers.create()` + `checkout.sessions.create()` + the persistence write all work.
+      Payment itself was deliberately not completed, so everything downstream of the Checkout
+      page remains unverified — see the webhook item above.
+
+      *Testing note:* driving this through a browser click proved unreliable (the click often
+      did not fire the handler, and Worker log ingestion was ~6.5h behind, making the logs
+      useless for live debugging). Issuing the request straight from the page context —
+      `fetch('/api/v1/billing/checkout', {method:'POST', credentials:'include',
+      body:'{"plan":"pro"}'})` — is far more reliable and returns the response body, which the
+      UI swallows.
 - [ ] Billing portal opens from **Manage billing** on `/dashboard/account`.
 - [ ] A `past_due` subscription retains access. Unit-tested in `tests/api/stripe-webhook.test.ts`,
       but not reproduced live — it needs a failing card and a test clock.
