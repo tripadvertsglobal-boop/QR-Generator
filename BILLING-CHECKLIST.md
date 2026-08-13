@@ -249,5 +249,5 @@ Read the scope note below before treating any of this as production evidence.
   Note the prod schema is ahead of `main` until the branch merges.
 - `lib/stripe.ts`, checkout + portal routes (`jwtOnly`), webhook receiver, `/pricing`
   checkout CTAs, **Manage billing** on the account page.
-- 237 tests pass; typecheck, lint, and production build clean; Stripe SDK confirmed absent
-  from client bundles.
+- 276 tests pass; typecheck, lint, and production build clean; Stripe SDK confirmed absent
+  from client bundles. Whole line re-verified 2026-08-13, not just the count.
