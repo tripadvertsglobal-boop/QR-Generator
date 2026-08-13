@@ -60,10 +60,17 @@ export default async function AccountPage({
         )}
         {profile?.stripe_customer_id ? (
           <ManageBilling />
-        ) : (
+        ) : plan === "free" ? (
           <Link href="/pricing" className={buttonClasses("secondary", "md", "self-start")}>
             See plans
           </Link>
+        ) : (
+          // Paid plan with no Stripe customer: granted by hand. Sending them to
+          // /pricing would invite a checkout that attaches a customer id and
+          // hands the plan back to Stripe's control.
+          <p className="text-sm text-muted">
+            This plan is managed for you — contact support to change it.
+          </p>
         )}
       </section>
 
