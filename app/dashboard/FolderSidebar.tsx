@@ -29,7 +29,7 @@ export default function FolderSidebar({
   const activeFolder = useSearchParams().get("folder");
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
-  const [color, setColor] = useState("#6366f1");
+  const [color, setColor] = useState("#ec3013");
   const [error, setError] = useState<string | null>(null);
 
   async function createFolder(e: React.FormEvent) {
@@ -56,12 +56,14 @@ export default function FolderSidebar({
   }
 
   const rowCls = (active: boolean) =>
-    `flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
-      active ? "bg-brand-tint text-brand" : "text-muted hover:bg-black/[0.04] hover:text-foreground"
+    `flex items-center justify-between px-2.5 py-1.5 text-[13px] font-semibold transition-colors ${
+      active
+        ? "bg-accent-100 text-accent-800"
+        : "text-muted hover:bg-foreground/[0.05] hover:text-foreground"
     }`;
 
   return (
-    <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-2">
+    <div className="ml-[26px] mt-0.5 flex flex-col gap-0.5 border-l-2 border-border pl-2">
       <Link
         href="/dashboard"
         onClick={onNavigate}
@@ -80,12 +82,12 @@ export default function FolderSidebar({
       </Link>
 
       <div className="mt-3 mb-1 flex items-center justify-between px-2.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-2">
+        <span className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted-2">
           Folders
         </span>
         <button
           onClick={() => setAdding((v) => !v)}
-          className="text-xs font-medium text-brand hover:underline"
+          className="text-xs font-extrabold text-brand hover:underline"
         >
           {adding ? "Cancel" : "+ New"}
         </button>
@@ -98,7 +100,7 @@ export default function FolderSidebar({
               type="color"
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border border-border bg-surface p-1"
+              className="h-9 w-9 shrink-0 cursor-pointer border border-border bg-surface p-1"
             />
             <Input
               autoFocus
@@ -109,7 +111,7 @@ export default function FolderSidebar({
             />
           </div>
           <Button type="submit" size="sm">Add folder</Button>
-          {error && <p className="text-xs text-rose-600">{error}</p>}
+          {error && <p className="text-xs font-semibold text-accent-700">{error}</p>}
         </form>
       )}
 
@@ -131,7 +133,7 @@ export default function FolderSidebar({
             onClick={() => deleteFolder(f.id)}
             title="Delete folder"
             aria-label={`Delete folder ${f.name}`}
-            className="ml-1.5 text-muted-2 hover:text-rose-600"
+            className="ml-1.5 text-muted-2 hover:text-accent-700"
           >
             ×
           </button>

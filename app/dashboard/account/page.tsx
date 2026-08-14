@@ -53,7 +53,7 @@ export default async function AccountPage({
             moment after the browser gets back from Checkout. Saying so beats
             showing a stale "Free" badge with no explanation. */}
         {checkout === "success" && (
-          <p className="rounded-lg border border-border bg-black/[0.02] p-3 text-sm">
+          <p className="rounded-lg border border-border bg-surface p-3 text-sm">
             Payment received. If your plan still shows as Free, reload in a few seconds — we
             are waiting on confirmation from Stripe.
           </p>

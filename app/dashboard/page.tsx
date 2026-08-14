@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createUserClient } from "@/lib/supabase/server";
 import { limitsFor } from "@/lib/plan";
-import PageHeader from "@/app/_components/ui/PageHeader";
+import { cn } from "@/lib/cn";
 import { buttonClasses } from "@/app/_components/ui/Button";
 import CreateQrForm from "./CreateQrForm";
 import TagFilterBar from "./TagFilterBar";
@@ -65,17 +65,61 @@ export default async function DashboardPage({
       ? `${liveCodes.length} ${liveCodes.length === 1 ? "code" : "codes"}`
       : `${liveCodes.length} of ${limits.maxQrCodes} codes`;
 
+  // Stat band. Everything here is derived from the rows already loaded above —
+  // no extra queries, no numbers the list itself can't account for.
+  const totalScans = liveCodes.reduce((sum, c) => sum + c.scan_count, 0);
+  const unfiled = liveCodes.filter((c) => c.folder_id === null).length;
+  const perCode = liveCodes.length ? Math.round(totalScans / liveCodes.length) : 0;
+  const topCode = liveCodes.reduce<QrCode | null>(
+    (best, c) => (best === null || c.scan_count > best.scan_count ? c : best),
+    null,
+  );
+  const topShare = totalScans > 0 && topCode ? Math.round((topCode.scan_count / totalScans) * 100) : 0;
+
+  const stats = [
+    {
+      label: "Scans · all time",
+      value: totalScans.toLocaleString(),
+      delta: `${liveCodes.length} live`,
+      note: `${perCode.toLocaleString()} per code average`,
+    },
+    {
+      label: "Live codes",
+      value: String(liveCodes.length),
+      delta: limits.maxQrCodes === Infinity ? "no cap" : `of ${limits.maxQrCodes}`,
+      deltaAccent: limits.maxQrCodes !== Infinity && liveCodes.length >= limits.maxQrCodes,
+      note: `${archivedCount} archived · ${unfiled} unfiled`,
+    },
+    {
+      label: "Top code",
+      value: topCode ? `${topShare}%` : "—",
+      delta: topCode ? "share" : "",
+      note: topCode ? (topCode.name ?? `/r/${topCode.short_slug}`) : "No scans recorded yet",
+    },
+    {
+      label: "Archived",
+      value: String(archivedCount),
+      delta: archivedCount > 0 ? "restorable" : "",
+      note: "Slug and scan history are kept",
+    },
+  ];
+
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8">
-      <PageHeader
-        title={viewingArchived ? "Archived QR codes" : "QR codes"}
-        description={
-          viewingArchived
-            ? "Retired codes. They no longer resolve, but their scan history and slug are kept — restore one to bring it back."
-            : `${usage} · ${user?.email ?? ""}`
-        }
-        actions={
-          viewingArchived ? (
+    <main>
+      {/* Title band */}
+      <div className="flex flex-col gap-3 border-b-2 border-border px-5 py-6 sm:flex-row sm:items-start sm:justify-between sm:px-8">
+        <div className="min-w-0">
+          <h1 className="text-2xl leading-tight tracking-[-0.03em] sm:text-[32px]">
+            {viewingArchived ? "Archived QR codes" : "QR codes"}
+          </h1>
+          <p className="mt-1.5 text-sm text-muted">
+            {viewingArchived
+              ? "Retired codes. They no longer resolve, but their scan history and slug are kept — restore one to bring it back."
+              : `${usage} · ${user?.email ?? ""}`}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {viewingArchived ? (
             <Link href="/dashboard" className={buttonClasses("secondary", "sm")}>
               Back to active
             </Link>
@@ -83,25 +127,80 @@ export default async function DashboardPage({
             <Link href="/dashboard?archived=1" className={buttonClasses("secondary", "sm")}>
               Archived ({archivedCount})
             </Link>
-          ) : null
-        }
-        className="mb-8"
-      />
-
-      <div className="flex flex-col gap-6">
-        {!viewingArchived && (
-          <>
-            <CreateQrForm folders={folders} />
-            <TagFilterBar tags={[...tagSet].sort()} activeTag={tag} folder={folder} />
-          </>
-        )}
-        <QrList
-          codes={visible}
-          canExport={limits.bulkOperations}
-          canArchive={limits.archiving}
-          viewingArchived={viewingArchived}
-        />
+          ) : null}
+        </div>
       </div>
+
+      {!viewingArchived && (
+        <>
+          {/* Stat band — four cells reading the live library at a glance. */}
+          <div className="grid grid-cols-2 border-b-2 border-border lg:grid-cols-4">
+            {stats.map((s, i) => (
+              <Stat
+                key={s.label}
+                {...s}
+                // Two columns then four: the rules have to know which cell sits
+                // against an edge at each breakpoint.
+                className={cn(
+                  i % 2 === 0 && "border-r",
+                  i === 1 && "lg:border-r",
+                  i < 2 && "border-b lg:border-b-0",
+                )}
+              />
+            ))}
+          </div>
+
+          <div className="border-b-2 border-border">
+            <CreateQrForm folders={folders} />
+          </div>
+          <TagFilterBar tags={[...tagSet].sort()} activeTag={tag} folder={folder} />
+        </>
+      )}
+
+      <QrList
+        codes={visible}
+        folders={folders}
+        canExport={limits.bulkOperations}
+        canArchive={limits.archiving}
+        viewingArchived={viewingArchived}
+      />
     </main>
+  );
+}
+
+// One cell of the stat band. Which edges carry a rule is the caller's call —
+// it depends on where the cell lands in the grid at each breakpoint.
+function Stat({
+  label,
+  value,
+  delta,
+  deltaAccent = false,
+  note,
+  className,
+}: {
+  label: string;
+  value: string;
+  delta: string;
+  deltaAccent?: boolean;
+  note: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("border-border px-5 py-4 sm:px-8 lg:px-5", className)}>
+      <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">{label}</h2>
+      <div className="mt-1.5 flex items-baseline gap-2">
+        <span className="text-[34px] font-extrabold leading-none tracking-[-0.03em]">{value}</span>
+        {delta && (
+          <span
+            className={`text-xs font-extrabold ${deltaAccent ? "text-brand" : "text-neutral-600"}`}
+          >
+            {delta}
+          </span>
+        )}
+      </div>
+      <p className="mt-1 truncate text-[11px] text-muted" title={note}>
+        {note}
+      </p>
+    </div>
   );
 }

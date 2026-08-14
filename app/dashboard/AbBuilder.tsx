@@ -38,7 +38,7 @@ export default function AbBuilder({
             type="button"
             onClick={() => onChange(arms.filter((_, idx) => idx !== i))}
             aria-label="Remove variant"
-            className="px-2 text-muted-2 hover:text-rose-600"
+            className="px-2 text-muted-2 hover:text-accent-700"
           >
             ×
           </button>
@@ -47,12 +47,12 @@ export default function AbBuilder({
       <button
         type="button"
         onClick={() => onChange([...arms, { url: "", weight: 50 }])}
-        className="self-start text-xs font-medium text-brand hover:underline"
+        className="self-start text-xs font-extrabold text-brand hover:underline"
       >
         + Add variant
       </button>
       {arms.length === 1 && (
-        <p className="text-xs text-amber-600">A/B split needs at least two variants.</p>
+        <p className="text-xs font-semibold text-neutral-700">A/B split needs at least two variants.</p>
       )}
     </div>
   );

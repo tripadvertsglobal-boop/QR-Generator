@@ -28,12 +28,12 @@ export default function DeleteAccount() {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-rose-300 bg-rose-50/40 p-5">
-      <h2 className="font-medium text-rose-700">Delete account</h2>
+    <div className="flex flex-col gap-3 border-2 border-accent-700 bg-accent-100 p-5">
+      <h2 className="text-lg text-accent-800">Delete account</h2>
       <p className="text-sm text-muted">
         Permanently deletes your account and all data (QR codes, scans, folders, keys, webhooks).
         This cannot be undone. Type{" "}
-        <code className="rounded bg-rose-100 px-1 py-0.5 font-mono text-xs text-rose-700">DELETE</code> to confirm.
+        <code className="bg-accent-200 px-1 py-0.5 font-mono text-xs text-accent-800">DELETE</code> to confirm.
       </p>
       <Input
         value={confirm}
@@ -50,7 +50,7 @@ export default function DeleteAccount() {
       >
         {busy ? "Deleting…" : "Delete my account"}
       </Button>
-      {error && <p className="text-sm text-rose-600">{error}</p>}
+      {error && <p className="text-sm font-semibold text-accent-700">{error}</p>}
     </div>
   );
 }

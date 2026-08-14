@@ -61,20 +61,17 @@ export default function CreateQrForm({ folders }: { folders: Folder[] }) {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 shadow-card sm:p-5"
-    >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <Field label="Destination URL" className="flex-1">
+    /* The create row: one line on desktop, stacked on mobile. Flush-left labels
+       sit over each control so the whole row reads as a single sentence. */
+    <form onSubmit={onSubmit} className="flex flex-col gap-3 bg-surface px-5 py-4 sm:px-8">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        <Field label="Create a dynamic code — paste a destination" className="flex-1">
           <Input type="url" required placeholder="https://example.com" value={destination} onChange={(e) => setDestination(e.target.value)} />
         </Field>
-        <Field label="Name (optional)" className="sm:w-40">
+        <Field label="Name" className="lg:w-40">
           <Input type="text" placeholder="Spring flyer" value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <Field label="Folder" className="sm:w-48">
+        <Field label="Folder" className="lg:w-44">
           <Select value={folderId} onChange={(e) => setFolderId(e.target.value)}>
             <option value="">No folder</option>
             {folders.map((f) => (
@@ -82,18 +79,18 @@ export default function CreateQrForm({ folders }: { folders: Folder[] }) {
             ))}
           </Select>
         </Field>
-        <Field label="Tags (comma-separated)" className="flex-1">
+        <Field label="Tags" className="lg:w-52">
           <Input type="text" placeholder="print, q2-campaign" value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
         </Field>
         <Button type="submit" loading={loading}>Create</Button>
       </div>
 
-      <button type="button" onClick={() => setAdvanced((v) => !v)} className="self-start text-xs font-medium text-brand hover:underline">
+      <button type="button" onClick={() => setAdvanced((v) => !v)} className="self-start text-xs font-extrabold text-brand hover:underline">
         {advanced ? "Hide advanced options" : "Advanced: scheduling, password, A/B"}
       </button>
 
       {advanced && (
-        <div className="flex flex-col gap-4 rounded-lg border border-border bg-black/[0.015] p-4">
+        <div className="flex flex-col gap-4 border border-border bg-background p-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             <Field label="Active from" className="flex-1">
               <Input type="datetime-local" value={activeFrom} onChange={(e) => setActiveFrom(e.target.value)} />
@@ -111,7 +108,7 @@ export default function CreateQrForm({ folders }: { folders: Folder[] }) {
         </div>
       )}
 
-      {error && <p className="text-sm text-rose-600">{error}</p>}
+      {error && <p className="text-sm font-semibold text-accent-700">{error}</p>}
     </form>
   );
 }

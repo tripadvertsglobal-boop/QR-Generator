@@ -4,7 +4,7 @@ export default function Skeleton({ className = "" }: { className?: string }) {
   return (
     <div
       aria-hidden
-      className={`animate-pulse rounded bg-black/10 dark:bg-white/10 ${className}`}
+      className={`animate-pulse bg-foreground/10 ${className}`}
     />
   );
 }

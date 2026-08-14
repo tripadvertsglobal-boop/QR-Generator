@@ -15,7 +15,7 @@ export default function UpgradeNotice({
   return (
     <Card>
       <CardBody className="flex flex-col items-start gap-3 py-8 text-center sm:items-center">
-        <h2 className="text-base font-medium">{feature} is a Pro feature</h2>
+        <h2 className="text-lg">{feature} is a Pro feature</h2>
         <p className="max-w-md text-sm text-muted sm:text-center">{description}</p>
         <Link href="/pricing" className={buttonClasses("primary", "md", "mt-1")}>
           See plans

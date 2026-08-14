@@ -73,11 +73,11 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
   return (
     <div className="flex flex-col gap-6">
       {newKey && (
-        <div className="flex flex-col gap-2 rounded-xl border border-emerald-600/25 bg-emerald-50 p-4">
-          <p className="text-sm font-medium text-emerald-800">
+        <div className="flex flex-col gap-2 border-2 border-border bg-surface p-4">
+          <p className="text-sm font-extrabold text-foreground">
             Key created — copy it now. You won&apos;t be able to see it again.
           </p>
-          <code className="block overflow-x-auto rounded-lg bg-white px-3 py-2 font-mono text-xs ring-1 ring-emerald-600/20">
+          <code className="block overflow-x-auto border border-border bg-background px-3 py-2 font-mono text-xs">
             {newKey}
           </code>
           <Button size="sm" variant="secondary" onClick={() => navigator.clipboard?.writeText(newKey)} className="self-start">
@@ -116,12 +116,12 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
             You have {MAX_KEYS} active keys (the maximum). Revoke one to create another.
           </p>
         )}
-        {error && <p className="text-sm text-rose-600">{error}</p>}
+        {error && <p className="text-sm font-semibold text-accent-700">{error}</p>}
       </form>
 
       <ul className="flex flex-col gap-3">
         {initial.length === 0 && (
-          <li className="rounded-xl border border-dashed border-border bg-black/[0.015] px-6 py-12 text-center text-sm text-muted">
+          <li className="rounded-xl border border-dashed border-border bg-surface px-6 py-12 text-center text-sm text-muted">
             No API keys yet.
           </li>
         )}
@@ -129,11 +129,11 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
           <li key={k.id} className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-card">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate font-medium">{k.name}</span>
-              <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-xs text-muted">{k.key_prefix}…</code>
+              <code className="rounded bg-foreground/[0.06] px-1.5 py-0.5 font-mono text-xs text-muted">{k.key_prefix}…</code>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {k.scopes.map((s) => (
-                <code key={s} className="rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-xs text-muted">{s}</code>
+                <code key={s} className="bg-neutral-200 px-2 py-0.5 font-mono text-xs text-neutral-800">{s}</code>
               ))}
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
@@ -146,7 +146,7 @@ export default function KeysManager({ initial }: { initial: ApiKey[] }) {
               variant="ghost"
               onClick={() => revoke(k.id)}
               loading={revokingId === k.id}
-              className="self-start text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+              className="self-start"
             >
               Revoke
             </Button>

@@ -23,7 +23,7 @@ export default async function WebhooksPage() {
         description={
           <>
             Receive HMAC-signed POSTs on QR mutations and scan milestones. Verify the{" "}
-            <code className="rounded bg-black/[0.05] px-1 py-0.5 font-mono text-xs">X-Webhook-Signature</code>{" "}
+            <code className="rounded bg-foreground/[0.06] px-1 py-0.5 font-mono text-xs">X-Webhook-Signature</code>{" "}
             header (sha256 HMAC of the body) with your secret.
           </>
         }

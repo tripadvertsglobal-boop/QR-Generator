@@ -44,14 +44,13 @@ export const siteConfig = {
   /* ---------------------------------------------------------------- */
   theme: {
     // Primary brand color (buttons, accents). Use any valid CSS color.
-    brand: "#4f46e5",
+    brand: "#ec3013",
     // Text color that sits on top of the brand color (e.g. button labels).
-    brandForeground: "#ffffff",
+    brandForeground: "#f3f2f2",
     // Hover shade for primary buttons.
-    brandHover: "#4338ca",
+    brandHover: "#dd2b0f",
     // Font family applied across the marketing pages. Any CSS font stack.
-    fontFamily:
-      "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+    fontFamily: 'var(--font-archivo), "Archivo", system-ui, sans-serif',
   },
 
   /* ---------------------------------------------------------------- */

@@ -72,13 +72,13 @@ export default function CheckoutButton({
         className={`w-full rounded-md px-4 py-2.5 text-center text-sm font-medium disabled:opacity-60 ${
           highlighted
             ? "text-[var(--brand-fg)] [background:var(--brand)] hover:[background:var(--brand-hover)]"
-            : "border border-black/15 hover:border-black/40"
+            : "border border-border hover:border-border-strong"
         }`}
       >
         {busy ? "Starting checkout…" : label}
       </button>
       {error && (
-        <p role="alert" className="mt-2 text-center text-xs text-rose-600">
+        <p role="alert" className="mt-2 text-center text-xs font-semibold text-accent-700">
           {error}
         </p>
       )}

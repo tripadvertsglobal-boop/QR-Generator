@@ -136,9 +136,9 @@ export default async function QrDetailPage({
               {countries.map((c) => (
                 <li key={c.country} className="flex items-center gap-3 text-sm">
                   <span className="w-8 shrink-0 font-medium">{c.country}</span>
-                  <span className="h-2 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+                  <span className="h-2 flex-1 overflow-hidden bg-foreground/[0.06]">
                     <span
-                      className="block h-full rounded-full bg-brand"
+                      className="block h-full bg-brand"
                       style={{ width: `${(Number(c.scan_count) / maxCountry) * 100}%` }}
                     />
                   </span>

@@ -36,7 +36,7 @@ export default function PasswordForm({ slug }: { slug: string }) {
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="rounded-md border border-black/15 bg-transparent px-3 py-2 text-sm outline-none focus:border-black/40 dark:border-white/20"
+        className="rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-border-strong dark:border-border"
       />
       <button
         type="submit"
@@ -45,7 +45,7 @@ export default function PasswordForm({ slug }: { slug: string }) {
       >
         {loading ? <Spinner /> : "Unlock"}
       </button>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm font-semibold text-accent-700">{error}</p>}
     </form>
   );
 }

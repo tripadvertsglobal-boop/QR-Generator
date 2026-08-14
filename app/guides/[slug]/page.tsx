@@ -35,12 +35,12 @@ function Block({ block }: { block: GuideBlock }) {
     case "h3":
       return <h3 className="mt-8 text-lg font-semibold">{block.text}</h3>;
     case "p":
-      return <p className="mt-5 text-black/70">{block.text}</p>;
+      return <p className="mt-5 text-muted">{block.text}</p>;
     case "ul":
       return (
         <ul className="mt-5 space-y-2">
           {block.items.map((item) => (
-            <li key={item} className="flex gap-3 text-black/70">
+            <li key={item} className="flex gap-3 text-muted">
               <span aria-hidden className="text-[var(--brand)]">
                 •
               </span>
@@ -53,10 +53,10 @@ function Block({ block }: { block: GuideBlock }) {
       return (
         <ol className="mt-5 space-y-3">
           {block.items.map((item, i) => (
-            <li key={item} className="flex gap-3 text-black/70">
+            <li key={item} className="flex gap-3 text-muted">
               <span
                 aria-hidden
-                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium text-[var(--brand-fg)] [background:var(--brand)]"
+                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-xs font-extrabold text-[var(--brand-fg)] [background:var(--brand)]"
               >
                 {i + 1}
               </span>
@@ -103,15 +103,15 @@ export default async function GuidePage({ params }: Props) {
       />
 
       <article className="mx-auto w-full max-w-3xl px-6 pt-16 pb-24 sm:pt-24">
-        <nav aria-label="Breadcrumb" className="text-sm text-black/50">
-          <Link href="/guides" className="hover:text-black">
+        <nav aria-label="Breadcrumb" className="text-sm text-muted-2">
+          <Link href="/guides" className="hover:text-foreground">
             Guides
           </Link>
         </nav>
 
         <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">{guide.title}</h1>
-        <p className="mt-4 text-lg text-black/60">{guide.description}</p>
-        <p className="mt-4 text-sm text-black/45">
+        <p className="mt-4 text-lg text-muted">{guide.description}</p>
+        <p className="mt-4 text-sm text-muted-2">
           <time dateTime={guide.updated}>Updated {formatDate(guide.updated)}</time> ·{" "}
           {guide.readingMinutes} min read
         </p>
@@ -122,9 +122,9 @@ export default async function GuidePage({ params }: Props) {
           ))}
         </div>
 
-        <aside className="mt-16 rounded-2xl border border-black/10 p-8">
+        <aside className="mt-16 rounded-2xl border border-border p-8">
           <h2 className="text-lg font-semibold">Try it on your own codes</h2>
-          <p className="mt-2 text-black/60">
+          <p className="mt-2 text-muted">
             {siteConfig.company.name} gives you {siteConfig.pricing.plans[0].features[0].toLowerCase()} on
             the free plan — editable destinations and scan analytics included.
           </p>
@@ -144,7 +144,7 @@ export default async function GuidePage({ params }: Props) {
                 <li key={g.slug}>
                   <Link
                     href={`/guides/${g.slug}`}
-                    className="text-black/70 underline decoration-black/20 underline-offset-4 hover:text-[var(--brand)]"
+                    className="text-muted underline decoration-border underline-offset-4 hover:text-[var(--brand)]"
                   >
                     {g.title}
                   </Link>

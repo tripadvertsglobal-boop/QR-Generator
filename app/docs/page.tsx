@@ -327,25 +327,25 @@ const groups: Group[] = [
 ];
 
 const methodColor: Record<Method, string> = {
-  GET: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  POST: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
-  PATCH: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  DELETE: "bg-red-500/15 text-red-700 dark:text-red-400",
+  GET: "bg-neutral-200 text-neutral-800",
+  POST: "bg-foreground text-background",
+  PATCH: "bg-neutral-300 text-neutral-900",
+  DELETE: "bg-accent-100 text-accent-800",
 };
 
 function EndpointRow({ ep }: { ep: Endpoint }) {
   return (
-    <div className="border-t border-black/10 py-4 first:border-t-0">
+    <div className="border-t border-border py-4 first:border-t-0">
       <div className="flex flex-wrap items-center gap-3">
         <span className={`rounded px-2 py-0.5 font-mono text-xs font-semibold ${methodColor[ep.method]}`}>
           {ep.method}
         </span>
         <code className="text-sm">{ep.path}</code>
-        <span className="rounded-full bg-black/5 px-2 py-0.5 text-xs text-black/60 dark:bg-white/10">{ep.auth}</span>
+        <span className="bg-surface px-2 py-0.5 text-xs text-muted">{ep.auth}</span>
       </div>
-      <p className="mt-2 text-sm text-black/70">{ep.summary}</p>
+      <p className="mt-2 text-sm text-muted">{ep.summary}</p>
       {ep.details && (
-        <ul className="mt-1 space-y-0.5 text-xs text-black/50">
+        <ul className="mt-1 space-y-0.5 text-xs text-muted-2">
           {ep.details.map((d) => (
             <li key={d} className="font-mono">{d}</li>
           ))}
@@ -353,14 +353,14 @@ function EndpointRow({ ep }: { ep: Endpoint }) {
       )}
       {ep.request && (
         <div className="mt-3">
-          <p className="text-xs font-medium text-black/50">Request body</p>
-          <pre className="mt-1 overflow-x-auto rounded-md bg-black/90 p-3 text-xs text-white">{ep.request}</pre>
+          <p className="text-xs font-medium text-muted-2">Request body</p>
+          <pre className="mt-1 overflow-x-auto rounded-md bg-foreground p-3 text-xs text-background">{ep.request}</pre>
         </div>
       )}
       {ep.response && (
         <div className="mt-3">
-          <p className="text-xs font-medium text-black/50">Response</p>
-          <pre className="mt-1 overflow-x-auto rounded-md bg-black/90 p-3 text-xs text-white">{ep.response}</pre>
+          <p className="text-xs font-medium text-muted-2">Response</p>
+          <pre className="mt-1 overflow-x-auto rounded-md bg-foreground p-3 text-xs text-background">{ep.response}</pre>
         </div>
       )}
     </div>
@@ -386,26 +386,26 @@ export default function DocsPage() {
       />
       <div className="mx-auto w-full max-w-3xl px-6 py-16">
         <h1 className="text-4xl font-bold tracking-tight">API reference</h1>
-        <p className="mt-4 text-black/60">
+        <p className="mt-4 text-muted">
           A REST API over HTTPS. All endpoints live under <code className="text-sm">/api/v1</code> and return JSON.
         </p>
 
         {/* Quickstart */}
         <section className="mt-12">
           <h2 className="text-2xl font-semibold">Quickstart — generate a QR for a campaign</h2>
-          <p className="mt-3 text-sm text-black/70">
+          <p className="mt-3 text-sm text-muted">
             Create a dynamic QR with a destination URL and a name. The response returns the QR&apos;s{" "}
             <strong><code>id</code> (a UUID)</strong> — store it against your ad campaign. Change the destination
             later with <code>PATCH /api/v1/qrcodes/&#123;id&#125;</code> and the printed code keeps working.
           </p>
-          <pre className="mt-3 overflow-x-auto rounded-lg bg-black/90 p-4 text-xs text-white">
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground p-4 text-xs text-background">
 {`curl -X POST https://your-domain.com/api/v1/qrcodes \\
   -H "X-API-Key: qr_sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{"destination_url":"https://example.com/landing","name":"Spring Campaign"}'`}
           </pre>
-          <p className="mt-3 text-sm text-black/70">Response <code>201 Created</code>:</p>
-          <pre className="mt-2 overflow-x-auto rounded-lg bg-black/90 p-4 text-xs text-white">
+          <p className="mt-3 text-sm text-muted">Response <code>201 Created</code>:</p>
+          <pre className="mt-2 overflow-x-auto rounded-lg bg-foreground p-4 text-xs text-background">
 {`{
   "id": "8f3c0b2e-4d1a-4c9b-9f2e-1a2b3c4d5e6f",   // QR UUID — store against your campaign
   "name": "Spring Campaign",
@@ -422,19 +422,19 @@ export default function DocsPage() {
         {/* Authentication */}
         <section className="mt-12">
           <h2 className="text-2xl font-semibold">Authentication</h2>
-          <p className="mt-3 text-sm text-black/70">
+          <p className="mt-3 text-sm text-muted">
             Two methods. A dashboard <strong>session</strong> can call everything. An <strong>API key</strong> is
             limited to the scopes stored on it — currently <code>qrcodes:read</code> and <code>qrcodes:write</code> —
             so API keys reach the QR-code endpoints only. Endpoints marked <em>session only</em> reject API keys (403).
           </p>
-          <p className="mt-3 text-sm text-black/70">
+          <p className="mt-3 text-sm text-muted">
             Create a key in <strong>Dashboard → API keys</strong> (max 4 active). Send it on each request:
           </p>
-          <pre className="mt-3 overflow-x-auto rounded-lg bg-black/90 p-4 text-xs text-white">
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-foreground p-4 text-xs text-background">
 {`curl https://your-domain.com/api/v1/qrcodes \\
   -H "X-API-Key: qr_sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"`}
           </pre>
-          <p className="mt-3 text-xs text-black/50">
+          <p className="mt-3 text-xs text-muted-2">
             Keys are stored only as SHA-256 hashes; the raw value is shown once. Treat it like a password.
           </p>
         </section>
@@ -442,11 +442,11 @@ export default function DocsPage() {
         {/* Rate limits */}
         <section className="mt-12">
           <h2 className="text-2xl font-semibold">Rate limits</h2>
-          <p className="mt-3 text-sm text-black/70">
+          <p className="mt-3 text-sm text-muted">
             Every response carries <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, and{" "}
             <code>X-RateLimit-Reset</code>. Exceeding the limit returns <code>429</code>.
           </p>
-          <ul className="mt-3 space-y-1 text-sm text-black/70">
+          <ul className="mt-3 space-y-1 text-sm text-muted">
             <li>• Session (JWT): 200 requests/min</li>
             <li>• API key: 100 requests/min by default (configurable per key, up to 10,000)</li>
             <li>• Redirect <code>/r/&#123;slug&#125;</code>: 5,000/min per IP at the edge</li>
@@ -456,7 +456,7 @@ export default function DocsPage() {
         {/* Errors */}
         <section className="mt-12">
           <h2 className="text-2xl font-semibold">Errors</h2>
-          <p className="mt-3 text-sm text-black/70">
+          <p className="mt-3 text-sm text-muted">
             Errors return a JSON body <code>{`{ "error": "..." }`}</code> with a standard status:{" "}
             <code>400</code> invalid input · <code>401</code> unauthenticated · <code>403</code> wrong scope / session
             required · <code>404</code> not found · <code>409</code> conflict (e.g. key limit) · <code>429</code>{" "}
@@ -467,7 +467,7 @@ export default function DocsPage() {
         {/* Security */}
         <section className="mt-12">
           <h2 className="text-2xl font-semibold">Security model</h2>
-          <ul className="mt-3 space-y-1 text-sm text-black/70">
+          <ul className="mt-3 space-y-1 text-sm text-muted">
             <li>• Keys stored as SHA-256 hashes; <code>qr_sk_</code> prefix lets secret scanners flag leaks.</li>
             <li>• Scoped + capped (4/account); revocation purges the auth cache immediately.</li>
             <li>• Every mutation is audit-logged; view it under Dashboard → Audit log.</li>
@@ -483,8 +483,8 @@ export default function DocsPage() {
           {groups.map((g) => (
             <div key={g.title} className="mt-8">
               <h3 className="text-lg font-semibold">{g.title}</h3>
-              {g.intro && <p className="mt-1 text-sm text-black/50">{g.intro}</p>}
-              <div className="mt-3 rounded-xl border border-black/10 px-5">
+              {g.intro && <p className="mt-1 text-sm text-muted-2">{g.intro}</p>}
+              <div className="mt-3 rounded-xl border border-border px-5">
                 {g.endpoints.map((ep) => (
                   <EndpointRow key={`${ep.method} ${ep.path}`} ep={ep} />
                 ))}

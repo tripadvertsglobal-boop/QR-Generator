@@ -5,32 +5,53 @@
    stays light regardless of the OS color scheme. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Modernist. Zero radius, 2px rules doing the organising, flush-left labels,
+   Archivo only. Red is reserved for the primary action and live-state emphasis.
+   The semantic names below are unchanged, so every page picks the system up
+   through the utilities it already uses. */
 :root {
   color-scheme: light;
 
-  /* Grounds. The page sits a hair below pure white with a faint cool bias so
-     white cards lift off it — the "airy" layered look. */
-  --background: #fbfbfd;
-  --surface: #ffffff;
-  --foreground: #16161d;
+  /* Grounds. A warm paper ground with a slightly deeper surface for the bands
+     and rails that sit on top of it — separation comes from rules, not lift. */
+  --background: #f3f2f2;
+  --surface: #eae9e9;
+  --foreground: #201e1d;
 
-  /* Text ramp (cool-biased neutrals, chosen not defaulted). */
-  --muted: #5c5c68;
-  --muted-2: #8b8b97;
+  /* Text ramp (warm neutrals off the same ink). */
+  --muted: #605d5d;
+  --muted-2: #7d7979;
 
-  /* Hairline borders + strong dividers. */
-  --border: #ececf1;
-  --border-strong: #dedee5;
+  /* Rules. One divider ink at two weights: 1px hairline, 2px structural.
+     Kept as a mix so it reads correctly on both grounds. */
+  --border: color-mix(in srgb, #201e1d 40%, transparent);
+  --border-strong: color-mix(in srgb, #201e1d 65%, transparent);
 
-  /* Brand — bright indigo, used app-wide. Marketing may override per site.config. */
-  --brand: #4f46e5;
-  --brand-fg: #ffffff;
-  --brand-hover: #4338ca;
-  --brand-tint: #eef2ff; /* indigo-50 wash for active/selected states */
+  /* Brand — the system's single red. */
+  --brand: #ec3013;
+  --brand-fg: #f3f2f2;
+  --brand-hover: #dd2b0f;
+  --brand-tint: #fff2ef;
 
-  /* Elevation. Soft, low-spread shadows with a slight cool tint. */
-  --shadow-card: 0 1px 2px rgba(16, 16, 40, 0.04), 0 1px 3px rgba(16, 16, 40, 0.05);
-  --shadow-pop: 0 8px 24px -6px rgba(16, 16, 40, 0.14), 0 2px 6px rgba(16, 16, 40, 0.06);
+  /* Tonal ramps, on one shared lightness scale. */
+  --neutral-100: #f8f4f4;
+  --neutral-200: #eae7e7;
+  --neutral-300: #d7d3d3;
+  --neutral-600: #7d7979;
+  --neutral-700: #605d5d;
+  --neutral-800: #444141;
+  --neutral-900: #2d2b2b;
+
+  --accent-100: #fff2ef;
+  --accent-200: #ffe0d9;
+  --accent-600: #dd2b0f;
+  --accent-700: #ae1800;
+  --accent-800: #7c1405;
+
+  /* Elevation. The system organises with rules, so the flat surfaces carry no
+     shadow at all; only things that float above the page (drawer, popovers) do. */
+  --shadow-card: none;
+  --shadow-pop: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
 }
 
 @theme inline {
@@ -46,16 +67,56 @@
   --color-brand-hover: var(--brand-hover);
   --color-brand-tint: var(--brand-tint);
 
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+
   --shadow-card: var(--shadow-card);
   --shadow-pop: var(--shadow-pop);
 
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-archivo);
   --font-mono: var(--font-geist-mono);
+
+  /* Zero radius across the whole scale, so every `rounded-*` already in the
+     codebase flattens without being rewritten. `rounded-full` is not part of
+     this scale and stays circular — it is what draws the status dots. */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  /* Use the loaded Geist face (was falling back to Arial). */
-  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-archivo), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Headings are the heavy Archivo cut, set tight — the system's loudest voice. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand) 30%, transparent);
 }

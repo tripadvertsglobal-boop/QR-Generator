@@ -6,15 +6,17 @@ import Link from "next/link";
 import Button from "@/app/_components/ui/Button";
 import { buttonClasses } from "@/app/_components/ui/Button";
 import QrRow from "./QrRow";
-import type { QrCode } from "./types";
+import type { Folder, QrCode } from "./types";
 
 export default function QrList({
   codes,
+  folders = [],
   canExport,
   canArchive,
   viewingArchived = false,
 }: {
   codes: QrCode[];
+  folders?: Folder[];
   canExport: boolean;
   canArchive: boolean;
   viewingArchived?: boolean;
@@ -22,6 +24,9 @@ export default function QrList({
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+
+  // Folder names live on the page's folder list, not on the code row.
+  const folderName = new Map(folders.map((f) => [f.id, f.name]));
 
   function onSelectChange(id: string, checked: boolean) {
     setSelected((prev) => {
@@ -80,30 +85,37 @@ export default function QrList({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <label className="flex items-center gap-2 text-muted">
-          <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 accent-brand" />
+    <div>
+      {/* Bulk bar. Selection-scoped actions appear on the left as they become
+          available; the always-available export stays anchored right. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-5 py-3 sm:px-8">
+        <label className="flex items-center gap-2 text-[13px] font-extrabold">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleAll}
+            className="h-4 w-4 accent-brand"
+          />
           {selected.size > 0 ? `${selected.size} selected` : "Select all"}
         </label>
-        <div className="flex items-center gap-2">
-          {selected.size > 0 && (
-            <>
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={busy}
-                onClick={() => archiveSelected(!viewingArchived)}
-                title={canArchive ? undefined : "Archiving is available on Pro"}
-              >
-                {viewingArchived ? "Restore selected" : "Archive selected"}
-                {!canArchive && " ↑"}
-              </Button>
-              <Button size="sm" variant="ghost" disabled={busy} onClick={deleteSelected} className="text-rose-600 hover:bg-rose-50 hover:text-rose-700">
-                Delete selected
-              </Button>
-            </>
-          )}
+        {selected.size > 0 && (
+          <>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy}
+              onClick={() => archiveSelected(!viewingArchived)}
+              title={canArchive ? undefined : "Archiving is available on Pro"}
+            >
+              {viewingArchived ? "Restore selected" : "Archive selected"}
+              {!canArchive && " ↑"}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={deleteSelected}>
+              Delete selected
+            </Button>
+          </>
+        )}
+        <div className="ml-auto">
           {/* CSV export is Pro-gated: the endpoint 402s on Free, and this is a
               plain navigation, so without the check the browser would render the
               raw JSON error. Point at /pricing instead. */}
@@ -125,22 +137,60 @@ export default function QrList({
         </div>
       </div>
 
-      <ul className="flex flex-col gap-3">
-        {codes.length === 0 && (
-          <li className="rounded-xl border border-dashed border-border bg-black/[0.015] px-6 py-12 text-center text-sm text-muted">
-            {viewingArchived ? "Nothing archived." : "No QR codes here yet."}
-          </li>
-        )}
-        {codes.map((code) => (
-          <QrRow
-            key={code.id}
-            code={code}
-            selected={selected.has(code.id)}
-            onSelectChange={onSelectChange}
-            canArchive={canArchive}
-          />
-        ))}
-      </ul>
+      {codes.length === 0 ? (
+        <p className="px-5 py-16 text-center text-sm text-muted sm:px-8">
+          {viewingArchived ? "Nothing archived." : "No QR codes here yet."}
+        </p>
+      ) : (
+        <>
+          {/* The ledger proper. Below `md` the same rows restack as cards —
+              the columns stop fitting long before the content stops mattering. */}
+          <table className="hidden w-full border-collapse text-sm md:table">
+            <thead>
+              <tr className="[&>th]:border-b-2 [&>th]:border-border [&>th]:text-[11px] [&>th]:font-extrabold [&>th]:uppercase [&>th]:tracking-[0.08em] [&>th]:text-muted">
+                <th className="w-9 py-2 pl-5 pr-2 text-left sm:pl-8" />
+                <th className="w-12 px-2 py-2 text-left" />
+                <th className="min-w-[190px] px-2 py-2 text-left">Name / slug</th>
+                <th className="min-w-[180px] px-2 py-2 text-left">Destination</th>
+                <th className="min-w-[150px] px-2 py-2 text-left">Folder &amp; tags</th>
+                <th className="w-24 px-2 py-2 text-right">Scans</th>
+                <th className="w-28 px-2 py-2 text-left">State</th>
+                <th className="w-px py-2 pl-2 pr-5 text-left sm:pr-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {codes.map((code) => (
+                <QrRow
+                  key={code.id}
+                  code={code}
+                  folderName={code.folder_id ? folderName.get(code.folder_id) : undefined}
+                  selected={selected.has(code.id)}
+                  onSelectChange={onSelectChange}
+                  canArchive={canArchive}
+                />
+              ))}
+            </tbody>
+          </table>
+
+          <ul className="md:hidden">
+            {codes.map((code) => (
+              <QrRow
+                key={code.id}
+                layout="card"
+                code={code}
+                folderName={code.folder_id ? folderName.get(code.folder_id) : undefined}
+                selected={selected.has(code.id)}
+                onSelectChange={onSelectChange}
+                canArchive={canArchive}
+              />
+            ))}
+          </ul>
+
+          <div className="border-t-2 border-border px-5 py-3.5 text-xs text-muted sm:px-8">
+            Showing {codes.length} {codes.length === 1 ? "code" : "codes"}
+          </div>
+        </>
+      )}
     </div>
   );
 }

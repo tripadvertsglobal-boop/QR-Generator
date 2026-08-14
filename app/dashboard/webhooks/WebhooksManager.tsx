@@ -79,12 +79,12 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
           </div>
         </div>
         <Button type="submit" className="self-start" loading={busy}>Add webhook</Button>
-        {error && <p className="text-sm text-rose-600">{error}</p>}
+        {error && <p className="text-sm font-semibold text-accent-700">{error}</p>}
       </form>
 
       <ul className="flex flex-col gap-3">
         {initial.length === 0 && (
-          <li className="rounded-xl border border-dashed border-border bg-black/[0.015] px-6 py-12 text-center text-sm text-muted">
+          <li className="rounded-xl border border-dashed border-border bg-surface px-6 py-12 text-center text-sm text-muted">
             No webhooks yet.
           </li>
         )}
@@ -98,19 +98,19 @@ export default function WebhooksManager({ initial }: { initial: Webhook[] }) {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {wh.events.map((e) => (
-                <code key={e} className="rounded-full bg-black/[0.05] px-2 py-0.5 font-mono text-xs text-muted">{e}</code>
+                <code key={e} className="bg-neutral-200 px-2 py-0.5 font-mono text-xs text-neutral-800">{e}</code>
               ))}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted">
               <span>Secret</span>
-              <code className="overflow-x-auto rounded bg-black/[0.05] px-1.5 py-0.5 font-mono">{wh.secret}</code>
+              <code className="overflow-x-auto rounded bg-foreground/[0.06] px-1.5 py-0.5 font-mono">{wh.secret}</code>
             </div>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => remove(wh.id)}
               loading={deletingId === wh.id}
-              className="self-start text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+              className="self-start"
             >
               Delete
             </Button>

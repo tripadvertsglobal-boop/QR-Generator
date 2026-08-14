@@ -26,7 +26,7 @@ export default async function KeysPage() {
         description={
           <>
             Authenticate API requests with the{" "}
-            <code className="rounded bg-black/[0.05] px-1 py-0.5 font-mono text-xs">X-API-Key</code> header. Keys
+            <code className="rounded bg-foreground/[0.06] px-1 py-0.5 font-mono text-xs">X-API-Key</code> header. Keys
             are shown once at creation — store them securely. Up to {MAX_API_KEYS} active keys per account. See the{" "}
             <Link href="/docs" className="text-brand underline">API docs</Link>.
           </>

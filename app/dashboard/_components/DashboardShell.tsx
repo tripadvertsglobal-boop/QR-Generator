@@ -88,10 +88,10 @@ export default function DashboardShell({
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-1 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex flex-1 items-center gap-2.5 border-l-2 px-3 py-2 text-[13px] font-semibold transition-colors",
                   active
-                    ? "bg-brand-tint text-brand"
-                    : "text-muted hover:bg-black/[0.04] hover:text-foreground",
+                    ? "border-brand bg-accent-100 text-accent-800"
+                    : "border-transparent text-muted hover:bg-foreground/[0.05] hover:text-foreground",
                 )}
               >
                 <Icon
@@ -104,7 +104,7 @@ export default function DashboardShell({
                   onClick={() => setFolderOpen((v) => !v)}
                   aria-label={folderOpen ? "Collapse folders" : "Expand folders"}
                   aria-expanded={folderOpen}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-2 transition-colors hover:bg-black/[0.04] hover:text-foreground"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-muted-2 transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
                 >
                   <ChevronIcon
                     className={cn("h-4 w-4 transition-transform", folderOpen && "rotate-180")}
@@ -131,17 +131,17 @@ export default function DashboardShell({
   );
 
   const footer = (
-    <div className="mt-auto flex flex-col gap-1 border-t border-border pt-3">
+    <div className="mt-auto flex flex-col gap-0.5 border-t-2 border-border pt-3">
       <Link
         href="/docs"
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-black/[0.04] hover:text-foreground"
+        className="flex items-center gap-2.5 border-l-2 border-transparent px-3 py-2 text-[13px] font-semibold text-muted transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
       >
         <DocsIcon className="h-[18px] w-[18px] shrink-0 text-muted-2" />
         Docs
       </Link>
       <button
         onClick={signOut}
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-black/[0.04] hover:text-foreground"
+        className="flex items-center gap-2.5 border-l-2 border-transparent px-3 py-2 text-left text-[13px] font-semibold text-muted transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
       >
         <SignOutIcon className="h-[18px] w-[18px] shrink-0 text-muted-2" />
         Sign out
@@ -153,8 +153,11 @@ export default function DashboardShell({
   return (
     <div>
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-border bg-surface px-3 py-4 lg:flex">
-        <Link href="/dashboard" className="mb-4 px-3 text-lg font-semibold tracking-tight">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r-2 border-border bg-surface py-4 pr-3 lg:flex">
+        <Link
+          href="/dashboard"
+          className="mb-4 px-5 text-lg font-extrabold tracking-tight text-foreground no-underline"
+        >
           {siteConfig.company.name}
         </Link>
         {nav()}
@@ -162,14 +165,14 @@ export default function DashboardShell({
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-surface/85 px-4 backdrop-blur lg:hidden">
-        <Link href="/dashboard" className="text-lg font-semibold tracking-tight">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b-2 border-border bg-surface px-4 lg:hidden">
+        <Link href="/dashboard" className="text-lg font-extrabold tracking-tight text-foreground no-underline">
           {siteConfig.company.name}
         </Link>
         <button
           onClick={() => setOpen(true)}
           aria-label="Open menu"
-          className="-mr-1 inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-black/[0.05] hover:text-foreground"
+          className="-mr-1 inline-flex h-9 w-9 items-center justify-center text-muted hover:bg-foreground/[0.07] hover:text-foreground"
         >
           <MenuIcon className="h-5 w-5" />
         </button>
@@ -181,15 +184,15 @@ export default function DashboardShell({
           <button
             aria-label="Close menu"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/30"
+            className="absolute inset-0 bg-neutral-900/50"
           />
-          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col border-r border-border bg-surface px-3 py-4 shadow-pop">
-            <div className="mb-4 flex items-center justify-between px-3">
-              <span className="text-lg font-semibold tracking-tight">{siteConfig.company.name}</span>
+          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col border-r-2 border-border bg-surface py-4 pr-3 shadow-pop">
+            <div className="mb-4 flex items-center justify-between pl-5 pr-1">
+              <span className="text-lg font-extrabold tracking-tight">{siteConfig.company.name}</span>
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
-                className="-mr-1 inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-black/[0.05] hover:text-foreground"
+                className="inline-flex h-8 w-8 items-center justify-center text-muted hover:bg-foreground/[0.07] hover:text-foreground"
               >
                 <CloseIcon className="h-5 w-5" />
               </button>

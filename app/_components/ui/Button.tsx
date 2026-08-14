@@ -6,21 +6,23 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md";
 
 const BASE =
-  "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap " +
-  "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 " +
-  "focus-visible:ring-offset-1 focus-visible:ring-offset-background " +
-  "disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-none font-extrabold whitespace-nowrap " +
+  "transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand " +
+  "disabled:pointer-events-none disabled:opacity-45";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-brand text-brand-foreground shadow-card hover:bg-brand-hover",
-  secondary: "border border-border bg-surface text-foreground shadow-card hover:bg-black/[0.03]",
-  ghost: "text-muted hover:bg-black/[0.05] hover:text-foreground",
-  danger: "bg-rose-600 text-white shadow-card hover:bg-rose-700",
+  primary: "bg-brand text-brand-foreground hover:bg-brand-hover active:bg-accent-700",
+  secondary:
+    "border border-border text-foreground hover:bg-foreground/[0.07] active:bg-foreground/[0.14]",
+  ghost: "text-brand hover:bg-brand/10 active:bg-brand/[0.18]",
+  // The system has one red, so destructive takes the deepest step of the ramp —
+  // same family as primary, visibly heavier, never mistaken for it.
+  danger: "bg-accent-700 text-brand-foreground hover:bg-accent-800",
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-[13px]",
-  md: "h-9 px-4 text-sm",
+  sm: "h-8 px-2.5 text-[13px]",
+  md: "h-9 px-3.5 text-sm",
 };
 
 // Shared class recipe so links styled as buttons stay identical to <Button>.

@@ -49,7 +49,7 @@ export default function ScanChart({ qrId }: { qrId: string }) {
     };
   }, [qrId]);
 
-  if (error) return <p className="text-sm text-rose-600">{error}</p>;
+  if (error) return <p className="text-sm font-semibold text-accent-700">{error}</p>;
   if (!data) return <Skeleton className="h-64 w-full rounded-xl" />;
 
   return (
@@ -58,19 +58,19 @@ export default function ScanChart({ qrId }: { qrId: string }) {
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: -16 }}>
           <defs>
             <linearGradient id="scanFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.18} />
-              <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
+              <stop offset="0%" stopColor="#ec3013" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="#ec3013" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(16,16,40,0.08)" vertical={false} />
-          <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#8b8b97" }} tickLine={false} axisLine={{ stroke: "#ececf1" }} interval="preserveStartEnd" />
-          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#8b8b97" }} tickLine={false} axisLine={false} width={32} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(32,30,29,0.16)" vertical={false} />
+          <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#7d7979" }} tickLine={false} axisLine={{ stroke: "rgba(32,30,29,0.4)" }} interval="preserveStartEnd" />
+          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#7d7979" }} tickLine={false} axisLine={false} width={32} />
           <Tooltip
-            contentStyle={{ borderRadius: 10, border: "1px solid #ececf1", boxShadow: "var(--shadow-pop)", fontSize: 12 }}
-            labelStyle={{ color: "#8b8b97" }}
-            cursor={{ stroke: "#4f46e5", strokeOpacity: 0.25 }}
+            contentStyle={{ borderRadius: 0, border: "2px solid rgba(32,30,29,0.4)", background: "#f3f2f2", fontSize: 12 }}
+            labelStyle={{ color: "#7d7979" }}
+            cursor={{ stroke: "#ec3013", strokeOpacity: 0.35 }}
           />
-          <Area type="monotone" dataKey="scan_count" stroke="#4f46e5" strokeWidth={2} fill="url(#scanFill)" dot={false} activeDot={{ r: 4, fill: "#4f46e5" }} />
+          <Area type="monotone" dataKey="scan_count" stroke="#ec3013" strokeWidth={2} fill="url(#scanFill)" dot={false} activeDot={{ r: 4, fill: "#ec3013" }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

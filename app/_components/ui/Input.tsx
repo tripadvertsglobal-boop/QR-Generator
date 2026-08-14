@@ -4,9 +4,9 @@ import { cn } from "@/lib/cn";
 // Shared field styling for text-like controls: hairline border, soft focus ring,
 // comfortable height, muted placeholder.
 const CONTROL =
-  "w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground " +
-  "placeholder:text-muted-2 shadow-[inset_0_1px_1px_rgba(16,16,40,0.02)] " +
-  "transition-colors focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/20 " +
+  "w-full rounded-none border border-border bg-surface px-2.5 text-sm text-foreground caret-brand " +
+  "placeholder:text-muted-2 transition-colors hover:border-border-strong " +
+  "focus:border-brand focus:outline-none " +
   "disabled:cursor-not-allowed disabled:opacity-60";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
@@ -27,7 +27,7 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
 
 export function Label({ className, children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
-    <label className={cn("text-[13px] font-medium text-foreground", className)} {...props}>
+    <label className={cn("text-xs font-semibold text-muted", className)} {...props}>
       {children}
     </label>
   );
@@ -54,7 +54,7 @@ export function Field({
       {label && <Label htmlFor={htmlFor}>{label}</Label>}
       {children}
       {error ? (
-        <p className="text-xs text-rose-600">{error}</p>
+        <p className="text-xs font-semibold text-accent-700">{error}</p>
       ) : hint ? (
         <p className="text-xs text-muted">{hint}</p>
       ) : null}

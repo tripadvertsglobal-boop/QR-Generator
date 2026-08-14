@@ -173,8 +173,8 @@ export default function AuthForm({
             {isLogin ? "Log in" : "Sign up"}
           </Button>
         </form>
-        {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
-        {notice && <p className="mt-3 text-sm text-emerald-600">{notice}</p>}
+        {error && <p className="mt-3 text-sm font-semibold text-accent-700">{error}</p>}
+        {notice && <p className="mt-3 text-sm font-semibold text-neutral-800">{notice}</p>}
       </div>
       <p className="text-center text-sm text-muted">
         {isLogin ? (

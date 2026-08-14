@@ -11,8 +11,8 @@ test("create a QR code, list it, and redirect resolves", async ({ page, request 
   await page.getByPlaceholder("Spring flyer").fill(name);
   await page.getByRole("button", { name: "Create", exact: true }).click();
 
-  // The new code shows up as its own row.
-  const row = page.locator("li", { hasText: name });
+  // The new code shows up as its own row in the ledger.
+  const row = page.locator("tr", { hasText: name });
   await expect(row).toBeVisible();
 
   // Grab its tracking URL and assert the redirect without following it.
@@ -48,7 +48,7 @@ test("edit a QR destination and the redirect updates", async ({ page, request })
   await page.getByPlaceholder("Spring flyer").fill(name);
   await page.getByRole("button", { name: "Create", exact: true }).click();
 
-  const row = page.locator("li", { hasText: name });
+  const row = page.locator("tr", { hasText: name });
   await expect(row).toBeVisible();
   const href = await row.locator('a[href*="/r/"]').first().getAttribute("href");
 

@@ -13,7 +13,7 @@ setup("authenticate", async ({ page }) => {
   await page.getByRole("button", { name: "Log in" }).click();
 
   await page.waitForURL("**/dashboard");
-  await expect(page.getByRole("heading", { name: "Your QR codes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "QR codes", exact: true })).toBeVisible();
 
   await page.context().storageState({ path: "e2e/.auth/state.json" });
 });

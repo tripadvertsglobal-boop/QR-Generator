@@ -21,14 +21,17 @@ export default function TagFilterBar({
   };
 
   const chip = (active: boolean) =>
-    `rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+    `px-2.5 py-1 text-xs font-semibold no-underline transition-colors ${
       active
-        ? "bg-foreground text-background"
-        : "border border-border bg-surface text-muted hover:bg-black/[0.03] hover:text-foreground"
+        ? "bg-brand text-brand-foreground"
+        : "border border-border text-muted hover:border-border-strong hover:text-foreground"
     }`;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 border-b border-border px-5 py-3 sm:px-8">
+      <span className="mr-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
+        Tags
+      </span>
       <Link href={hrefFor(null)} className={chip(activeTag === null)}>
         All tags
       </Link>

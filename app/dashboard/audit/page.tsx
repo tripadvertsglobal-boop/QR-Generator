@@ -16,16 +16,16 @@ type AuditRow = {
 type Tone = "emerald" | "blue" | "rose" | "gray";
 
 const BADGE: Record<Tone, string> = {
-  emerald: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-  blue: "bg-blue-50 text-blue-700 ring-blue-600/20",
-  rose: "bg-rose-50 text-rose-700 ring-rose-600/20",
-  gray: "bg-black/[0.06] text-black/60 ring-black/10",
+  emerald: "bg-accent-100 text-accent-800",
+  blue: "bg-foreground text-background",
+  rose: "bg-accent-200 text-accent-800",
+  gray: "bg-neutral-200 text-neutral-800",
 };
 const DOT: Record<Tone, string> = {
-  emerald: "bg-emerald-500",
-  blue: "bg-blue-500",
-  rose: "bg-rose-500",
-  gray: "bg-black/30",
+  emerald: "bg-brand",
+  blue: "bg-background",
+  rose: "bg-accent-700",
+  gray: "bg-neutral-600",
 };
 
 const RESOURCE_LABEL: Record<string, string> = {
@@ -107,24 +107,24 @@ export default async function AuditPage() {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold">Audit log</h1>
           {rows.length > 0 && (
-            <span className="rounded-full bg-black/[0.06] px-2.5 py-0.5 text-xs font-medium text-black/60">
+            <span className="bg-neutral-200 px-2.5 py-0.5 text-xs font-semibold text-neutral-800">
               {rows.length}{rows.length === 200 ? "+" : ""} event{rows.length === 1 ? "" : "s"}
             </span>
           )}
         </div>
-        <p className="mt-1 text-sm text-black/60">
+        <p className="mt-1 text-sm text-muted">
           A record of every change made to your account, by you or via the API. Showing the latest
           200 events; entries are retained for 90 days.
         </p>
       </header>
 
       {rows.length === 0 ? (
-        <div className="rounded-xl border border-black/10 bg-black/[0.015] px-6 py-16 text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/[0.06] text-lg">
+        <div className="rounded-xl border border-border bg-surface px-6 py-16 text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center bg-foreground/[0.06] text-lg">
             🗒️
           </div>
           <p className="text-sm font-medium">No activity yet</p>
-          <p className="mt-1 text-sm text-black/50">
+          <p className="mt-1 text-sm text-muted-2">
             Actions like creating, editing, or deleting QR codes will appear here.
           </p>
         </div>
@@ -132,28 +132,28 @@ export default async function AuditPage() {
         <div className="space-y-8">
           {groups.map((group) => (
             <section key={group.label}>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-black/40">
+              <h2 className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted-2">
                 {group.label}
               </h2>
-              <div className="divide-y divide-black/[0.07] overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+              <div className="divide-y divide-border border-2 border-border bg-background">
                 {group.rows.map((r) => {
                   const { text, label, tone } = describeAction(r.action, r.resource_type);
                   const changes = diffLines(r.old_value, r.new_value);
                   const when = new Date(r.created_at);
                   return (
-                    <div key={r.id} className="flex gap-3 px-4 py-3.5 transition-colors hover:bg-black/[0.02]">
+                    <div key={r.id} className="flex gap-3 px-4 py-3.5 transition-colors hover:bg-surface">
                       <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${DOT[tone]}`} aria-hidden />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span
-                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${BADGE[tone]}`}
+                              className={`inline-flex items-center px-2.5 py-0.5 text-[11px] font-semibold ${BADGE[tone]}`}
                             >
                               {text}
                             </span>
                             <span className="text-sm font-medium">{label}</span>
                             {r.resource_id && (
-                              <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[11px] text-black/50">
+                              <code className="rounded bg-foreground/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-muted-2">
                                 {r.resource_id.slice(0, 8)}
                               </code>
                             )}
@@ -161,7 +161,7 @@ export default async function AuditPage() {
                           <time
                             dateTime={r.created_at}
                             title={when.toLocaleString()}
-                            className="shrink-0 whitespace-nowrap pt-0.5 text-xs text-black/45"
+                            className="shrink-0 whitespace-nowrap pt-0.5 text-xs text-muted-2"
                           >
                             {when.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
                           </time>
@@ -171,17 +171,17 @@ export default async function AuditPage() {
                           <ul className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed">
                             {changes.map((c, i) => (
                               <li key={i} className="flex flex-wrap items-baseline gap-x-1.5">
-                                <span className="text-black/45">{c.field}</span>
+                                <span className="text-muted-2">{c.field}</span>
                                 {c.pair ? (
                                   <>
-                                    <span className="break-all text-rose-600 line-through decoration-rose-300">
+                                    <span className="break-all text-muted line-through decoration-border-strong">
                                       {c.before}
                                     </span>
-                                    <span className="text-black/30">→</span>
-                                    <span className="break-all text-emerald-600">{c.after}</span>
+                                    <span className="text-muted-2">→</span>
+                                    <span className="break-all font-semibold text-foreground">{c.after}</span>
                                   </>
                                 ) : (
-                                  <span className="break-all text-black/70">{c.after}</span>
+                                  <span className="break-all text-muted">{c.after}</span>
                                 )}
                               </li>
                             ))}
@@ -189,7 +189,7 @@ export default async function AuditPage() {
                         )}
 
                         {r.ip_address && (
-                          <p className="mt-2 text-[11px] text-black/40">
+                          <p className="mt-2 text-[11px] text-muted-2">
                             from <span className="font-mono">{r.ip_address}</span>
                           </p>
                         )}

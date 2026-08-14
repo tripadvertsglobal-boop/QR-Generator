@@ -17,32 +17,32 @@ export default function SiteHeader() {
   if (pathname?.startsWith("/r/") || pathname?.startsWith("/dashboard")) return null;
 
   return (
-    <header className="sticky top-0 z-10 border-b border-black/10 bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-10 border-b-2 border-border bg-background">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
         <Link
           href={user ? "/dashboard" : "/"}
-          className="text-lg font-semibold tracking-tight"
+          className="text-lg font-extrabold tracking-tight text-foreground no-underline"
         >
           {siteConfig.company.name}
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           {/* Pricing is pre-sale marketing — hidden once a user is signed in. */}
           {!user && (
-            <Link href="/pricing" className="text-black/70 hover:text-black">
+            <Link href="/pricing" className="text-muted no-underline hover:text-brand">
               Pricing
             </Link>
           )}
-          <Link href="/docs" className="text-black/70 hover:text-black">
+          <Link href="/docs" className="text-muted no-underline hover:text-brand">
             Docs
           </Link>
           {user ? (
             <>
-              <Link href="/dashboard" className="text-black/70 hover:text-black">
+              <Link href="/dashboard" className="text-muted no-underline hover:text-brand">
                 Dashboard
               </Link>
               <Link
                 href="/dashboard/account"
-                className="text-black/70 hover:text-black"
+                className="text-muted no-underline hover:text-brand"
               >
                 Account
               </Link>
@@ -51,7 +51,7 @@ export default function SiteHeader() {
           ) : (
             <Link
               href={siteConfig.links.logIn}
-              className="rounded-md px-3 py-1.5 font-medium text-[var(--brand-fg)] [background:var(--brand)] hover:[background:var(--brand-hover)]"
+              className="px-3.5 py-2 font-extrabold no-underline text-[var(--brand-fg)] [background:var(--brand)] hover:[background:var(--brand-hover)]"
             >
               Log in
             </Link>

@@ -69,7 +69,7 @@ export default function LandingPage() {
         <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight sm:text-6xl">
           {hero.headline}
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-black/60">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted">
           {hero.subheadline}
         </p>
         <div className="mt-10 flex items-center justify-center gap-4">
@@ -81,7 +81,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/pricing"
-            className="rounded-md border border-black/15 px-5 py-3 text-sm font-medium hover:border-black/40"
+            className="rounded-md border border-border px-5 py-3 text-sm font-medium hover:border-border-strong"
           >
             {hero.secondaryCta}
           </Link>
@@ -97,10 +97,10 @@ export default function LandingPage() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="rounded-xl border border-black/10 p-6"
+              className="rounded-xl border border-border p-6"
             >
               <h3 className="text-base font-semibold">{feature.title}</h3>
-              <p className="mt-2 text-sm text-black/60">{feature.description}</p>
+              <p className="mt-2 text-sm text-muted">{feature.description}</p>
             </div>
           ))}
         </div>
@@ -113,19 +113,19 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold tracking-tight">
             What makes a QR code dynamic?
           </h2>
-          <p className="mt-6 text-black/70">
+          <p className="mt-6 text-muted">
             A static QR code encodes your destination directly into the pattern. It works
             forever, but it can never change — if the link moves, every printed copy is
             dead paper.
           </p>
-          <p className="mt-4 text-black/70">
+          <p className="mt-4 text-muted">
             A dynamic QR code encodes a short tracking link that you control instead. The
             printed pattern never has to change, so you can repoint it whenever you like,
             schedule when it goes live, put it behind a password, or split scans across two
             landing pages to see which one wins. Because every scan passes through a link
             you own, it is also the only kind of QR code that can be measured at all.
           </p>
-          <p className="mt-4 text-black/70">
+          <p className="mt-4 text-muted">
             The short link keeps the pattern coarse too, which matters more than people
             expect: fewer, larger modules survive small print, curved surfaces, and bad
             lighting far better than a dense grid encoding a long URL.
@@ -146,9 +146,9 @@ export default function LandingPage() {
         </h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {useCases.map((useCase) => (
-            <div key={useCase.title} className="rounded-xl border border-black/10 p-6">
+            <div key={useCase.title} className="rounded-xl border border-border p-6">
               <h3 className="text-base font-semibold">{useCase.title}</h3>
-              <p className="mt-2 text-sm text-black/60">{useCase.description}</p>
+              <p className="mt-2 text-sm text-muted">{useCase.description}</p>
             </div>
           ))}
         </div>
@@ -158,11 +158,11 @@ export default function LandingPage() {
           questions a visitor can actually read on the page. */}
       <section className="mx-auto w-full max-w-6xl px-6 py-16">
         <h2 className="text-3xl font-bold tracking-tight">Frequently asked questions</h2>
-        <dl className="mt-10 max-w-3xl divide-y divide-black/10 border-t border-black/10">
+        <dl className="mt-10 max-w-3xl divide-y divide-border border-t border-border">
           {faq.map((item) => (
             <div key={item.question} className="py-6">
               <dt className="text-base font-semibold">{item.question}</dt>
-              <dd className="mt-2 text-black/70">{item.answer}</dd>
+              <dd className="mt-2 text-muted">{item.answer}</dd>
             </div>
           ))}
         </dl>
@@ -176,7 +176,7 @@ export default function LandingPage() {
             <li key={guide.slug}>
               <Link
                 href={`/guides/${guide.slug}`}
-                className="text-black/70 underline decoration-black/20 underline-offset-4 hover:text-[var(--brand)]"
+                className="text-muted underline decoration-border underline-offset-4 hover:text-[var(--brand)]"
               >
                 {guide.title}
               </Link>

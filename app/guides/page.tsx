@@ -42,13 +42,13 @@ export default function GuidesIndexPage() {
 
       <section className="mx-auto w-full max-w-3xl px-6 pt-20 pb-10 sm:pt-28">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">QR code guides</h1>
-        <p className="mt-4 text-lg text-black/60">
+        <p className="mt-4 text-lg text-muted">
           How to use QR codes so they still work a year after you print them.
         </p>
       </section>
 
       <section className="mx-auto w-full max-w-3xl px-6 pb-24">
-        <ul className="divide-y divide-black/10 border-t border-black/10">
+        <ul className="divide-y divide-border border-t border-border">
           {sorted.map((guide) => (
             <li key={guide.slug} className="py-8">
               <h2 className="text-xl font-semibold">
@@ -56,8 +56,8 @@ export default function GuidesIndexPage() {
                   {guide.title}
                 </Link>
               </h2>
-              <p className="mt-2 text-black/60">{guide.description}</p>
-              <p className="mt-3 text-sm text-black/45">{guide.readingMinutes} min read</p>
+              <p className="mt-2 text-muted">{guide.description}</p>
+              <p className="mt-3 text-sm text-muted-2">{guide.readingMinutes} min read</p>
             </li>
           ))}
         </ul>

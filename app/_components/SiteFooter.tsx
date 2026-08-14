@@ -13,18 +13,18 @@ export default function SiteFooter() {
   ];
 
   return (
-    <footer className="mt-auto border-t border-black/10">
+    <footer className="mt-auto border-t border-border">
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="text-base font-semibold">{company.name}</p>
-          <p className="mt-2 max-w-xs text-sm text-black/60">{footer.note}</p>
+          <p className="mt-2 max-w-xs text-sm text-muted">{footer.note}</p>
         </div>
 
         <div className="text-sm">
           <p className="font-medium">Contact</p>
-          <ul className="mt-2 space-y-1 text-black/60">
+          <ul className="mt-2 space-y-1 text-muted">
             <li>
-              <a href={`mailto:${contact.email}`} className="hover:text-black">
+              <a href={`mailto:${contact.email}`} className="hover:text-foreground">
                 {contact.email}
               </a>
             </li>
@@ -35,21 +35,21 @@ export default function SiteFooter() {
 
         <div className="text-sm">
           <p className="font-medium">Product</p>
-          <ul className="mt-2 space-y-1 text-black/60">
+          <ul className="mt-2 space-y-1 text-muted">
             <li>
-              <Link href="/pricing" className="hover:text-black">
+              <Link href="/pricing" className="hover:text-foreground">
                 Pricing
               </Link>
             </li>
             <li>
-              <Link href={siteConfig.links.logIn} className="hover:text-black">
+              <Link href={siteConfig.links.logIn} className="hover:text-foreground">
                 Log in
               </Link>
             </li>
             {socialLinks.length > 0 && (
               <li className="flex gap-3 pt-1 capitalize">
                 {socialLinks.map(([name, url]) => (
-                  <a key={name} href={url} className="hover:text-black">
+                  <a key={name} href={url} className="hover:text-foreground">
                     {name}
                   </a>
                 ))}
@@ -60,10 +60,10 @@ export default function SiteFooter() {
 
         <div className="text-sm">
           <p className="font-medium">Legal</p>
-          <ul className="mt-2 space-y-1 text-black/60">
+          <ul className="mt-2 space-y-1 text-muted">
             {legalLinks.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="hover:text-black">
+                <Link href={link.href} className="hover:text-foreground">
                   {link.label}
                 </Link>
               </li>
@@ -71,7 +71,7 @@ export default function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-black/10 px-6 py-6 text-center text-xs text-black/50">
+      <div className="border-t border-border px-6 py-6 text-center text-xs text-muted-2">
         © {new Date().getFullYear()} {company.name}. All rights reserved.
       </div>
     </footer>

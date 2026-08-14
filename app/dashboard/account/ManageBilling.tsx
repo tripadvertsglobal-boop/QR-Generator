@@ -35,7 +35,7 @@ export default function ManageBilling() {
         Manage billing
       </Button>
       {error && (
-        <p role="alert" className="text-sm text-rose-600">
+        <p role="alert" className="text-sm font-semibold text-accent-700">
           {error}
         </p>
       )}

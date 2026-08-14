@@ -47,7 +47,7 @@ export default function PricingPage() {
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
           {pricing.heading}
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-black/60">
+        <p className="mx-auto mt-4 max-w-xl text-lg text-muted">
           {pricing.subheading}
         </p>
       </section>
@@ -57,29 +57,29 @@ export default function PricingPage() {
           {pricing.plans.map((plan) => (
             <div
               key={plan.name}
-              className={`flex flex-col rounded-2xl border p-8 ${
+              className={`flex flex-col p-8 ${
                 plan.highlighted
-                  ? "border-[var(--brand)] shadow-lg"
-                  : "border-black/10"
+                  ? "border-2 border-[var(--brand)]"
+                  : "border-2 border-border"
               }`}
             >
               {plan.highlighted && (
-                <span className="mb-4 inline-block w-fit rounded-full px-3 py-1 text-xs font-medium text-[var(--brand-fg)] [background:var(--brand)]">
+                <span className="mb-4 inline-block w-fit px-3 py-1 text-xs font-extrabold uppercase tracking-[0.08em] text-[var(--brand-fg)] [background:var(--brand)]">
                   Most popular
                 </span>
               )}
               <h2 className="text-lg font-semibold">{plan.name}</h2>
-              <p className="mt-1 text-sm text-black/60">{plan.description}</p>
+              <p className="mt-1 text-sm text-muted">{plan.description}</p>
               <div className="mt-6 flex items-baseline gap-1">
                 <span className="text-4xl font-bold">{plan.price}</span>
-                <span className="text-sm text-black/50">{plan.period}</span>
+                <span className="text-sm text-muted-2">{plan.period}</span>
               </div>
 
               <ul className="mt-8 flex-1 space-y-3 text-sm">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex gap-2">
                     <span className="text-[var(--brand)]">✓</span>
-                    <span className="text-black/70">{feature}</span>
+                    <span className="text-muted">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -88,11 +88,11 @@ export default function PricingPage() {
                 <div className="mt-8">
                   <p
                     aria-disabled="true"
-                    className="cursor-not-allowed rounded-md border border-black/10 px-4 py-2.5 text-center text-sm font-medium text-black/40"
+                    className="cursor-not-allowed rounded-md border border-border px-4 py-2.5 text-center text-sm font-medium text-muted-2"
                   >
                     {plan.cta}
                   </p>
-                  <p className="mt-2 text-center text-xs text-black/50">
+                  <p className="mt-2 text-center text-xs text-muted-2">
                     This plan isn’t open for sign-up right now.
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export default function PricingPage() {
                   className={`mt-8 rounded-md px-4 py-2.5 text-center text-sm font-medium ${
                     plan.highlighted
                       ? "text-[var(--brand-fg)] [background:var(--brand)] hover:[background:var(--brand-hover)]"
-                      : "border border-black/15 hover:border-black/40"
+                      : "border border-border hover:border-border-strong"
                   }`}
                 >
                   {plan.cta}

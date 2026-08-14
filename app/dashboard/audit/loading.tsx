@@ -14,14 +14,14 @@ export default function AuditLoading() {
         {Array.from({ length: 2 }).map((_, g) => (
           <section key={g}>
             <Skeleton className="mb-2 h-3 w-24" />
-            <div className="divide-y divide-black/[0.07] overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm">
+            <div className="divide-y divide-border border-2 border-border bg-background">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex gap-3 px-4 py-3.5">
                   <Skeleton className="mt-1.5 h-2 w-2 shrink-0 rounded-full" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <Skeleton className="h-5 w-16 rounded-full" />
+                        <Skeleton className="h-5 w-16" />
                         <Skeleton className="h-4 w-24" />
                       </div>
                       <Skeleton className="h-3 w-14" />

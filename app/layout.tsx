@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Geist_Mono } from "next/font/google";
 import { siteConfig } from "@/site.config";
 import { createUserClient } from "@/lib/supabase/server";
 import { OG_IMAGE, graph, organizationSchema, websiteSchema } from "@/lib/seo";
@@ -8,9 +8,12 @@ import JsonLd from "./_components/JsonLd";
 import SiteHeader from "./_components/SiteHeader";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Archivo is the system's only display/text face — 400 for body, 600 for
+// emphasis, 800 for every heading, label and control.
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
+  weight: ["400", "600", "800"],
 });
 
 const geistMono = Geist_Mono({
@@ -76,7 +79,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col">
         {/* Site-wide entities, emitted once. Page-level graphs reference these

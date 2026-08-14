@@ -85,7 +85,7 @@ export default function AdvancedSettings({
       <Field
         label={
           <>
-            Password {hasPassword && <span className="font-normal text-emerald-600">(currently set)</span>}
+            Password {hasPassword && <span className="font-normal text-muted">(currently set)</span>}
           </>
         }
       >
@@ -110,8 +110,8 @@ export default function AdvancedSettings({
 
       <div className="flex items-center gap-3">
         <Button onClick={save} loading={busy} className="self-start">Save settings</Button>
-        {msg && <span className="text-sm text-emerald-600">{msg}</span>}
-        {error && <span className="text-sm text-rose-600">{error}</span>}
+        {msg && <span className="text-sm font-semibold text-neutral-800">{msg}</span>}
+        {error && <span className="text-sm font-semibold text-accent-700">{error}</span>}
       </div>
     </section>
   );

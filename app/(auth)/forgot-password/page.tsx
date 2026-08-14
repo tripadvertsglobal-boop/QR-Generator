@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
           We&apos;ll email you a link to set a new password.
         </p>
         {sent ? (
-          <p className="rounded-lg border border-emerald-600/25 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <p className="border-2 border-border bg-surface px-4 py-3 text-sm text-foreground">
             If an account exists for {email}, a reset link is on its way. Check your inbox.
           </p>
         ) : (
@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
             <Button type="submit" loading={loading} className="w-full">
               {loading ? "Sending…" : "Send reset link"}
             </Button>
-            {error && <p className="text-sm text-rose-600">{error}</p>}
+            {error && <p className="text-sm font-semibold text-accent-700">{error}</p>}
           </form>
         )}
       </div>
