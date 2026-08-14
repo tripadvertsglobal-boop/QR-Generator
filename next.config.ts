@@ -99,6 +99,13 @@ const cspHeader = process.env.CSP_ENFORCE
 const nextConfig: NextConfig = {
   // Don't advertise the framework.
   poweredByHeader: false,
+  // Without a DSN the Sentry SDK is ~3 MB of server bundle that can never do
+  // anything — every call site bails out on the missing DSN before touching it.
+  // The Worker has a hard compressed-size limit, so on a DSN-less build the SDK
+  // is aliased to a no-op. Same condition that skips withSentryConfig below.
+  ...(process.env.SENTRY_DSN
+    ? {}
+    : { turbopack: { resolveAlias: { "@sentry/nextjs": "./lib/sentry-stub.ts" } } }),
   async headers() {
     return [
       {
