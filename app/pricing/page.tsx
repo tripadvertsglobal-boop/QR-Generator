@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { siteConfig } from "@/site.config";
-import { ORG_ID, absoluteUrl, breadcrumbSchema, graph, pageMetadata } from "@/lib/seo";
+import { ORG_ID, absoluteUrl, breadcrumbSchema, graph, pageMetadata, planOffers } from "@/lib/seo";
 import MarketingShell from "../_components/MarketingShell";
 import JsonLd from "../_components/JsonLd";
 import CheckoutButton from "./CheckoutButton";
@@ -26,20 +26,9 @@ export default function PricingPage() {
             name: siteConfig.company.name,
             description: siteConfig.company.description,
             brand: { "@id": ORG_ID },
-            // availability tracks plan.available: self-serve checkout is only
-            // open on the free plan, and claiming otherwise in rich results
-            // would send people to a CTA that does not work.
-            offers: pricing.plans.map((plan) => ({
-              "@type": "Offer",
-              name: plan.name,
-              description: plan.description,
-              price: plan.price.replace(/[^0-9.]/g, ""),
-              priceCurrency: "USD",
-              url: absoluteUrl("/pricing"),
-              availability: plan.available
-                ? "https://schema.org/InStock"
-                : "https://schema.org/PreOrder",
-            })),
+            // Shared with the homepage's SoftwareApplication so both pages
+            // advertise the same prices and the same availability.
+            offers: planOffers(),
           },
         )}
       />

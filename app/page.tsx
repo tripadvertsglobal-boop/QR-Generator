@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { siteConfig } from "@/site.config";
 import { guides } from "@/content/guides";
-import { ORG_ID, absoluteUrl, graph, pageMetadata } from "@/lib/seo";
+import { ORG_ID, absoluteUrl, faqSchema, graph, pageMetadata, planOffers } from "@/lib/seo";
 import MarketingShell from "./_components/MarketingShell";
 import JsonLd from "./_components/JsonLd";
 
@@ -23,7 +23,6 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   const { hero, features, useCases, faq, links, company } = siteConfig;
-  const freePlan = siteConfig.pricing.plans[0];
 
   return (
     <MarketingShell>
@@ -40,27 +39,12 @@ export default function LandingPage() {
             url: absoluteUrl(),
             publisher: { "@id": ORG_ID },
             featureList: features.map((f) => f.title),
-            // Only the free plan is self-serve today, so it is the only price
-            // we advertise as buyable. Listing the paid tiers as purchasable
-            // offers while checkout is closed would be a false claim.
-            offers: {
-              "@type": "Offer",
-              price: "0",
-              priceCurrency: "USD",
-              description: freePlan.description,
-              availability: "https://schema.org/InStock",
-              url: absoluteUrl("/pricing"),
-            },
+            // Every tier is self-serve through Stripe Checkout, so all three
+            // are advertised. planOffers() reads the same site.config plans the
+            // /pricing page renders and honours the per-plan `available` flag.
+            offers: planOffers(),
           },
-          {
-            "@type": "FAQPage",
-            "@id": absoluteUrl("/#faq"),
-            mainEntity: faq.map((item) => ({
-              "@type": "Question",
-              name: item.question,
-              acceptedAnswer: { "@type": "Answer", text: item.answer },
-            })),
-          },
+          faqSchema("/#faq", faq),
         )}
       />
 
@@ -135,6 +119,34 @@ export default function LandingPage() {
             className="mt-6 inline-block text-sm font-medium text-[var(--brand)] hover:underline"
           >
             Read the full comparison →
+          </Link>
+        </div>
+      </section>
+
+      {/* Scan tracking — the homepage's own coverage of the tracking intent, and
+          the internal link that points at the dedicated page. */}
+      <section className="mx-auto w-full max-w-6xl px-6 py-16">
+        <div className="max-w-3xl">
+          <h2 className="text-3xl font-bold tracking-tight">
+            How QR code scan tracking works
+          </h2>
+          <p className="mt-6 text-muted">
+            Because every scan passes through a short link on our domain before it reaches
+            your page, we can count it. You see a running total per code, a day-by-day trend
+            you can chart over any window up to a year, and where the scans came from — no
+            tracking pixel, no app, nothing to add to your landing page.
+          </p>
+          <p className="mt-4 text-muted">
+            The count is filtered, not raw. Crawlers and the link-preview bots that fire when
+            someone pastes your link into a chat app are discarded, and repeat hits from the
+            same source are collapsed, so the number you read is people rather than requests.
+            Raw IP addresses are never stored.
+          </p>
+          <Link
+            href="/qr-code-tracking"
+            className="mt-6 inline-block text-sm font-medium text-[var(--brand)] hover:underline"
+          >
+            How to track QR code scans →
           </Link>
         </div>
       </section>

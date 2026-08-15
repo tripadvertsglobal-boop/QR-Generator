@@ -42,6 +42,16 @@ export default function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/qr-code-tracking" className="hover:text-foreground">
+                QR code tracking
+              </Link>
+            </li>
+            <li>
+              <Link href="/guides" className="hover:text-foreground">
+                Guides
+              </Link>
+            </li>
+            <li>
               <Link href={siteConfig.links.logIn} className="hover:text-foreground">
                 Log in
               </Link>

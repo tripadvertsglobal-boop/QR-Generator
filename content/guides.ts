@@ -167,14 +167,32 @@ export const guides: Guide[] = [
     slug: "tracking-qr-code-scans",
     title: "How to track QR code scans (and what the numbers actually mean)",
     description:
-      "What a QR code can and cannot tell you about the people scanning it, how to structure codes so the data is worth reading, and why your scan count is lower than your raw hit count.",
+      "How QR code scan tracking actually works, what a code can and cannot tell you about the people scanning it, how to structure codes so the data is worth reading, and why your scan count is lower than your raw hit count.",
     published: "2026-07-29",
-    updated: "2026-07-29",
-    readingMinutes: 6,
+    updated: "2026-08-15",
+    readingMinutes: 8,
     body: [
       {
         type: "p",
         text: "A QR code is not measurable by itself. The pattern is just text, and a phone reading text does not report back to anyone. Everything you can learn about scans comes from putting a link you control in the middle — which is exactly what a dynamic QR code does.",
+      },
+      { type: "h2", text: "How do you track QR codes?" },
+      {
+        type: "p",
+        text: "You track a QR code by changing what it encodes. Instead of the pattern carrying your destination URL, it carries a short link on a domain you control. The scan hits that link first, the server records it and looks up where the code currently points, and the phone is forwarded on — usually inside a second, and invisibly to the person scanning. That redirect hop is the entire tracking mechanism. There is no pixel, no tag on your landing page, and no app for the person holding the phone.",
+      },
+      {
+        type: "p",
+        text: "This is also why tracking and editability arrive together. The same indirection that lets you count a scan is what lets you repoint the code afterwards, so any tool offering one is offering the other.",
+      },
+      { type: "h2", text: "Can you track how many times a QR code is scanned?" },
+      {
+        type: "p",
+        text: "Yes, provided the code is dynamic. You get a running total per code and a day-by-day count you can chart over whatever window you care about. The total is the number most people ask for and the least useful one they get: it tells you the code worked, but not when, not where, and not whether it is still working. The per-day series answers all three, and it is where a poster that stopped earning scans in week two becomes obvious.",
+      },
+      {
+        type: "p",
+        text: "A static code cannot be counted at all. Nothing you own is ever contacted, so there is no event to record — and no provider can retrofit tracking onto a pattern that is already printed.",
       },
       { type: "h2", text: "What you can know" },
       {
@@ -218,6 +236,15 @@ export const guides: Guide[] = [
           "Add UTM parameters to the destination as well, so the visit shows up correctly in your web analytics too.",
           "Compare scans per placement after a fortnight and put the next print budget where the scans are.",
         ],
+      },
+      { type: "h2", text: "Can you track a QR code that is already printed?" },
+      {
+        type: "p",
+        text: "Only if it was dynamic when you generated it. If the pattern on the page encodes your destination directly, adding tracking means generating a different pattern and reprinting — there is no software fix, because the code is the URL.",
+      },
+      {
+        type: "p",
+        text: "There is one rescue worth knowing. If the printed destination sits on a domain you control, turn that URL into a redirect of your own. The old static codes then pass through a hop you own, and you can count them and repoint them from that point on. It will not work for a code pointing at someone else's domain, which is the usual reason a print run is unrecoverable.",
       },
       { type: "h2", text: "Connect scans to what happened next" },
       {

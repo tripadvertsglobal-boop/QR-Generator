@@ -86,6 +86,10 @@ export function organizationSchema() {
     "@type": "Organization",
     "@id": ORG_ID,
     name: company.name,
+    // The ways the brand is actually written in the wild — the domain drops the
+    // space, people drop "Builder". Declaring them keeps search engines from
+    // treating each spelling as a different company.
+    alternateName: ["QRStudio", "QR Studio Builder", "QR Builder Studio"],
     url: absoluteUrl(),
     description: company.description,
     logo: absoluteUrl("/og.png"),
@@ -108,6 +112,64 @@ export function websiteSchema() {
     url: absoluteUrl(),
     inLanguage: "en",
     publisher: { "@id": ORG_ID },
+  };
+}
+
+/**
+ * Offer nodes for the pricing tiers.
+ *
+ * Shared by the homepage `SoftwareApplication` and the `/pricing` `Product` so
+ * the two can never disagree about what is on sale. Both derive from
+ * site.config, so adding or repricing a tier updates the structured data too.
+ *
+ * `availability` follows each plan's `available` flag — the kill switch for
+ * closing a tier — because advertising a buyable price in a rich result and
+ * then showing a dead CTA is exactly the mismatch that gets markup penalised.
+ */
+export function planOffers() {
+  return siteConfig.pricing.plans.map((plan) => {
+    const amount = plan.price.replace(/[^0-9.]/g, "");
+    return {
+      "@type": "Offer",
+      name: plan.name,
+      description: plan.description,
+      price: amount,
+      priceCurrency: "USD",
+      // Every tier is a monthly subscription. Without the reference quantity a
+      // bare "19" reads as a one-off purchase.
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: amount,
+        priceCurrency: "USD",
+        referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+      },
+      url: absoluteUrl("/pricing"),
+      availability: plan.available
+        ? "https://schema.org/InStock"
+        : "https://schema.org/PreOrder",
+    };
+  });
+}
+
+/**
+ * FAQPage node for a page's question list.
+ *
+ * Google only honours this markup when the same questions are visible in the
+ * page body, so every caller must render the identical list rather than
+ * emitting questions that exist only in the schema.
+ *
+ * `hash` makes the @id unique per page (e.g. "/#faq"), since a page can carry
+ * only one FAQPage node but the site carries several.
+ */
+export function faqSchema(hash: string, items: readonly { question: string; answer: string }[]) {
+  return {
+    "@type": "FAQPage",
+    "@id": absoluteUrl(hash),
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
   };
 }
 

@@ -8,7 +8,8 @@ import { guides } from "@/content/guides";
 // sitemap that claims every page changed on every build teaches crawlers to
 // ignore the field. Bump a date when that page's content actually changes.
 const ROUTES = [
-  { path: "", priority: 1, lastModified: "2026-07-29" },
+  { path: "", priority: 1, lastModified: "2026-08-15" },
+  { path: "/qr-code-tracking", priority: 0.9, lastModified: "2026-08-15" },
   { path: "/pricing", priority: 0.8, lastModified: "2026-07-29" },
   { path: "/docs", priority: 0.8, lastModified: "2026-07-29" },
   { path: "/guides", priority: 0.7, lastModified: "2026-07-29" },

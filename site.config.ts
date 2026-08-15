@@ -159,9 +159,19 @@ export const siteConfig = {
         "Yes. Edit the destination in the dashboard or through the API and the next scan goes to the new URL, usually within a second. This works on every plan, including the free one.",
     },
     {
+      question: "How do you track QR codes?",
+      answer:
+        "You track a QR code by making it dynamic. Instead of encoding your destination, the printed pattern encodes a short link on our domain, so every scan passes through a server you control before the phone lands on your page. That hop is what gets counted — a static QR code contacts nothing you own, so there is nothing to measure. Create the code, print it, and scan tracking starts on the first scan with no tag, pixel, or app to install.",
+    },
+    {
+      question: "Can you track how many times a QR code is scanned?",
+      answer:
+        "Yes. Every dynamic code carries a running total plus a day-by-day count you can chart over any window up to a year. The total is deduplicated and filtered: crawler and link-preview fetches are discarded, and rapid repeat hits from the same source are collapsed, so the number reflects people rather than requests. Scan counts are included on every plan, including the free one.",
+    },
+    {
       question: "Can I see who scans my QR codes?",
       answer:
-        "You get total scans, a per-day trend, and a breakdown by country, region, and city. Scans are recorded without storing raw IP addresses, and crawler or link-preview fetches are filtered out so your numbers reflect real people.",
+        "You get total scans, a per-day trend, and location down to city level. You do not get identities — a scan is an anonymous web request, so there is no name, email, or phone number attached. Scans are recorded without storing raw IP addresses, and crawler or link-preview fetches are filtered out so your numbers reflect real people. The aggregated country breakdown is a paid-plan feature.",
     },
     {
       question: "Is there a free plan?",
