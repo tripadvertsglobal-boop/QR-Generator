@@ -49,3 +49,6 @@ next-env.d.ts
 # cloudflare / opennext build output
 .open-next
 .wrangler
+
+# daily SEO task transcripts
+/scripts/seo/logs/

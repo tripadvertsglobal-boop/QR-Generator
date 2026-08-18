@@ -149,6 +149,55 @@ describe("guide content", () => {
   });
 });
 
+// The daily SEO automation (scripts/seo/) edits guide copy unattended. These are
+// the floor it cannot drop below: Google demotes thin and duplicated pages, so a
+// run that pads word count or reuses copy across guides must fail the build
+// rather than ship.
+describe("thin and duplicate content guard", () => {
+  const wordsIn = (guide: (typeof guides)[number]) =>
+    guide.body
+      .flatMap((block) => ("text" in block ? [block.text] : block.items))
+      .join(" ")
+      .split(/\s+/)
+      .filter(Boolean).length;
+
+  it("gives every guide enough substance to rank", () => {
+    for (const guide of guides) {
+      expect(wordsIn(guide), guide.slug).toBeGreaterThan(400);
+      expect(guide.body.filter((b) => b.type === "h2").length, guide.slug).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("states a reading time consistent with the actual length", () => {
+    // A wrong number here is a small lie to the reader and a mismatch with the
+    // Article structured data, at roughly 200 words per minute.
+    for (const guide of guides) {
+      expect(guide.readingMinutes, guide.slug).toBeGreaterThan(0);
+      expect(Math.abs(guide.readingMinutes - wordsIn(guide) / 200), guide.slug).toBeLessThan(4);
+    }
+  });
+
+  it("never reuses a title or meta description across guides", () => {
+    const titles = guides.map((g) => g.title);
+    const descriptions = guides.map((g) => g.description);
+    expect(new Set(titles).size).toBe(titles.length);
+    expect(new Set(descriptions).size).toBe(descriptions.length);
+  });
+
+  it("never reuses a whole paragraph across guides", () => {
+    const seen = new Map<string, string>();
+    for (const guide of guides) {
+      for (const block of guide.body) {
+        if (block.type !== "p") continue;
+        const key = block.text.trim().toLowerCase();
+        const owner = seen.get(key);
+        expect(owner, `duplicated between ${owner} and ${guide.slug}`).toBeUndefined();
+        seen.set(key, guide.slug);
+      }
+    }
+  });
+});
+
 describe("landing page FAQ", () => {
   it("has questions and answers for FAQPage structured data", () => {
     expect(siteConfig.faq.length).toBeGreaterThan(2);
