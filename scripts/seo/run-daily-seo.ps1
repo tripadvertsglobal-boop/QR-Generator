@@ -105,8 +105,11 @@ if ($LASTEXITCODE -ne 0) {
 # DELETES it from the working tree mid-run — including the prompt this script is
 # about to read, and the script itself. Refuse to run until the tooling is on
 # the base branch rather than strip the working tree every morning.
-& $Git cat-file -e "${base}:scripts/seo/run-daily-seo.ps1" 2>$null
-if ($LASTEXITCODE -ne 0) {
+# ls-tree rather than cat-file: a missing path makes cat-file write to stderr,
+# and PowerShell 5.1 turns native stderr into a terminating error under
+# $ErrorActionPreference = "Stop". ls-tree just returns nothing.
+$tooling = & $Git ls-tree -r --name-only $base -- "scripts/seo/run-daily-seo.ps1"
+if (-not $tooling) {
   Write-Log "SKIP: $base does not contain scripts/seo/, so branching from it would"
   Write-Log "      delete this tooling from the working tree. Merge the SEO tooling"
   Write-Log "      into main and push it, then this job can run:"
