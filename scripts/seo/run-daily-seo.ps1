@@ -101,11 +101,26 @@ if ($LASTEXITCODE -ne 0) {
   $base = "main"
 }
 
+# This directory is tracked, so checking out a base branch that predates it
+# DELETES it from the working tree mid-run — including the prompt this script is
+# about to read, and the script itself. Refuse to run until the tooling is on
+# the base branch rather than strip the working tree every morning.
+& $Git cat-file -e "${base}:scripts/seo/run-daily-seo.ps1" 2>$null
+if ($LASTEXITCODE -ne 0) {
+  Write-Log "SKIP: $base does not contain scripts/seo/, so branching from it would"
+  Write-Log "      delete this tooling from the working tree. Merge the SEO tooling"
+  Write-Log "      into main and push it, then this job can run:"
+  Write-Log "        git checkout main; git merge seo-daily-task; git push origin main"
+  exit 0
+}
+
+# Read the prompt BEFORE switching branches, so the run does not depend on the
+# file surviving the checkout.
+$prompt = Get-Content $PromptFile -Raw
+
 & $Git checkout -b $Branch $base --quiet
 if ($LASTEXITCODE -ne 0) { Write-Log "ABORT: could not create $Branch from $base"; exit 1 }
 Write-Log "created $Branch from $base"
-
-$prompt = Get-Content $PromptFile -Raw
 
 # The allowlist is the real safety boundary. Bash is granted only for the
 # verification commands and local git; `git push`, `npm run deploy`, and
