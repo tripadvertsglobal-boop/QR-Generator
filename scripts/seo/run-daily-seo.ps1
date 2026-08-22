@@ -139,10 +139,25 @@ $allowedTools = @(
 Write-Log "invoking Claude (this typically takes several minutes)..."
 Add-Content -Path $LogFile -Value "`n----- claude transcript -----" -Encoding utf8
 
-$prompt | & $Claude -p --permission-mode acceptEdits --allowedTools $allowedTools 2>&1 |
-  Tee-Object -FilePath $LogFile -Append
+# `2>&1` on a native command makes PowerShell 5.1 wrap each stderr line in an
+# ErrorRecord, which $ErrorActionPreference = "Stop" then promotes to a
+# terminating error — killing the run with nothing in the log. Drop to
+# "Continue" for the call so stderr is captured as text instead, and catch
+# anything else so a failure is never silent.
+$claudeExit = $null
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+try {
+  $prompt | & $Claude -p --permission-mode acceptEdits --allowedTools $allowedTools 2>&1 |
+    Tee-Object -FilePath $LogFile -Append
+  $claudeExit = $LASTEXITCODE
+} catch {
+  Add-Content -Path $LogFile -Value "EXCEPTION: $_" -Encoding utf8
+  Add-Content -Path $LogFile -Value ($_.ScriptStackTrace | Out-String) -Encoding utf8
+} finally {
+  $ErrorActionPreference = $prevEAP
+}
 
-$claudeExit = $LASTEXITCODE
 Add-Content -Path $LogFile -Value "----- end transcript -----`n" -Encoding utf8
 Write-Log "claude exited with code $claudeExit"
 
