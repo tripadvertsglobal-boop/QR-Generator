@@ -7,9 +7,12 @@ import MarketingShell from "../_components/MarketingShell";
 import JsonLd from "../_components/JsonLd";
 import CheckoutButton from "./CheckoutButton";
 
+// The subheading is already the visible copy under the <h1>; repeating it here
+// spent the snippet on words the searcher can't act on. Prices and limits come
+// from the plan list so the snippet can't drift from what checkout charges.
 export const metadata: Metadata = pageMetadata({
   title: "Pricing",
-  description: `${siteConfig.pricing.subheading} ${siteConfig.pricing.plans[0].features[0]} free, no credit card required.`,
+  description: `${siteConfig.pricing.plans[0].features[0]} free, no credit card required. Pro at ${siteConfig.pricing.plans[1].price}/month adds unlimited codes, full scan analytics, and API access. Cancel anytime.`,
   path: "/pricing",
 });
 

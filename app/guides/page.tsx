@@ -6,7 +6,7 @@ import MarketingShell from "../_components/MarketingShell";
 import JsonLd from "../_components/JsonLd";
 
 const description =
-  "Practical guides to dynamic QR codes: choosing between static and dynamic, printing codes that always scan, tracking scans, and building menu codes you can update.";
+  "Practical guides to dynamic QR codes: static versus dynamic, printing codes that always scan, tracking scans, and menus you update without reprinting.";
 
 export const metadata: Metadata = pageMetadata({
   title: "QR code guides",

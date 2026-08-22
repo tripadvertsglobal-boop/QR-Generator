@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import type { Metadata } from "next";
 import { guides } from "@/content/guides";
 import { siteConfig } from "@/site.config";
 
@@ -9,10 +10,19 @@ process.env.NEXT_PUBLIC_APP_URL = APP_URL;
 
 let seo: typeof import("@/lib/seo");
 let sitemap: typeof import("@/app/sitemap").default;
+// Path → the metadata that page actually exports. Imported dynamically for the
+// same reason as above: these modules pull in lib/seo.
+let pageMeta: { path: string; metadata: Metadata }[];
 
 beforeAll(async () => {
   seo = await import("@/lib/seo");
   sitemap = (await import("@/app/sitemap")).default;
+  pageMeta = [
+    { path: "/", metadata: (await import("@/app/page")).metadata },
+    { path: "/pricing", metadata: (await import("@/app/pricing/page")).metadata },
+    { path: "/docs", metadata: (await import("@/app/docs/page")).metadata },
+    { path: "/guides", metadata: (await import("@/app/guides/page")).metadata },
+  ];
 });
 
 describe("pageMetadata", () => {
@@ -54,6 +64,35 @@ describe("pageMetadata", () => {
       publishedTime: "2026-01-01",
       modifiedTime: "2026-02-02",
     });
+  });
+});
+
+// Snippet length is the one SEO lever that shows up directly in the search
+// result. Under ~120 characters wastes the space; over ~155 Google truncates
+// the tail or rewrites the description itself, so the words chosen here stop
+// being the words shown.
+describe("marketing page meta descriptions", () => {
+  it("keeps every description in the 120–155 character band", () => {
+    for (const { path, metadata } of pageMeta) {
+      expect(typeof metadata.description, path).toBe("string");
+      expect(metadata.description!.length, path).toBeGreaterThanOrEqual(120);
+      expect(metadata.description!.length, path).toBeLessThanOrEqual(155);
+    }
+  });
+
+  it("never reuses a title or description between two pages", () => {
+    // Two pages competing on the same snippet is a signal to consolidate them,
+    // not something to leave for Google to pick between.
+    const descriptions = pageMeta.map((p) => p.metadata.description);
+    const titles = pageMeta.map((p) => JSON.stringify(p.metadata.title));
+    expect(new Set(descriptions).size).toBe(pageMeta.length);
+    expect(new Set(titles).size).toBe(pageMeta.length);
+  });
+
+  it("canonicalises each page to its own path", () => {
+    for (const { path, metadata } of pageMeta) {
+      expect(metadata.alternates?.canonical, path).toBe(path);
+    }
   });
 });
 
