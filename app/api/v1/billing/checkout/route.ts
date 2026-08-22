@@ -27,13 +27,37 @@ export const POST = withAuth(
     }
     const { plan } = parsed.data;
 
-    const { data: profile } = await auth.db
+    const { data: profile, error: profileError } = await auth.db
       .from("user_profiles")
       .select("plan, stripe_customer_id")
       .eq("id", auth.userId)
       .maybeSingle();
 
-    if (profile?.plan === plan) {
+    // Fail closed, matching lib/plan.ts: without the profile there is no way to
+    // tell a comped account from an ordinary one, and the wrong guess is the
+    // irreversible one — it attaches a Stripe customer to a plan granted by hand.
+    if (profileError || !profile) {
+      log("error", "checkout_profile_unavailable", {
+        userId: auth.userId,
+        message: profileError?.message,
+      });
+      return NextResponse.json({ error: "Could not start checkout" }, { status: 503 });
+    }
+
+    // Comped: a paid plan with no Stripe customer, i.e. granted by hand. Opening
+    // Checkout stamps stripe_customer_id below, and that column is what the
+    // webhook matches on — after that a `customer.subscription.deleted` would
+    // write this account down to free. Checked before the already-subscribed
+    // case so the message names the real reason rather than pointing at a
+    // billing portal this account has no customer for.
+    if (profile.plan !== "free" && !profile.stripe_customer_id) {
+      return NextResponse.json(
+        { error: "Your plan is managed for you. Contact support to change it." },
+        { status: 409 },
+      );
+    }
+
+    if (profile.plan === plan) {
       // Not an error worth a Stripe round trip — the UI should have sent them
       // to the billing portal instead.
       return NextResponse.json(
@@ -48,7 +72,7 @@ export const POST = withAuth(
 
     try {
       const client = stripe();
-      let customerId: string | undefined = profile?.stripe_customer_id ?? undefined;
+      let customerId: string | undefined = profile.stripe_customer_id ?? undefined;
 
       // Reuse the customer across checkouts so a second purchase does not
       // create a duplicate customer with a split payment history.

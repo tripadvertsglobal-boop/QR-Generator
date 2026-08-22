@@ -208,6 +208,32 @@ Read the scope note below before treating any of this as production evidence.
       retries. The receiver also had **no tests at all** — `tests/api/stripe-webhook.test.ts`
       now covers signature rejection, tier mapping, `past_due` grace, deletion, foreign
       subscriptions, customer-id fallback, and out-of-order delivery (14 tests).
+- [x] **A comped account could hand its own plan back to Stripe.** An account on a paid plan
+      with no `stripe_customer_id` was comped — its plan set by hand, the webhook being
+      otherwise the only writer of `user_profiles.plan`. Nothing stopped such an account from
+      opening Checkout, and `POST /api/v1/billing/checkout` stamps `stripe_customer_id` before
+      redirecting. That column is precisely what `applySubscription` falls back to when a
+      subscription carries no `metadata.user_id`, so from that moment on a single
+      `customer.subscription.deleted` could write a hand-granted plan down to `free`.
+
+      Fixed 2026-08-13 (branch `guard-comped-accounts`, commit `3b48f29`): the checkout route
+      rejects a paid plan with a null customer id with a 409, ordered *before* the
+      already-subscribed 409 so the message names the comp instead of pointing at a portal the
+      account has no customer for. The profile read's `error` is now captured rather than
+      discarded — a failed read was indistinguishable from "not comped", so the guard failed
+      **open** at exactly the wrong moment; it now 503s, matching the fail-closed rule
+      `lib/plan.ts` sets out. `/pricing` and `/dashboard/account` hide their upgrade CTAs to
+      match, but that is presentation only — the route is the boundary. The route had **no
+      tests at all**; `tests/api/billing-checkout.test.ts` now covers the guard, both
+      fail-closed paths, message ordering against the already-subscribed case, and the
+      ordinary free→Pro and Pro→Business purchases (9 tests).
+
+      **To comp an account:** set `user_profiles.plan` and leave `stripe_customer_id` null.
+      The null is load-bearing — it is what keeps the grant unreachable by any webhook, and it
+      is what the guard keys on. Do not "tidy up" a comped account by attaching a Stripe
+      customer to it. Comped in prod as of 2026-08-13: `tech@tripadverts.com`
+      (`b6e88f4c-4d53-45bc-988a-17bc4b2864d9`, `business`).
+
 - [ ] Business-tier bullets *priority support* and *onboarding assistance* are not
       enforceable in code. Pre-existing, and `lib/plan.ts` documents that deliberately.
 
@@ -223,5 +249,5 @@ Read the scope note below before treating any of this as production evidence.
   Note the prod schema is ahead of `main` until the branch merges.
 - `lib/stripe.ts`, checkout + portal routes (`jwtOnly`), webhook receiver, `/pricing`
   checkout CTAs, **Manage billing** on the account page.
-- 237 tests pass; typecheck, lint, and production build clean; Stripe SDK confirmed absent
-  from client bundles.
+- 276 tests pass; typecheck, lint, and production build clean; Stripe SDK confirmed absent
+  from client bundles. Whole line re-verified 2026-08-13, not just the count.

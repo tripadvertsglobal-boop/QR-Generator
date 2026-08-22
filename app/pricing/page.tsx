@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { siteConfig } from "@/site.config";
+import { createUserClient } from "@/lib/supabase/server";
 import { ORG_ID, absoluteUrl, breadcrumbSchema, graph, pageMetadata } from "@/lib/seo";
 import MarketingShell from "../_components/MarketingShell";
 import JsonLd from "../_components/JsonLd";
@@ -12,8 +13,24 @@ export const metadata: Metadata = pageMetadata({
   path: "/pricing",
 });
 
-export default function PricingPage() {
+export default async function PricingPage() {
   const { pricing } = siteConfig;
+
+  // A comped account — paid plan, no Stripe customer — must not reach Checkout.
+  // Creating a session stamps a stripe_customer_id (see the billing checkout
+  // route), and that column is exactly what lets a later subscription event
+  // match the row and overwrite a plan that was granted by hand. Holds their
+  // tier, or null for everyone else. RLS scopes the read to the caller, and a
+  // signed-out visitor simply gets no row.
+  const supabase = await createUserClient();
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("plan, stripe_customer_id")
+    .maybeSingle();
+  const compedPlan =
+    profile && profile.plan !== "free" && !profile.stripe_customer_id
+      ? (profile.plan as string)
+      : null;
 
   return (
     <MarketingShell>
@@ -107,6 +124,23 @@ export default function PricingPage() {
                 >
                   {plan.cta}
                 </Link>
+              ) : compedPlan ? (
+                // Same treatment as a closed tier: the CTA is present but inert,
+                // so the page still reads as a price list rather than looking
+                // broken.
+                <div className="mt-8">
+                  <p
+                    aria-disabled="true"
+                    className="cursor-not-allowed rounded-md border border-black/10 px-4 py-2.5 text-center text-sm font-medium text-black/40"
+                  >
+                    {plan.plan === compedPlan ? "Current plan" : plan.cta}
+                  </p>
+                  <p className="mt-2 text-center text-xs text-black/50">
+                    {plan.plan === compedPlan
+                      ? "This is your current plan."
+                      : "Your plan is managed for you — contact support to change it."}
+                  </p>
+                </div>
               ) : (
                 // Paid tiers go through Stripe Checkout rather than a link —
                 // the session has to be created server-side against the
