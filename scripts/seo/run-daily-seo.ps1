@@ -148,9 +148,13 @@ $claudeExit = $null
 $prevEAP = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
 try {
-  $prompt | & $Claude -p --permission-mode acceptEdits --allowedTools $allowedTools 2>&1 |
-    Tee-Object -FilePath $LogFile -Append
+  # Not Tee-Object: it has no -Encoding in PowerShell 5.1 and writes UTF-16,
+  # which interleaves with the UTF-8 Write-Log lines and renders the log as
+  # spaced-out garbage. Buffer instead, then write it as UTF-8.
+  $transcript = $prompt | & $Claude -p --permission-mode acceptEdits --allowedTools $allowedTools 2>&1
   $claudeExit = $LASTEXITCODE
+  $transcript | Out-String -Width 500 | Out-File -FilePath $LogFile -Append -Encoding utf8
+  $transcript | Write-Output
 } catch {
   Add-Content -Path $LogFile -Value "EXCEPTION: $_" -Encoding utf8
   Add-Content -Path $LogFile -Value ($_.ScriptStackTrace | Out-String) -Encoding utf8
