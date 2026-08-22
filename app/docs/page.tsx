@@ -6,7 +6,7 @@ import JsonLd from "../_components/JsonLd";
 
 export const metadata: Metadata = pageMetadata({
   title: "QR Code API reference",
-  description: `REST API reference for ${siteConfig.company.name}: authentication, scopes, rate limits, webhooks, and every endpoint for creating and tracking QR codes programmatically.`,
+  description: `REST API reference for ${siteConfig.company.name}: create, update, and track dynamic QR codes programmatically, with API key scopes, rate limits, and webhooks.`,
   path: "/docs",
 });
 

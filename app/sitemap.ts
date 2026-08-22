@@ -9,9 +9,9 @@ import { guides } from "@/content/guides";
 // ignore the field. Bump a date when that page's content actually changes.
 const ROUTES = [
   { path: "", priority: 1, lastModified: "2026-07-29" },
-  { path: "/pricing", priority: 0.8, lastModified: "2026-07-29" },
-  { path: "/docs", priority: 0.8, lastModified: "2026-07-29" },
-  { path: "/guides", priority: 0.7, lastModified: "2026-07-29" },
+  { path: "/pricing", priority: 0.8, lastModified: "2026-08-22" },
+  { path: "/docs", priority: 0.8, lastModified: "2026-08-22" },
+  { path: "/guides", priority: 0.7, lastModified: "2026-08-22" },
   { path: "/privacy", priority: 0.3, lastModified: "2026-06-17" },
   { path: "/terms", priority: 0.3, lastModified: "2026-06-17" },
   { path: "/cookies", priority: 0.3, lastModified: "2026-06-17" },
